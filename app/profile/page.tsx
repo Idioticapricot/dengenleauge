@@ -189,8 +189,7 @@ export default function ProfilePage() {
   if (!activeAccount?.address) {
     return (
       <AppLayout>
-        <PullToRefresh onRefresh={fetchBalances} className="flex-1">
-          <ProfileContainer>
+        <ProfileContainer>
           <ProfileHeader>
             <ProfileTitle>🔗 CONNECT WALLET</ProfileTitle>
             <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
