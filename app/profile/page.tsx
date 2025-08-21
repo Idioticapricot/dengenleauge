@@ -6,6 +6,8 @@ import { AppLayout } from '../../components/layout/AppLayout'
 import styled from 'styled-components'
 import { Button } from '../../components/styled/GlobalStyles'
 import { useRouter } from 'next/navigation'
+import { useSwipe } from '../../hooks/useSwipe'
+import { PullToRefresh } from '../../components/ui/PullToRefresh'
 
 const ProfileContainer = styled.div`
   display: flex;
@@ -14,6 +16,7 @@ const ProfileContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  min-height: 100vh;
 `
 
 const ProfileHeader = styled.div`
@@ -130,6 +133,18 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
+  // Swipe gesture handlers for page navigation
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => {
+      // Navigate to next page (defi)
+      router.push('/defi')
+    },
+    onSwipeRight: () => {
+      // Navigate to previous page (battle)
+      router.push('/battle')
+    }
+  })
+
   useEffect(() => {
     if (activeAccount?.address) {
       fetchBalances()
@@ -174,7 +189,8 @@ export default function ProfilePage() {
   if (!activeAccount?.address) {
     return (
       <AppLayout>
-        <ProfileContainer>
+        <PullToRefresh onRefresh={fetchBalances} className="flex-1">
+          <ProfileContainer>
           <ProfileHeader>
             <ProfileTitle>🔗 CONNECT WALLET</ProfileTitle>
             <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
@@ -189,80 +205,82 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <ProfileContainer>
-        <ProfileHeader>
-          <ProfileTitle>👤 PLAYER PROFILE</ProfileTitle>
-          <WalletAddress>
-            {activeAccount.address.slice(0, 8)}...{activeAccount.address.slice(-8)}
-          </WalletAddress>
-        </ProfileHeader>
+      <PullToRefresh onRefresh={fetchBalances} className="flex-1">
+        <ProfileContainer ref={swipeRef}>
+          <ProfileHeader>
+            <ProfileTitle>👤 PLAYER PROFILE</ProfileTitle>
+            <WalletAddress>
+              {activeAccount.address.slice(0, 8)}...{activeAccount.address.slice(-8)}
+            </WalletAddress>
+          </ProfileHeader>
 
-        <TokenSection>
-          <SectionTitle>💰 Token Balances</SectionTitle>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-primary)' }}>
-              🔄 Loading balances...
+          <TokenSection>
+            <SectionTitle>💰 Token Balances</SectionTitle>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-primary)' }}>
+                🔄 Loading balances...
+              </div>
+            ) : (
+              <TokenGrid>
+                <TokenCard>
+                  <TokenSymbol>ALGO</TokenSymbol>
+                  <TokenBalance>{balances.algo.toFixed(4)}</TokenBalance>
+                  <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginTop: '4px' }}>
+                    Last updated: {new Date().toLocaleTimeString()}
+                  </div>
+                </TokenCard>
+                <TokenCard>
+                  <TokenSymbol>DEGEN</TokenSymbol>
+                  <TokenBalance>{balances.degen.toFixed(2)}</TokenBalance>
+                  <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginTop: '4px' }}>
+                    Last updated: {new Date().toLocaleTimeString()}
+                  </div>
+                </TokenCard>
+              </TokenGrid>
+            )}
+          </TokenSection>
+
+          <StatsGrid>
+            <StatCard>
+              <StatValue>0</StatValue>
+              <StatLabel>Wins</StatLabel>
+            </StatCard>
+            <StatCard>
+              <StatValue>0</StatValue>
+              <StatLabel>Losses</StatLabel>
+            </StatCard>
+            <StatCard>
+              <StatValue>0</StatValue>
+              <StatLabel>Total Battles</StatLabel>
+            </StatCard>
+            <StatCard>
+              <StatValue>0</StatValue>
+              <StatLabel>Win Streak</StatLabel>
+            </StatCard>
+          </StatsGrid>
+
+          <TokenSection>
+            <SectionTitle>⚡ Quick Actions</SectionTitle>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <Button onClick={() => router.push('/buy-tokens')}>
+                🪙 Buy DEGEN
+              </Button>
+              <Button onClick={() => router.push('/battle')}>
+                ⚔️ Battle
+              </Button>
+              <Button onClick={() => router.push('/defi')}>
+                💱 DeFi
+              </Button>
             </div>
-          ) : (
-            <TokenGrid>
-              <TokenCard>
-                <TokenSymbol>ALGO</TokenSymbol>
-                <TokenBalance>{balances.algo.toFixed(4)}</TokenBalance>
-                <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginTop: '4px' }}>
-                  Last updated: {new Date().toLocaleTimeString()}
-                </div>
-              </TokenCard>
-              <TokenCard>
-                <TokenSymbol>DEGEN</TokenSymbol>
-                <TokenBalance>{balances.degen.toFixed(2)}</TokenBalance>
-                <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginTop: '4px' }}>
-                  Last updated: {new Date().toLocaleTimeString()}
-                </div>
-              </TokenCard>
-            </TokenGrid>
-          )}
-        </TokenSection>
-
-        <StatsGrid>
-          <StatCard>
-            <StatValue>0</StatValue>
-            <StatLabel>Wins</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>0</StatValue>
-            <StatLabel>Losses</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>0</StatValue>
-            <StatLabel>Total Battles</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>0</StatValue>
-            <StatLabel>Win Streak</StatLabel>
-          </StatCard>
-        </StatsGrid>
-
-        <TokenSection>
-          <SectionTitle>⚡ Quick Actions</SectionTitle>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
-            <Button onClick={() => router.push('/buy-tokens')}>
-              🪙 Buy DEGEN
+            <Button
+              onClick={fetchBalances}
+              style={{ background: 'var(--brutal-orange)', fontSize: '14px' }}
+            >
+              🔄 Refresh Balances
             </Button>
-            <Button onClick={() => router.push('/battle')}>
-              ⚔️ Battle
-            </Button>
-            <Button onClick={() => router.push('/defi')}>
-              💱 DeFi
-            </Button>
-          </div>
-          <Button 
-            onClick={fetchBalances}
-            style={{ background: 'var(--brutal-orange)', fontSize: '14px' }}
-          >
-            🔄 Refresh Balances
-          </Button>
-        </TokenSection>
-      </ProfileContainer>
+          </TokenSection>
+        </ProfileContainer>
+      </PullToRefresh>
     </AppLayout>
   )
 }
