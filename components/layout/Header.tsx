@@ -1,8 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
 import { useWallet } from "../wallet/WalletProvider"
+import { useRouter } from "next/navigation"
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -78,43 +80,66 @@ const AddButton = styled.button`
   }
 `
 
+const PopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`
+
+const PopupContent = styled.div`
+  background: var(--light-bg);
+  border: 4px solid var(--border-primary);
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  font-family: var(--font-mono);
+`
+
+const PopupTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+`
+
+const PopupText = styled.p`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 24px 0;
+  text-align: center;
+`
+
+const PopupButtons = styled.div`
+  display: flex;
+  gap: 12px;
+`
+
+const PopupButton = styled(Button)`
+  flex: 1;
+  font-size: 14px;
+  padding: 12px;
+  text-transform: uppercase;
+`
+
 const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
 `
 
-const DocsButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--brutal-orange);
-  border: 3px solid var(--border-primary);
-  border-radius: 0;
-  padding: 8px 12px;
-  color: var(--text-primary);
-  font-weight: 900;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  box-shadow: 2px 2px 0px 0px var(--border-primary);
-  transition: all 0.1s ease;
-  
-  &:hover {
-    background: var(--brutal-pink);
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px 0px var(--border-primary);
-  }
-`
-
-const ConnectWalletButton = styled(Button)`
-  font-size: 12px;
-  padding: 8px 16px;
-  text-transform: uppercase;
-`
-
-const WalletInfo = styled.div`
+const ProfileButton = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -139,30 +164,59 @@ const WalletInfo = styled.div`
 `
 
 export function Header() {
-  const { wallet, connectWallet, disconnectWallet } = useWallet()
+  const { wallet } = useWallet()
+  const router = useRouter()
+  const [showWamPopup, setShowWamPopup] = useState(false)
+
+  const handleWamClick = () => {
+    setShowWamPopup(true)
+  }
+
+  const handleGoToDeposit = () => {
+    setShowWamPopup(false)
+    router.push('/profile')
+  }
+
+  const handleProfileClick = () => {
+    router.push('/profile')
+  }
 
   return (
+    <>
+      {showWamPopup && (
+        <PopupOverlay onClick={() => setShowWamPopup(false)}>
+          <PopupContent onClick={(e) => e.stopPropagation()}>
+            <PopupTitle>💰 BUY $WAM</PopupTitle>
+            <PopupText>
+              Get more $WAM tokens to create beasts and battle other trainers!
+            </PopupText>
+            <PopupButtons>
+              <PopupButton onClick={() => setShowWamPopup(false)}>
+                Cancel
+              </PopupButton>
+              <PopupButton onClick={handleGoToDeposit}>
+                Go to Deposit
+              </PopupButton>
+            </PopupButtons>
+          </PopupContent>
+        </PopupOverlay>
+      )}
+    
     <HeaderContainer>
       <LeftSection>
         <BalanceContainer>
           <TokenIcon>$WAM</TokenIcon>
           <Balance>{wallet.balance.toFixed(0)}</Balance>
-          <AddButton>+</AddButton>
+          <AddButton onClick={handleWamClick}>+</AddButton>
         </BalanceContainer>
       </LeftSection>
 
       <RightSection>
-        <DocsButton>📚 Docs</DocsButton>
-        {wallet.isConnected ? (
-          <WalletInfo onClick={disconnectWallet}>
-            {wallet.address?.slice(0, 6)}...{wallet.address?.slice(-4)}
-          </WalletInfo>
-        ) : (
-          <ConnectWalletButton $size="sm" onClick={connectWallet} disabled={wallet.connecting}>
-            {wallet.connecting ? "Connecting..." : "Connect Wallet"}
-          </ConnectWalletButton>
-        )}
+        <ProfileButton onClick={handleProfileClick}>
+          testingtesla7
+        </ProfileButton>
       </RightSection>
     </HeaderContainer>
+    </>
   )
 }

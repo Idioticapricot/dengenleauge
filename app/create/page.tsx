@@ -281,115 +281,367 @@ const Ability = styled.div`
   text-transform: uppercase;
 `
 
+const DescriptionInput = styled.textarea`
+  width: 100%;
+  min-height: 120px;
+  padding: 16px;
+  border: 4px solid var(--border-primary);
+  background: var(--light-bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  resize: vertical;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+    background: var(--brutal-lime);
+  }
+  
+  &::placeholder {
+    color: var(--text-primary);
+    opacity: 0.7;
+  }
+`
+
+const StatsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`
+
+const StatControl = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--brutal-cyan);
+  border: 3px solid var(--border-primary);
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+`
+
+const StatName = styled.div`
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`
+
+const StatButtons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`
+
+const StatButton = styled.button`
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-primary);
+  background: var(--brutal-yellow);
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: all 0.1s ease;
+  
+  &:hover:not(:disabled) {
+    background: var(--brutal-orange);
+    transform: translate(1px, 1px);
+  }
+  
+  &:disabled {
+    background: var(--brutal-red);
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`
+
+const StatDisplay = styled.div`
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--light-bg);
+  border: 3px solid var(--border-primary);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+`
+
+const OverviewSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`
+
+const OverviewItem = styled.div`
+  padding: 16px;
+  background: var(--brutal-violet);
+  border: 3px solid var(--border-primary);
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+`
+
+const OverviewLabel = styled.div`
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+`
+
+const OverviewValue = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+`
+
+const OverviewStats = styled.div`
+  display: flex;
+  gap: 12px;
+`
+
+const OverviewStat = styled.div`
+  background: var(--brutal-lime);
+  padding: 8px 12px;
+  border: 2px solid var(--border-primary);
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+`
+
+type Step = 'tier' | 'design' | 'stats' | 'final'
+
+interface BeastData {
+  tier: string | null
+  description: string
+  stats: {
+    health: number
+    stamina: number
+    power: number
+  }
+}
+
 export default function CreatePage() {
   const router = useRouter()
-  const [selectedType, setSelectedType] = useState<string | null>(null)
-  const [selectedTier, setSelectedTier] = useState<string | null>(null)
+  const [currentStep, setCurrentStep] = useState<Step>('tier')
+  const [beastData, setBeastData] = useState<BeastData>({
+    tier: null,
+    description: '',
+    stats: { health: 5, stamina: 5, power: 5 }
+  })
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleMint = async () => {
-    if (!selectedType || !selectedTier) return
-    
+  const handleNext = () => {
+    if (currentStep === 'tier' && beastData.tier) {
+      setBeastData({...beastData, description: '', stats: { health: 5, stamina: 5, power: 5 }})
+      setCurrentStep('design')
+    } else if (currentStep === 'design' && beastData.description.trim()) {
+      setBeastData({...beastData, stats: { health: 5, stamina: 5, power: 5 }})
+      setCurrentStep('stats')
+    } else if (currentStep === 'stats') {
+      setCurrentStep('final')
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep === 'design') {
+      setBeastData({...beastData, tier: null, stats: { health: 5, stamina: 5, power: 5 }})
+      setCurrentStep('tier')
+    } else if (currentStep === 'stats') {
+      setBeastData({...beastData, description: '', stats: { health: 5, stamina: 5, power: 5 }})
+      setCurrentStep('design')
+    } else if (currentStep === 'final') {
+      setBeastData({...beastData, stats: { health: 5, stamina: 5, power: 5 }})
+      setCurrentStep('stats')
+    } else {
+      router.back()
+    }
+  }
+
+  const handleCreate = async () => {
     setIsLoading(true)
-    // Simulate minting process
     await new Promise(resolve => setTimeout(resolve, 2000))
     setIsLoading(false)
-    
-    // Redirect to home after minting
     router.push("/home")
   }
   
-  const getCalculatedStats = (baseStats: any, tier: any) => {
-    return {
-      hp: Math.floor(baseStats.hp * tier.multiplier),
-      attack: Math.floor(baseStats.attack * tier.multiplier),
-      defense: Math.floor(baseStats.defense * tier.multiplier)
-    }
+  const selectedTierData = tiers.find(t => t.id === beastData.tier)
+  const getMaxPoints = () => {
+    if (beastData.tier === 'basic') return 20
+    if (beastData.tier === 'advanced') return 30
+    if (beastData.tier === 'legendary') return 40
+    return 20
   }
   
-  const selectedTierData = tiers.find(t => t.id === selectedTier)
-  const totalCost = selectedTierData?.cost || 0
+  const getTotalUsedPoints = () => {
+    return beastData.stats.health + beastData.stats.stamina + beastData.stats.power
+  }
+  
+  const getRemainingPoints = () => {
+    return getMaxPoints() - getTotalUsedPoints()
+  }
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 'tier':
+        return (
+          <Card>
+            <SectionTitle>SELECT TIER</SectionTitle>
+            <TierSelector>
+              {tiers.map((tier) => (
+                <TierCard
+                  key={tier.id}
+                  $selected={beastData.tier === tier.id}
+                  $color={tier.color}
+                  onClick={() => setBeastData({...beastData, tier: tier.id})}
+                >
+                  <TierName>{tier.name}</TierName>
+                  <TierCost>{tier.cost} $WAM</TierCost>
+                  <TierAbilities>
+                    {tier.abilities.map((ability, index) => (
+                      <Ability key={index}>{ability}</Ability>
+                    ))}
+                  </TierAbilities>
+                </TierCard>
+              ))}
+            </TierSelector>
+          </Card>
+        )
+      
+      case 'design':
+        return (
+          <Card>
+            <SectionTitle>DESCRIBE YOUR BEAST</SectionTitle>
+            <DescriptionInput
+              placeholder="Describe your beast's appearance, personality, and abilities..."
+              value={beastData.description}
+              onChange={(e) => setBeastData({...beastData, description: e.target.value})}
+            />
+          </Card>
+        )
+      
+      case 'stats':
+        return (
+          <Card>
+            <SectionTitle>DISTRIBUTE STATS ({getRemainingPoints()} POINTS LEFT)</SectionTitle>
+            <StatsContainer>
+              {Object.entries(beastData.stats).map(([stat, value]) => (
+                <StatControl key={stat}>
+                  <StatName>{stat.toUpperCase()}</StatName>
+                  <StatButtons>
+                    <StatButton 
+                      onClick={() => {
+                        if (value > 5) {
+                          setBeastData({
+                            ...beastData,
+                            stats: {...beastData.stats, [stat]: value - 1}
+                          })
+                        }
+                      }}
+                      disabled={value <= 5}
+                    >
+                      -
+                    </StatButton>
+                    <StatDisplay>{value}</StatDisplay>
+                    <StatButton 
+                      onClick={() => {
+                        if (getRemainingPoints() > 0) {
+                          setBeastData({
+                            ...beastData,
+                            stats: {...beastData.stats, [stat]: value + 1}
+                          })
+                        }
+                      }}
+                      disabled={getRemainingPoints() <= 0}
+                    >
+                      +
+                    </StatButton>
+                  </StatButtons>
+                </StatControl>
+              ))}
+            </StatsContainer>
+          </Card>
+        )
+      
+      case 'final':
+        return (
+          <Card>
+            <SectionTitle>BEAST OVERVIEW</SectionTitle>
+            <OverviewSection>
+              <OverviewItem>
+                <OverviewLabel>TIER:</OverviewLabel>
+                <OverviewValue>{selectedTierData?.name}</OverviewValue>
+              </OverviewItem>
+              <OverviewItem>
+                <OverviewLabel>DESCRIPTION:</OverviewLabel>
+                <OverviewValue>{beastData.description}</OverviewValue>
+              </OverviewItem>
+              <OverviewItem>
+                <OverviewLabel>STATS:</OverviewLabel>
+                <OverviewStats>
+                  <OverviewStat>Health: {beastData.stats.health}</OverviewStat>
+                  <OverviewStat>Stamina: {beastData.stats.stamina}</OverviewStat>
+                  <OverviewStat>Power: {beastData.stats.power}</OverviewStat>
+                </OverviewStats>
+              </OverviewItem>
+            </OverviewSection>
+          </Card>
+        )
+    }
+  }
 
   return (
     <AppLayout>
-      <BackButton onClick={() => router.back()}>
+      <BackButton onClick={handleBack}>
         ← BACK
       </BackButton>
       
       <CreateContainer>
         <CreateHeader>
           <CreateTitle>🐲 CREATE BEAST</CreateTitle>
-          <CreateSubtitle>Choose tier and beast type</CreateSubtitle>
+          <CreateSubtitle>
+            {currentStep === 'tier' && 'Choose your beast tier'}
+            {currentStep === 'design' && 'Design your beast'}
+            {currentStep === 'stats' && 'Distribute stat points'}
+            {currentStep === 'final' && 'Review and create'}
+          </CreateSubtitle>
         </CreateHeader>
         
-        <Card>
-          <SectionTitle>SELECT TIER</SectionTitle>
-          <TierSelector>
-            {tiers.map((tier) => (
-              <TierCard
-                key={tier.id}
-                $selected={selectedTier === tier.id}
-                $color={tier.color}
-                onClick={() => setSelectedTier(tier.id)}
-              >
-                <TierName>{tier.name}</TierName>
-                <TierCost>{tier.cost} $WAM</TierCost>
-                <TierAbilities>
-                  {tier.abilities.map((ability, index) => (
-                    <Ability key={index}>{ability}</Ability>
-                  ))}
-                </TierAbilities>
-              </TierCard>
-            ))}
-          </TierSelector>
-        </Card>
+        {renderStep()}
 
-        {selectedTier && (
-          <Card>
-            <SectionTitle>SELECT BEAST TYPE</SectionTitle>
-            <BeastTypeGrid>
-              {beastTypes.map((beast) => {
-                const calculatedStats = getCalculatedStats(beast.baseStats, selectedTierData)
-                return (
-                  <BeastTypeCard
-                    key={beast.id}
-                    $selected={selectedType === beast.id}
-                    onClick={() => setSelectedType(beast.id)}
-                  >
-                    <BeastIcon>{beast.icon}</BeastIcon>
-                    <BeastTypeName>{beast.name}</BeastTypeName>
-                    <BeastTypeDescription>{beast.description}</BeastTypeDescription>
-                    
-                    <BeastStats>
-                      <StatItem>
-                        <StatLabel>HP</StatLabel>
-                        <StatValue>{calculatedStats.hp}</StatValue>
-                      </StatItem>
-                      <StatItem>
-                        <StatLabel>ATK</StatLabel>
-                        <StatValue>{calculatedStats.attack}</StatValue>
-                      </StatItem>
-                      <StatItem>
-                        <StatLabel>DEF</StatLabel>
-                        <StatValue>{calculatedStats.defense}</StatValue>
-                      </StatItem>
-                    </BeastStats>
-                    
-                    <MintCost>TOTAL: {totalCost} $WAM</MintCost>
-                  </BeastTypeCard>
-                )
-              })}
-            </BeastTypeGrid>
-          </Card>
+        {currentStep !== 'final' ? (
+          <MintButton
+            $fullWidth
+            disabled={
+              (currentStep === 'tier' && !beastData.tier) ||
+              (currentStep === 'design' && !beastData.description.trim()) ||
+              (currentStep === 'stats' && getRemainingPoints() !== 0)
+            }
+            onClick={handleNext}
+          >
+            NEXT
+          </MintButton>
+        ) : (
+          <MintButton
+            $fullWidth
+            disabled={isLoading}
+            onClick={handleCreate}
+          >
+            {isLoading ? "CREATING..." : "CREATE BEAST (20 $WAM)"}
+          </MintButton>
         )}
-
-        <MintButton
-          $fullWidth
-          disabled={!selectedType || !selectedTier || isLoading}
-          onClick={handleMint}
-        >
-          {isLoading ? "MINTING..." : `MINT BEAST (${totalCost} $WAM)`}
-        </MintButton>
       </CreateContainer>
     </AppLayout>
   )
