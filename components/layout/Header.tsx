@@ -163,8 +163,48 @@ const ProfileButton = styled.div`
   }
 `
 
+const NetworkIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--brutal-violet);
+  border: 2px solid var(--border-primary);
+  border-radius: 0;
+  padding: 6px 10px;
+  font-size: 10px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  transition: all 0.1s ease;
+  
+  &:hover {
+    background: var(--brutal-pink);
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
+  }
+`
+
+const NetworkDot = styled.div<{ $network: string }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${(props) => {
+    switch (props.$network) {
+      case "avalanche":
+        return "#E84142"
+      case "avalancheFuji":
+        return "#F7931A"
+      default:
+        return "#6B7280"
+    }
+  }};
+`
+
 export function Header() {
-  const { wallet } = useWallet()
+  const { wallet, switchNetwork } = useWallet()
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
 
@@ -179,6 +219,25 @@ export function Header() {
 
   const handleProfileClick = () => {
     router.push('/profile')
+  }
+
+  const handleNetworkSwitch = () => {
+    if (wallet.network === "avalanche") {
+      switchNetwork(43113) // Switch to Fuji testnet
+    } else {
+      switchNetwork(43114) // Switch to Avalanche mainnet
+    }
+  }
+
+  const getNetworkName = () => {
+    switch (wallet.network) {
+      case "avalanche":
+        return "AVAX"
+      case "avalancheFuji":
+        return "FUJI"
+      default:
+        return "UNKNOWN"
+    }
   }
 
   return (
@@ -206,9 +265,15 @@ export function Header() {
       <LeftSection>
         <BalanceContainer>
           <TokenIcon>$WAM</TokenIcon>
-          <Balance>{wallet.balance.toFixed(0)}</Balance>
+          <Balance>{parseFloat(wallet.balance).toFixed(2)}</Balance>
           <AddButton onClick={handleWamClick}>+</AddButton>
         </BalanceContainer>
+        {wallet.isConnected && (
+          <NetworkIndicator onClick={handleNetworkSwitch}>
+            <NetworkDot $network={wallet.network} />
+            {getNetworkName()}
+          </NetworkIndicator>
+        )}
       </LeftSection>
 
       <RightSection>
