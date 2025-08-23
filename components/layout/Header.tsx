@@ -278,7 +278,10 @@ export function Header() {
 
       <RightSection>
         <ProfileButton onClick={handleProfileClick}>
-          testingtesla7
+          {wallet.isConnected && wallet.address 
+            ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
+            : "Connect Wallet"
+          }
         </ProfileButton>
       </RightSection>
     </HeaderContainer>

@@ -102,30 +102,7 @@ const CopyButton = styled.button`
   }
 `
 
-const SocialIcons = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-`
 
-const SocialIcon = styled.button`
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: rgba(51, 65, 85, 0.5);
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  
-  &:hover {
-    background: rgba(34, 197, 94, 0.2);
-    color: var(--primary-green);
-  }
-`
 
 const BalanceSection = styled.div`
   text-align: center;
@@ -193,7 +170,7 @@ const USDValue = styled.div`
 
 const ActionButtons = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 24px;
 `
@@ -393,31 +370,157 @@ const ConnectWalletButton = styled(Button)`
 `
 
 
+const PopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`
+
+const PopupContent = styled.div`
+  background: var(--light-bg);
+  border: 4px solid var(--border-primary);
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  font-family: var(--font-mono);
+`
+
+const PopupTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+`
+
+const PopupText = styled.p`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  text-align: center;
+`
+
+const AddressDisplay = styled.div`
+  background: var(--brutal-lime);
+  border: 3px solid var(--border-primary);
+  padding: 16px;
+  margin: 16px 0;
+  word-break: break-all;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  text-align: center;
+  position: relative;
+`
+
+const CopyAddressButton = styled(Button)`
+  margin-top: 12px;
+  background: var(--brutal-yellow);
+  
+  &:hover {
+    background: var(--brutal-orange);
+  }
+`
+
+const InputField = styled.input`
+  width: 100%;
+  padding: 12px;
+  border: 3px solid var(--border-primary);
+  background: var(--light-bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+    background: var(--brutal-lime);
+  }
+  
+  &::placeholder {
+    color: var(--text-primary);
+    opacity: 0.7;
+  }
+`
+
+const MaxButton = styled.button`
+  background: var(--brutal-cyan);
+  border: 2px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.1s ease;
+  
+  &:hover {
+    background: var(--brutal-pink);
+    transform: translate(1px, 1px);
+  }
+`
+
+const PopupButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+`
+
+const PopupButton = styled(Button)`
+  flex: 1;
+  font-size: 14px;
+  padding: 12px;
+  text-transform: uppercase;
+`
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Live")
   const { wallet, connectWallet } = useWallet()
+  const [showDepositPopup, setShowDepositPopup] = useState(false)
+  const [showWithdrawPopup, setShowWithdrawPopup] = useState(false)
+  const [withdrawAmount, setWithdrawAmount] = useState("")
+  const [withdrawAddress, setWithdrawAddress] = useState("")
 
   const handleDeposit = () => {
-    console.log("Deposit clicked")
-    // TODO: Implement deposit functionality
+    setShowDepositPopup(true)
   }
 
   const handleWithdraw = () => {
-    console.log("Withdraw clicked")
-    // TODO: Implement withdraw functionality
-  }
-
-  const handleExportPK = () => {
-    console.log("Export PK clicked")
-    // TODO: Implement export private key functionality
+    setShowWithdrawPopup(true)
   }
 
   const handleCopyAddress = () => {
     if (wallet.address) {
       navigator.clipboard.writeText(wallet.address)
-      // TODO: Show toast notification
     }
   }
+
+  const handleMaxWithdraw = () => {
+    setWithdrawAmount(wallet.balance)
+  }
+
+  const handleConfirmWithdraw = () => {
+    // TODO: Call smart contract withdraw function
+    console.log(`Withdrawing ${withdrawAmount} to ${withdrawAddress}`)
+    setShowWithdrawPopup(false)
+    setWithdrawAmount("")
+    setWithdrawAddress("")
+  }
+
+
+
+
 
   // If wallet is not connected, show connect prompt
   if (!wallet.isConnected) {
@@ -443,27 +546,25 @@ export default function ProfilePage() {
         <ProfileAvatar>T</ProfileAvatar>
         <ProfileInfo>
           <ProfileName>
-            <Username>testingtesla7</Username>
+            <Username>
+              {wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : "Not Connected"}
+            </Username>
             <EditIcon>✏️</EditIcon>
           </ProfileName>
           <WalletAddress>
-            {wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : "Connecting..."}
+            {wallet.address ? `${wallet.address.slice(0, 8)}...${wallet.address.slice(-8)}` : "No wallet connected"}
             <CopyButton onClick={handleCopyAddress}>📋</CopyButton>
           </WalletAddress>
-          <SocialIcons>
-            <SocialIcon>🔗</SocialIcon>
-            <SocialIcon>🌐</SocialIcon>
-            <SocialIcon>🔒</SocialIcon>
-          </SocialIcons>
+
         </ProfileInfo>
       </ProfileHeader>
 
       <BalanceSection>
         <BalanceAmount>
           <BalanceValue>{parseFloat(wallet.balance).toFixed(2)}</BalanceValue>
-          <TokenIcon>AVAX</TokenIcon>
+          <TokenIcon>$WAM</TokenIcon>
         </BalanceAmount>
-        <USDValue>{parseFloat(wallet.balance).toFixed(2)} AVAX</USDValue>
+        <USDValue>{parseFloat(wallet.balance).toFixed(2)} $WAM TOKENS</USDValue>
 
         <ActionButtons>
           <ActionButton onClick={handleDeposit}>
@@ -473,10 +574,6 @@ export default function ProfilePage() {
           <ActionButton onClick={handleWithdraw}>
             <ActionIcon>💸</ActionIcon>
             <ActionLabel>Withdraw</ActionLabel>
-          </ActionButton>
-          <ActionButton onClick={handleExportPK}>
-            <ActionIcon>🔑</ActionIcon>
-            <ActionLabel>Export PK</ActionLabel>
           </ActionButton>
         </ActionButtons>
       </BalanceSection>
@@ -524,6 +621,84 @@ export default function ProfilePage() {
       )}
 
 
+      {showDepositPopup && (
+        <PopupOverlay onClick={() => setShowDepositPopup(false)}>
+          <PopupContent onClick={(e) => e.stopPropagation()}>
+            <PopupTitle>💰 BUY $WAM TOKENS</PopupTitle>
+            <PopupText>
+              Exchange your AVAX for $WAM tokens. Enter the amount of AVAX to spend.
+            </PopupText>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <InputField
+                type="number"
+                placeholder="AVAX amount to spend"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                max={wallet.balance}
+              />
+              <MaxButton onClick={handleMaxWithdraw}>MAX</MaxButton>
+            </div>
+            <PopupText style={{ fontSize: '12px', margin: '8px 0' }}>
+              You will receive: {withdrawAmount ? (parseFloat(withdrawAmount) * 100).toFixed(0) : '0'} $WAM
+              <br />Rate: 1 AVAX = 100 $WAM
+            </PopupText>
+            <PopupButtons>
+              <PopupButton onClick={() => setShowDepositPopup(false)}>
+                CANCEL
+              </PopupButton>
+              <PopupButton 
+                onClick={() => {
+                  // TODO: Call smart contract to buy $WAM
+                  console.log(`Buying ${withdrawAmount ? (parseFloat(withdrawAmount) * 100).toFixed(0) : '0'} $WAM for ${withdrawAmount} AVAX`)
+                  setShowDepositPopup(false)
+                  setWithdrawAmount('')
+                }}
+                disabled={!withdrawAmount}
+              >
+                BUY $WAM
+              </PopupButton>
+            </PopupButtons>
+          </PopupContent>
+        </PopupOverlay>
+      )}
+
+      {showWithdrawPopup && (
+        <PopupOverlay onClick={() => setShowWithdrawPopup(false)}>
+          <PopupContent onClick={(e) => e.stopPropagation()}>
+            <PopupTitle>💸 WITHDRAW FUNDS</PopupTitle>
+            <PopupText>
+              Enter the amount and destination address for withdrawal.
+            </PopupText>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <InputField
+                type="number"
+                placeholder="Amount to withdraw"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                max={wallet.balance}
+              />
+              <MaxButton onClick={handleMaxWithdraw}>MAX</MaxButton>
+            </div>
+            <InputField
+              type="text"
+              placeholder="Destination wallet address (0x...)"
+              value={withdrawAddress}
+              onChange={(e) => setWithdrawAddress(e.target.value)}
+            />
+            <PopupButtons>
+              <PopupButton onClick={() => setShowWithdrawPopup(false)}>
+                CANCEL
+              </PopupButton>
+              <PopupButton 
+                onClick={handleConfirmWithdraw}
+                disabled={!withdrawAmount || !withdrawAddress}
+              >
+                CONFIRM WITHDRAW
+              </PopupButton>
+            </PopupButtons>
+          </PopupContent>
+        </PopupOverlay>
+      )}
     </AppLayout>
   )
 }
