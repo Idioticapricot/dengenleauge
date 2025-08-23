@@ -1,0 +1,360 @@
+// Battle Beasts - Complete Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  walletAddress  String   @unique @map("wallet_address")
+  username       String?
+  avatarUrl      String?  @map("avatar_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  // Stats
+  totalBattles   Int      @default(0) @map("total_battles")
+  wins           Int      @default(0)
+  losses         Int      @default(0)
+  totalEarnings  Decimal  @default(0) @db.Decimal(18, 8) @map("total_earnings")
+  
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  
+  // Relations
+  beasts         Beast[]
+  teams          Team[]
+  battlesAsPlayer1 Battle[] @relation("Player1")
+  battlesAsPlayer2 Battle[] @relation("Player2")
+  battleWins     Battle[] @relation("Winner")
+  battleActions  BattleAction[]
+  marketplaceListings MarketplaceListing[] @relation("Seller")
+  purchases      MarketplaceListing[] @relation("Buyer")
+  ranking        UserRanking?
+  
+  @@map("users")
+}
+
+model Beast {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId          String   @map("owner_id") @db.Uuid
+  name             String
+  tier             BeastTier
+  elementType      ElementType @map("element_type")
+  rarity           BeastRarity
+  
+  // NFT Integration
+  nftTokenId       String?  @unique @map("nft_token_id")
+  nftContractAddress String? @map("nft_contract_address")
+  blockchain       String   @default("ethereum")
+  
+  // Level & Experience
+  level            Int      @default(5)
+  currentExp       Int      @default(0) @map("current_exp")
+  requiredExp      Int      @default(100) @map("required_exp")
+  
+  // Stats
+  health           Int
+  stamina          Int
+  power            Int
+  
+  // Abilities (JSON array of ability IDs)
+  abilities        Json     @default("[]")
+  
+  // Metadata
+  description      String?
+  aiPrompt         String?  @map("ai_prompt")
+  nftMetadataUri   String?  @map("nft_metadata_uri")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  
+  // Status
+  isForSale        Boolean  @default(false) @map("is_for_sale")
+  salePrice        Decimal? @db.Decimal(18, 8) @map("sale_price")
+  isInBattle       Boolean  @default(false) @map("is_in_battle")
+  
+  // Relations
+  owner            User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  moves            BeastMove[]
+  teamsAsBeast1    Team[]   @relation("Beast1")
+  teamsAsBeast2    Team[]   @relation("Beast2")
+  teamsAsBeast3    Team[]   @relation("Beast3")
+  battleActions    BattleAction[] @relation("ActorBeast")
+  targetActions    BattleAction[] @relation("TargetBeast")
+  marketplaceListings MarketplaceListing[]
+  
+  @@map("beasts")
+}
+
+model Move {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  elementType ElementType @map("element_type")
+  damage      Int
+  cooldown    Int
+  description String?
+  minLevel    Int         @default(5) @map("min_level")
+  tier        MoveTier
+  createdAt   DateTime    @default(now()) @map("created_at")
+  
+  // Relations
+  beastMoves    BeastMove[]
+  battleActions BattleAction[]
+  
+  @@map("moves")
+}
+
+model Ability {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  description String
+  effectType  EffectType  @map("effect_type")
+  effectData  Json        @map("effect_data")
+  rarity      AbilityRarity
+  createdAt   DateTime    @default(now()) @map("created_at")
+  
+  @@map("abilities")
+}
+
+model BeastMove {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  beastId   String   @map("beast_id") @db.Uuid
+  moveId    String   @map("move_id") @db.Uuid
+  slotIndex Int      @map("slot_index")
+  learnedAt DateTime @default(now()) @map("learned_at")
+  
+  // Relations
+  beast Beast @relation(fields: [beastId], references: [id], onDelete: Cascade)
+  move  Move  @relation(fields: [moveId], references: [id], onDelete: Cascade)
+  
+  @@unique([beastId, slotIndex])
+  @@unique([beastId, moveId])
+  @@map("beast_moves")
+}
+
+model Team {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  beast1Id  String?  @map("beast1_id") @db.Uuid
+  beast2Id  String?  @map("beast2_id") @db.Uuid
+  beast3Id  String?  @map("beast3_id") @db.Uuid
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beast1 Beast? @relation("Beast1", fields: [beast1Id], references: [id])
+  beast2 Beast? @relation("Beast2", fields: [beast2Id], references: [id])
+  beast3 Beast? @relation("Beast3", fields: [beast3Id], references: [id])
+  
+  battlesAsPlayer1Team Battle[] @relation("Player1Team")
+  battlesAsPlayer2Team Battle[] @relation("Player2Team")
+  
+  @@unique([userId])
+  @@map("teams")
+}
+
+model Battle {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  battleType   BattleType  @map("battle_type")
+  
+  // Players
+  player1Id    String      @map("player1_id") @db.Uuid
+  player2Id    String?     @map("player2_id") @db.Uuid
+  
+  // Teams
+  player1TeamId String     @map("player1_team") @db.Uuid
+  player2TeamId String?    @map("player2_team") @db.Uuid
+  
+  // Battle State
+  status       BattleStatus @default(ACTIVE)
+  currentTurn  Int         @default(1) @map("current_turn")
+  winnerId     String?     @map("winner_id") @db.Uuid
+  
+  // Stakes & Rewards
+  stakeAmount  Decimal     @default(0) @db.Decimal(18, 8) @map("stake_amount")
+  winnerReward Decimal     @default(0) @db.Decimal(18, 8) @map("winner_reward")
+  
+  // Timestamps
+  startedAt    DateTime    @default(now()) @map("started_at")
+  endedAt      DateTime?   @map("ended_at")
+  
+  // Battle State
+  finalState   Json?       @map("final_state")
+  
+  // Relations
+  player1      User        @relation("Player1", fields: [player1Id], references: [id])
+  player2      User?       @relation("Player2", fields: [player2Id], references: [id])
+  winner       User?       @relation("Winner", fields: [winnerId], references: [id])
+  player1Team  Team        @relation("Player1Team", fields: [player1TeamId], references: [id])
+  player2Team  Team?       @relation("Player2Team", fields: [player2TeamId], references: [id])
+  actions      BattleAction[]
+  
+  @@map("battles")
+}
+
+model BattleAction {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  battleId        String   @map("battle_id") @db.Uuid
+  turnNumber      Int      @map("turn_number")
+  playerId        String   @map("player_id") @db.Uuid
+  beastId         String   @map("beast_id") @db.Uuid
+  moveId          String   @map("move_id") @db.Uuid
+  targetBeastId   String   @map("target_beast_id") @db.Uuid
+  damageDealt     Int      @default(0) @map("damage_dealt")
+  actionTimestamp DateTime @default(now()) @map("action_timestamp")
+  actionData      Json     @default("{}") @map("action_data")
+  
+  // Relations
+  battle      Battle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  player      User   @relation(fields: [playerId], references: [id])
+  beast       Beast  @relation("ActorBeast", fields: [beastId], references: [id])
+  move        Move   @relation(fields: [moveId], references: [id])
+  targetBeast Beast  @relation("TargetBeast", fields: [targetBeastId], references: [id])
+  
+  @@map("battle_actions")
+}
+
+model MarketplaceListing {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  beastId        String            @map("beast_id") @db.Uuid
+  sellerId       String            @map("seller_id") @db.Uuid
+  price          Decimal           @db.Decimal(18, 8)
+  status         ListingStatus     @default(ACTIVE)
+  
+  // NFT Transfer Data
+  nftTransferTx  String?           @map("nft_transfer_tx")
+  transferStatus TransferStatus    @default(PENDING) @map("transfer_status")
+  
+  createdAt      DateTime          @default(now()) @map("created_at")
+  soldAt         DateTime?         @map("sold_at")
+  buyerId        String?           @map("buyer_id") @db.Uuid
+  
+  // Relations
+  beast  Beast @relation(fields: [beastId], references: [id], onDelete: Cascade)
+  seller User  @relation("Seller", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyer  User? @relation("Buyer", fields: [buyerId], references: [id])
+  
+  @@map("marketplace_listings")
+}
+
+model UserRanking {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  rankPoints     Int      @default(1000) @map("rank_points")
+  currentRank    Int?     @map("current_rank")
+  highestRank    Int      @default(999999) @map("highest_rank")
+  rankTier       RankTier @default(BRONZE) @map("rank_tier")
+  
+  // Weekly/Monthly stats
+  weeklyBattles  Int      @default(0) @map("weekly_battles")
+  weeklyWins     Int      @default(0) @map("weekly_wins")
+  monthlyBattles Int      @default(0) @map("monthly_battles")
+  monthlyWins    Int      @default(0) @map("monthly_wins")
+  
+  lastBattleAt   DateTime? @map("last_battle_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_rankings")
+}
+
+// Enums
+enum BeastTier {
+  BASIC
+  ADVANCED
+  LEGENDARY
+  
+  @@map("beast_tier")
+}
+
+enum ElementType {
+  FIRE
+  WATER
+  EARTH
+  ELECTRIC
+  
+  @@map("element_type")
+}
+
+enum BeastRarity {
+  COMMON
+  RARE
+  LEGENDARY
+  
+  @@map("beast_rarity")
+}
+
+enum MoveTier {
+  BASIC
+  ADVANCED
+  LEGENDARY
+  
+  @@map("move_tier")
+}
+
+enum EffectType {
+  PASSIVE
+  ACTIVE
+  TRIGGER
+  
+  @@map("effect_type")
+}
+
+enum AbilityRarity {
+  COMMON
+  RARE
+  LEGENDARY
+  
+  @@map("ability_rarity")
+}
+
+enum BattleType {
+  PVP
+  PVE
+  
+  @@map("battle_type")
+}
+
+enum BattleStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+  
+  @@map("battle_status")
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  CANCELLED
+  
+  @@map("listing_status")
+}
+
+enum TransferStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  
+  @@map("transfer_status")
+}
+
+enum RankTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+  MASTER
+  
+  @@map("rank_tier")
+}
