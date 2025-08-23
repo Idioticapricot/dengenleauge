@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Button } from "../../components/styled/GlobalStyles"
@@ -9,6 +9,7 @@ import { Beast, Move } from "../../types/beast"
 import { BattleArena } from "../../components/battle/BattleArena"
 import { MoveSelector } from "../../components/battle/MoveSelector"
 import { BattleLog } from "../../components/battle/BattleLog"
+import { useWallet } from "../../components/wallet/WalletProvider"
 
 const BattleContainer = styled.div`
   display: flex;
@@ -217,9 +218,74 @@ export default function BattlePage() {
   const [battleState, setBattleState] = useState<BattleState | null>(null)
   const [selectedMove, setSelectedMove] = useState<Move | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [player1Team, setPlayer1Team] = useState<Beast[]>([])
+  const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
+  const { wallet } = useWallet()
 
-  const player1Team = mockBeasts.slice(0, 3)
   const player2Team = mockBeasts.slice(3, 6)
+
+  useEffect(() => {
+    const loadUserTeam = async () => {
+      if (!wallet.isConnected || !wallet.address) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        // Get user
+        const userResponse = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: wallet.address,
+            username: `User_${wallet.address.slice(-6)}`
+          })
+        })
+
+        if (userResponse.ok) {
+          const user = await userResponse.json()
+          setUserId(user.id)
+
+          // Fetch user's team
+          const teamResponse = await fetch(`/api/teams?userId=${user.id}`)
+          if (teamResponse.ok) {
+            const team = await teamResponse.json()
+            if (team && (team.beast1 || team.beast2 || team.beast3)) {
+              const teamBeasts = [team.beast1, team.beast2, team.beast3]
+                .filter(Boolean)
+                .map(beast => ({
+                  id: beast.id,
+                  name: beast.name,
+                  tier: beast.tier.toLowerCase(),
+                  level: beast.level,
+                  exp: { current: beast.currentExp, required: beast.requiredExp },
+                  stats: { health: beast.health, stamina: beast.stamina, power: beast.power },
+                  elementType: beast.elementType.toLowerCase(),
+                  rarity: beast.rarity.toLowerCase(),
+                  imageUrl: beast.nftMetadataUri,
+                  moves: beast.moves.map(bm => ({
+                    id: bm.move.id,
+                    name: bm.move.name,
+                    damage: bm.move.damage,
+                    elementType: bm.move.elementType.toLowerCase(),
+                    cooldown: bm.move.cooldown,
+                    description: bm.move.description
+                  }))
+                }))
+              setPlayer1Team(teamBeasts)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading team:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUserTeam()
+  }, [wallet.isConnected, wallet.address])
 
   const selectMode = (mode: 'pvp' | 'pve') => {
     setSelectedMode(mode)
@@ -290,6 +356,45 @@ export default function BattlePage() {
     setSelectedMode(null)
   }
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <BattleContainer>
+          <BattleHeader>
+            <BattleTitle>⚔️ BATTLE ARENA</BattleTitle>
+            <BattleStatus>Loading your team...</BattleStatus>
+          </BattleHeader>
+        </BattleContainer>
+      </AppLayout>
+    )
+  }
+
+  if (!wallet.isConnected) {
+    return (
+      <AppLayout>
+        <BattleContainer>
+          <BattleHeader>
+            <BattleTitle>⚔️ BATTLE ARENA</BattleTitle>
+            <BattleStatus>Connect wallet to battle</BattleStatus>
+          </BattleHeader>
+        </BattleContainer>
+      </AppLayout>
+    )
+  }
+
+  if (player1Team.length === 0) {
+    return (
+      <AppLayout>
+        <BattleContainer>
+          <BattleHeader>
+            <BattleTitle>⚔️ BATTLE ARENA</BattleTitle>
+            <BattleStatus>No team found - Create and save a team first</BattleStatus>
+          </BattleHeader>
+        </BattleContainer>
+      </AppLayout>
+    )
+  }
+
   if (battleMode === 'select') {
     return (
       <AppLayout>
@@ -338,7 +443,22 @@ export default function BattlePage() {
               <TeamGrid>
                 {player1Team.map((beast, index) => (
                   <TeamSlot key={index}>
-                    <BeastIcon>{beast.elementType === 'fire' ? '🔥' : beast.elementType === 'water' ? '🌊' : beast.elementType === 'earth' ? '🌍' : '⚡'}</BeastIcon>
+                    {beast.imageUrl ? (
+                      <img 
+                        src={beast.imageUrl} 
+                        alt={beast.name}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          objectFit: 'cover',
+                          border: '2px solid var(--border-primary)',
+                          marginBottom: '8px',
+                          imageRendering: 'pixelated'
+                        }}
+                      />
+                    ) : (
+                      <BeastIcon>{beast.elementType === 'fire' ? '🔥' : beast.elementType === 'water' ? '🌊' : beast.elementType === 'earth' ? '🌍' : '⚡'}</BeastIcon>
+                    )}
                     <BeastName>{beast.name}</BeastName>
                     <BeastLevel>LVL {beast.level}</BeastLevel>
                   </TeamSlot>

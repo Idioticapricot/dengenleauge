@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useRouter } from "next/navigation"
+import { useWallet } from "../../components/wallet/WalletProvider"
 
 const BackButton = styled(Button)`
   background: var(--brutal-red);
@@ -425,6 +426,9 @@ type Step = 'tier' | 'design' | 'stats' | 'final'
 
 interface BeastData {
   tier: string | null
+  name: string
+  elementType: string | null
+  rarity: string | null
   description: string
   stats: {
     health: number
@@ -435,15 +439,47 @@ interface BeastData {
 
 export default function CreatePage() {
   const router = useRouter()
+  const { wallet } = useWallet()
   const [currentStep, setCurrentStep] = useState<Step>('tier')
   const [beastData, setBeastData] = useState<BeastData>({
     tier: null,
+    name: '',
+    elementType: null,
+    rarity: null,
     description: '',
     stats: { health: 5, stamina: 5, power: 5 }
   })
   const [isLoading, setIsLoading] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [createdBeast, setCreatedBeast] = useState<any>(null)
+
+  // Get or create user when wallet connects
+  useEffect(() => {
+    const initUser = async () => {
+      if (wallet.isConnected && wallet.address) {
+        try {
+          const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              walletAddress: wallet.address,
+              username: `User_${wallet.address.slice(-6)}`
+            })
+          })
+          if (response.ok) {
+            const user = await response.json()
+            setUserId(user.id)
+          }
+        } catch (error) {
+          console.error('Error creating user:', error)
+        }
+      }
+    }
+    initUser()
+  }, [wallet.isConnected, wallet.address])
 
   const handleNext = () => {
     if (currentStep === 'tier' && beastData.tier) {
@@ -473,35 +509,47 @@ export default function CreatePage() {
   }
 
   const handleGenerate = async () => {
+    if (!wallet.isConnected || !userId) {
+      alert('Please connect your wallet first')
+      return
+    }
+
     setIsGenerating(true)
     try {
+      const beastName = beastData.name || `Beast_${Date.now()}`
+      
       const response = await fetch('/api/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          userId,
+          name: beastName,
           description: beastData.description,
           tier: beastData.tier,
+          elementType: beastData.elementType || 'fire',
+          rarity: beastData.rarity || 'common',
           stats: beastData.stats
         })
       })
       
       if (response.ok) {
-        const { imageUrl } = await response.json()
+        const { imageUrl, beast } = await response.json()
         setGeneratedImage(imageUrl)
+        setCreatedBeast(beast)
+      } else {
+        const error = await response.json()
+        console.error('Error creating beast:', error)
+        alert(`Error: ${error.error}`)
       }
     } catch (error) {
-      console.error('Error generating image:', error)
+      console.error('Error creating beast:', error)
+      alert('Failed to create beast. Please try again.')
     } finally {
       setIsGenerating(false)
     }
   }
 
-  const handleCreate = async () => {
-    setIsLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    router.push("/home")
-  }
+
   
   const selectedTierData = tiers.find(t => t.id === beastData.tier)
   const getMaxPoints = () => {
@@ -549,12 +597,55 @@ export default function CreatePage() {
       case 'design':
         return (
           <Card>
-            <SectionTitle>DESCRIBE YOUR BEAST</SectionTitle>
-            <DescriptionInput
-              placeholder="Describe your beast's appearance, personality, and abilities..."
-              value={beastData.description}
-              onChange={(e) => setBeastData({...beastData, description: e.target.value})}
-            />
+            <SectionTitle>DESIGN YOUR BEAST</SectionTitle>
+            <div style={{ marginBottom: '16px' }}>
+              <OverviewLabel>BEAST NAME:</OverviewLabel>
+              <DescriptionInput
+                placeholder="Enter your beast's name..."
+                value={beastData.name}
+                onChange={(e) => setBeastData({...beastData, name: e.target.value})}
+                style={{ minHeight: '60px' }}
+              />
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <OverviewLabel>ELEMENT TYPE:</OverviewLabel>
+              <BeastTypeGrid>
+                {beastTypes.map((type) => (
+                  <BeastTypeCard
+                    key={type.id}
+                    $selected={beastData.elementType === type.id}
+                    onClick={() => setBeastData({...beastData, elementType: type.id})}
+                  >
+                    <BeastIcon>{type.icon}</BeastIcon>
+                    <BeastTypeName>{type.name}</BeastTypeName>
+                    <BeastTypeDescription>{type.description}</BeastTypeDescription>
+                  </BeastTypeCard>
+                ))}
+              </BeastTypeGrid>
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <OverviewLabel>RARITY:</OverviewLabel>
+              <TierSelector>
+                {['common', 'rare', 'legendary'].map((rarity) => (
+                  <TierCard
+                    key={rarity}
+                    $selected={beastData.rarity === rarity}
+                    $color={rarity === 'legendary' ? 'var(--brutal-yellow)' : rarity === 'rare' ? 'var(--brutal-cyan)' : 'var(--brutal-lime)'}
+                    onClick={() => setBeastData({...beastData, rarity})}
+                  >
+                    <TierName>{rarity.toUpperCase()}</TierName>
+                  </TierCard>
+                ))}
+              </TierSelector>
+            </div>
+            <div>
+              <OverviewLabel>DESCRIPTION:</OverviewLabel>
+              <DescriptionInput
+                placeholder="Describe your beast's appearance, personality, and abilities..."
+                value={beastData.description}
+                onChange={(e) => setBeastData({...beastData, description: e.target.value})}
+              />
+            </div>
           </Card>
         )
       
@@ -635,14 +726,24 @@ export default function CreatePage() {
                 </OverviewItem>
               )}
             </OverviewSection>
-            <MintButton
-              $fullWidth
-              disabled={isGenerating}
-              onClick={handleGenerate}
-              style={{marginBottom: '16px', background: 'var(--brutal-cyan)'}}
-            >
-              {isGenerating ? "GENERATING..." : "🎨 GENERATE IMAGE"}
-            </MintButton>
+            {!createdBeast ? (
+              <MintButton
+                $fullWidth
+                disabled={isGenerating}
+                onClick={handleGenerate}
+                style={{marginBottom: '16px', background: 'var(--brutal-cyan)'}}
+              >
+                {isGenerating ? "CREATING BEAST..." : "🐲 CREATE BEAST"}
+              </MintButton>
+            ) : (
+              <MintButton
+                $fullWidth
+                onClick={() => router.push('/team')}
+                style={{marginBottom: '16px', background: 'var(--brutal-yellow)'}}
+              >
+                ✅ BEAST CREATED! GO TO TEAM
+              </MintButton>
+            )}
           </Card>
         )
     }
@@ -672,22 +773,14 @@ export default function CreatePage() {
             $fullWidth
             disabled={
               (currentStep === 'tier' && !beastData.tier) ||
-              (currentStep === 'design' && !beastData.description.trim()) ||
+              (currentStep === 'design' && (!beastData.name.trim() || !beastData.elementType || !beastData.rarity || !beastData.description.trim())) ||
               (currentStep === 'stats' && getRemainingPoints() !== 0)
             }
             onClick={handleNext}
           >
             NEXT
           </MintButton>
-        ) : (
-          <MintButton
-            $fullWidth
-            disabled={isLoading}
-            onClick={handleCreate}
-          >
-            {isLoading ? "CREATING..." : "CREATE BEAST (20 $WAM)"}
-          </MintButton>
-        )}
+        ) : null}
       </CreateContainer>
     </AppLayout>
   )

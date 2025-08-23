@@ -7,6 +7,7 @@ export interface Beast {
   stats: { health: number; stamina: number; power: number }
   elementType: 'fire' | 'water' | 'earth' | 'electric'
   rarity: 'common' | 'rare' | 'legendary'
+  imageUrl?: string
   moves: Move[]
 }
 

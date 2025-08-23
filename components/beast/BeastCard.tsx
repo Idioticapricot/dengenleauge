@@ -90,9 +90,28 @@ const LevelDisplay = styled.div`
   text-transform: uppercase;
 `
 
-const BeastImagePlaceholder = styled.div<{ $elementType: string }>`
+const BeastImageContainer = styled.div`
   width: 100%;
   height: 120px;
+  border: 4px solid var(--border-primary);
+  margin-bottom: 12px;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  overflow: hidden;
+  position: relative;
+`
+
+const BeastImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+`
+
+const BeastImagePlaceholder = styled.div<{ $elementType: string }>`
+  width: 100%;
+  height: 100%;
   background: ${props => {
     switch (props.$elementType) {
       case 'fire': return 'var(--brutal-red)'
@@ -102,15 +121,9 @@ const BeastImagePlaceholder = styled.div<{ $elementType: string }>`
       default: return 'var(--brutal-pink)'
     }
   }};
-  border: 4px solid var(--border-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
-  box-shadow: 2px 2px 0px 0px var(--border-primary);
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
 `
 
 const ImageText = styled.div`
@@ -263,9 +276,24 @@ export function BeastCard({ beast, onLevelUp, onSelect, selected }: BeastCardPro
         {getElementIcon(beast.elementType)}
       </ElementType>
       
-      <BeastImagePlaceholder $elementType={beast.elementType}>
-        <ImageText>BEAST IMAGE</ImageText>
-      </BeastImagePlaceholder>
+      <BeastImageContainer>
+        {beast.imageUrl ? (
+          <BeastImage 
+            src={beast.imageUrl} 
+            alt={beast.name}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+              e.currentTarget.nextElementSibling?.setAttribute('style', 'display: flex')
+            }}
+          />
+        ) : null}
+        <BeastImagePlaceholder 
+          $elementType={beast.elementType}
+          style={{ display: beast.imageUrl ? 'none' : 'flex' }}
+        >
+          <ImageText>BEAST IMAGE</ImageText>
+        </BeastImagePlaceholder>
+      </BeastImageContainer>
       
       <BeastHeader>
         <BeastInfo>

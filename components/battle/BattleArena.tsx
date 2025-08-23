@@ -50,9 +50,43 @@ const BeastBattleCard = styled.div<{ $isPlayer?: boolean; $isActive?: boolean }>
   `}
 `
 
+const BeastImageContainer = styled.div`
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border: 3px solid var(--border-primary);
+  overflow: hidden;
+  position: relative;
+`
+
+const BeastImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+`
+
 const BeastIcon = styled.div`
   font-size: 64px;
   margin-bottom: 16px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  border: 3px solid var(--border-primary);
+  background: ${props => {
+    switch (props.elementType) {
+      case 'fire': return 'var(--brutal-red)'
+      case 'water': return 'var(--brutal-cyan)'
+      case 'earth': return 'var(--brutal-lime)'
+      case 'electric': return 'var(--brutal-yellow)'
+      default: return 'var(--brutal-pink)'
+    }
+  }};
 `
 
 const BeastName = styled.h3`
@@ -191,7 +225,28 @@ export function BattleArena({ playerBeast, opponentBeast, isPlayerTurn }: Battle
       
       <BeastBattleGrid>
         <BeastBattleCard $isPlayer={true} $isActive={isPlayerTurn}>
-          <BeastIcon>{getElementIcon(playerBeast.elementType)}</BeastIcon>
+          {playerBeast.imageUrl ? (
+            <BeastImageContainer>
+              <BeastImage 
+                src={playerBeast.imageUrl} 
+                alt={playerBeast.name}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.nextElementSibling?.setAttribute('style', 'display: flex')
+                }}
+              />
+              <BeastIcon 
+                elementType={playerBeast.elementType}
+                style={{ display: 'none' }}
+              >
+                {getElementIcon(playerBeast.elementType)}
+              </BeastIcon>
+            </BeastImageContainer>
+          ) : (
+            <BeastIcon elementType={playerBeast.elementType}>
+              {getElementIcon(playerBeast.elementType)}
+            </BeastIcon>
+          )}
           <BeastName>{playerBeast.name}</BeastName>
           <BeastLevel>LV {playerBeast.level}</BeastLevel>
           
@@ -208,7 +263,28 @@ export function BattleArena({ playerBeast, opponentBeast, isPlayerTurn }: Battle
         </BeastBattleCard>
 
         <BeastBattleCard $isPlayer={false} $isActive={!isPlayerTurn}>
-          <BeastIcon>{getElementIcon(opponentBeast.elementType)}</BeastIcon>
+          {opponentBeast.imageUrl ? (
+            <BeastImageContainer>
+              <BeastImage 
+                src={opponentBeast.imageUrl} 
+                alt={opponentBeast.name}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.nextElementSibling?.setAttribute('style', 'display: flex')
+                }}
+              />
+              <BeastIcon 
+                elementType={opponentBeast.elementType}
+                style={{ display: 'none' }}
+              >
+                {getElementIcon(opponentBeast.elementType)}
+              </BeastIcon>
+            </BeastImageContainer>
+          ) : (
+            <BeastIcon elementType={opponentBeast.elementType}>
+              {getElementIcon(opponentBeast.elementType)}
+            </BeastIcon>
+          )}
           <BeastName>{opponentBeast.name}</BeastName>
           <BeastLevel>LV {opponentBeast.level}</BeastLevel>
           
