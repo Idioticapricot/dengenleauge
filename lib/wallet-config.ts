@@ -22,7 +22,12 @@ export const config = createConfig({
           };
         }
         
-        throw new Error('No wallet provider found. Please install Core Wallet or MetaMask.');
+        // Return mock provider for development
+        return {
+          id: 'MockWallet',
+          name: 'Mock Wallet',
+          provider: null,
+        };
       },
     }),
   ],
