@@ -238,8 +238,6 @@ const FilterButton = styled.button<{ $active?: boolean }>`
 `
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState("Global")
-  const [timeFilter, setTimeFilter] = useState("All Time")
 
   const leaderboardData = [
     {
@@ -326,17 +324,7 @@ export default function LeaderboardPage() {
 
   return (
     <AppLayout>
-      <TabContainer>
-        <Tab $active={activeTab === "Global"} onClick={() => setActiveTab("Global")}>
-          Global
-        </Tab>
-        <Tab $active={activeTab === "Friends"} onClick={() => setActiveTab("Friends")}>
-          Friends
-        </Tab>
-        <Tab $active={activeTab === "Tournament"} onClick={() => setActiveTab("Tournament")}>
-          Tournament
-        </Tab>
-      </TabContainer>
+
 
       <LeaderboardCard>
         <LeaderboardHeader>
@@ -344,13 +332,7 @@ export default function LeaderboardPage() {
           <HeaderSubtitle>Top battle beast trainers</HeaderSubtitle>
         </LeaderboardHeader>
 
-        <FilterContainer>
-          {["All Time", "This Week", "This Month", "Today"].map((filter) => (
-            <FilterButton key={filter} $active={timeFilter === filter} onClick={() => setTimeFilter(filter)}>
-              {filter}
-            </FilterButton>
-          ))}
-        </FilterContainer>
+
 
         <LeaderboardList>
           {leaderboardData.map((player) => (

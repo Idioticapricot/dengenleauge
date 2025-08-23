@@ -1,4 +1,5 @@
 import { Beast } from '../types/beast'
+import { getStartingMoves } from './mockMoves'
 
 export const mockBeasts: Beast[] = [
   {
@@ -9,7 +10,8 @@ export const mockBeasts: Beast[] = [
     exp: { current: 850, required: 1000 },
     stats: { health: 45, stamina: 38, power: 42 },
     elementType: "fire",
-    rarity: "common"
+    rarity: "common",
+    moves: getStartingMoves("fire")
   },
   {
     id: "2", 
@@ -19,7 +21,8 @@ export const mockBeasts: Beast[] = [
     exp: { current: 320, required: 500 },
     stats: { health: 52, stamina: 45, power: 38 },
     elementType: "water",
-    rarity: "rare"
+    rarity: "rare", 
+    moves: getStartingMoves("water")
   },
   {
     id: "3",
@@ -29,7 +32,8 @@ export const mockBeasts: Beast[] = [
     exp: { current: 1200, required: 1200 },
     stats: { health: 68, stamina: 55, power: 72 },
     elementType: "electric",
-    rarity: "legendary"
+    rarity: "legendary",
+    moves: getStartingMoves("electric")
   },
   {
     id: "4",
@@ -39,7 +43,8 @@ export const mockBeasts: Beast[] = [
     exp: { current: 650, required: 750 },
     stats: { health: 58, stamina: 42, power: 48 },
     elementType: "earth",
-    rarity: "common"
+    rarity: "common",
+    moves: getStartingMoves("earth")
   },
   {
     id: "5",
@@ -49,7 +54,8 @@ export const mockBeasts: Beast[] = [
     exp: { current: 180, required: 300 },
     stats: { health: 35, stamina: 42, power: 38 },
     elementType: "water",
-    rarity: "common"
+    rarity: "common",
+    moves: getStartingMoves("water")
   },
   {
     id: "6", 
@@ -59,6 +65,7 @@ export const mockBeasts: Beast[] = [
     exp: { current: 2500, required: 2500 },
     stats: { health: 85, stamina: 70, power: 95 },
     elementType: "fire",
-    rarity: "legendary"
+    rarity: "legendary",
+    moves: getStartingMoves("fire")
   }
 ]

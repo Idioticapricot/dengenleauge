@@ -6,8 +6,10 @@ import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
 import { LevelUpModal } from "../../components/beast/LevelUpModal"
+import { LearnMoveModal } from "../../components/beast/LearnMoveModal"
 import { mockBeasts } from "../../data/mockBeasts"
 import { Beast } from "../../types/beast"
+import { getAvailableMoves } from "../../data/mockMoves"
 
 const TeamContainer = styled.div`
   display: flex;
@@ -211,6 +213,7 @@ export default function TeamPage() {
   const [currentTeam, setCurrentTeam] = useState<(Beast | null)[]>([null, null, null])
   const [selectedBeasts, setSelectedBeasts] = useState<string[]>([])
   const [levelUpBeast, setLevelUpBeast] = useState<string | null>(null)
+  const [learnMoveBeast, setLearnMoveBeast] = useState<string | null>(null)
 
   const handleBeastSelect = (beastId: string) => {
     const beast = mockBeasts.find(b => b.id === beastId)
@@ -233,7 +236,25 @@ export default function TeamPage() {
     // TODO: Your backend friend will implement this
     // await levelUpBeast(beastId, newStats)
     console.log(`Leveling up beast ${beastId} with stats:`, newStats)
+    
+    const beast = mockBeasts.find(b => b.id === beastId)
+    // Check if beast should learn a new move (every 5 levels)
+    if (beast && (beast.level + 1) % 5 === 0) {
+      setLearnMoveBeast(beastId)
+    }
+    
     setLevelUpBeast(null)
+  }
+
+  const handleLearnMove = async (beastId: string, moveId: string, slotIndex: number) => {
+    // TODO: Your backend friend will implement this
+    // await learnMove(beastId, moveId, slotIndex)
+    console.log(`Beast ${beastId} learning move ${moveId} in slot ${slotIndex}`)
+    setLearnMoveBeast(null)
+  }
+
+  const handleCloseLearnMove = () => {
+    setLearnMoveBeast(null)
   }
 
   const handleCloseLevelUp = () => {
@@ -315,6 +336,21 @@ export default function TeamPage() {
           currentStats={mockBeasts.find(b => b.id === levelUpBeast)?.stats || { health: 0, stamina: 0, power: 0 }}
           onConfirm={handleConfirmLevelUp}
           onClose={handleCloseLevelUp}
+        />
+      )}
+
+      {learnMoveBeast && (
+        <LearnMoveModal
+          beastId={learnMoveBeast}
+          beastName={mockBeasts.find(b => b.id === learnMoveBeast)?.name || "Unknown Beast"}
+          currentLevel={mockBeasts.find(b => b.id === learnMoveBeast)?.level || 1}
+          currentMoves={mockBeasts.find(b => b.id === learnMoveBeast)?.moves || []}
+          availableMoves={getAvailableMoves(
+            mockBeasts.find(b => b.id === learnMoveBeast)?.elementType || 'fire',
+            mockBeasts.find(b => b.id === learnMoveBeast)?.level || 1
+          )}
+          onConfirm={handleLearnMove}
+          onClose={handleCloseLearnMove}
         />
       )}
     </AppLayout>

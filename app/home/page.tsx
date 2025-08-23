@@ -651,6 +651,14 @@ export default function HomePage() {
         </BattleSection>
         
         <QuickActions>
+          <Link href="/battle">
+            <ActionCard>
+              <ActionIcon>⚔️</ActionIcon>
+              <ActionTitle>START BATTLE</ActionTitle>
+              <ActionDesc>Fight other trainers</ActionDesc>
+            </ActionCard>
+          </Link>
+          
           <Link href="/team">
             <ActionCard>
               <ActionIcon>👥</ActionIcon>
