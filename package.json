@@ -12,7 +12,10 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "test:db": "node tests/database.test.js",
+    "test:api": "node tests/api.test.js",
+    "test:all": "npm run test:db && npm run test:api"
   },
   "dependencies": {
     "@fal-ai/client": "^1.6.2",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card } from "../../components/styled/GlobalStyles"
@@ -238,8 +238,28 @@ const FilterButton = styled.button<{ $active?: boolean }>`
 `
 
 export default function LeaderboardPage() {
+  const [leaderboardData, setLeaderboardData] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const leaderboardData = [
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const response = await fetch('/api/leaderboard')
+        if (response.ok) {
+          const data = await response.json()
+          setLeaderboardData(data)
+        }
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLeaderboard()
+  }, [])
+
+  const mockData = [
     {
       rank: 1,
       name: "BeastMaster",
@@ -322,6 +342,8 @@ export default function LeaderboardPage() {
     },
   ]
 
+  const displayData = leaderboardData.length > 0 ? leaderboardData : mockData
+
   return (
     <AppLayout>
 
@@ -335,31 +357,32 @@ export default function LeaderboardPage() {
 
 
         <LeaderboardList>
-          {leaderboardData.map((player) => (
-            <LeaderboardItem key={player.rank} $rank={player.rank}>
-              <RankBadge $rank={player.rank}>
-                {player.rank <= 3 ? (player.rank === 1 ? "🥇" : player.rank === 2 ? "🥈" : "🥉") : player.rank}
+          {loading ? (
+            <div style={{ padding: '20px', textAlign: 'center' }}>Loading leaderboard...</div>
+          ) : displayData.map((player: any) => (
+            <LeaderboardItem key={player.rank || player.currentRank} $rank={player.rank || player.currentRank}>
+              <RankBadge $rank={player.rank || player.currentRank}>
+                {(player.rank || player.currentRank) <= 3 ? ((player.rank || player.currentRank) === 1 ? "🥇" : (player.rank || player.currentRank) === 2 ? "🥈" : "🥉") : (player.rank || player.currentRank)}
               </RankBadge>
 
-              <PlayerAvatar $variant={player.variant}>{player.avatar}</PlayerAvatar>
+              <PlayerAvatar $variant={player.variant || 'blue'}>{player.avatar || '🐲'}</PlayerAvatar>
 
               <PlayerInfo>
                 <PlayerDetails>
-                  <PlayerName>{player.name}</PlayerName>
+                  <PlayerName>{player.name || player.user?.username || `User_${player.user?.walletAddress?.slice(-6) || 'Unknown'}`}</PlayerName>
                   <PlayerStats>
-                    <StatItem>⚔️ {player.matches} battles</StatItem>
-                    <StatItem>📊 {player.winRate}% win rate</StatItem>
-                    <StatItem>💰 {player.totalEarnings} $WAM</StatItem>
+                    <StatItem>⚔️ {player.matches || player.user?.totalBattles || 0} battles</StatItem>
+                    <StatItem>📊 {player.winRate || (player.user?.totalBattles > 0 ? ((player.user.wins / player.user.totalBattles) * 100).toFixed(1) : 0)}% win rate</StatItem>
+                    <StatItem>💰 {player.totalEarnings || player.user?.totalEarnings || 0} $WAM</StatItem>
                   </PlayerStats>
                 </PlayerDetails>
               </PlayerInfo>
 
               <PlayerScore>
-                <Score $positive={player.score > 0}>
-                  {player.score > 0 ? "+" : ""}
-                  {player.score.toFixed(2)}%
+                <Score $positive={(player.score || player.rankPoints || 1000) >= 1000}>
+                  {player.score ? `${player.score > 0 ? '+' : ''}${player.score.toFixed(2)}%` : `${player.rankPoints || 1000} PTS`}
                 </Score>
-                <ScoreLabel>Total Return</ScoreLabel>
+                <ScoreLabel>{player.score ? 'Total Return' : 'Rank Points'}</ScoreLabel>
               </PlayerScore>
             </LeaderboardItem>
           ))}

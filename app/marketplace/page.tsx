@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
 import { SellModal } from "../../components/marketplace/SellModal"
-import { mockBeasts } from "../../data/mockBeasts"
+// Removed mock data import - using API
 
 const MarketplaceContainer = styled.div`
   display: flex;
@@ -195,10 +195,29 @@ const BuyButton = styled(Button)`
 export default function MarketplacePage() {
   const [filter, setFilter] = useState("all")
   const [showSellModal, setShowSellModal] = useState(false)
+  const [listings, setListings] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredBeasts = filter === "all" 
-    ? mockBeasts 
-    : mockBeasts.filter(beast => beast.elementType === filter)
+  useEffect(() => {
+    const fetchMarketplaceListings = async () => {
+      try {
+        const params = new URLSearchParams()
+        if (filter !== 'all') params.append('element', filter)
+        
+        const response = await fetch(`/api/marketplace?${params}`)
+        if (response.ok) {
+          const data = await response.json()
+          setListings(data)
+        }
+      } catch (error) {
+        console.error('Error fetching marketplace:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMarketplaceListings()
+  }, [filter])
 
   const filters = [
     { id: "all", label: "All" },
@@ -235,18 +254,24 @@ export default function MarketplacePage() {
           </FilterContainer>
 
           <BeastGrid>
-            {filteredBeasts.map((beast) => (
-              <MarketplaceBeastCard key={beast.id}>
-                <BeastCardComponent
-                  beast={beast}
-                  onSelect={() => console.log('Beast selected:', beast.name)}
-                />
-                <BeastPrice>{(beast.level * 10 + 50)} $WAM</BeastPrice>
-                <BuyButton $fullWidth>
-                  BUY BEAST
-                </BuyButton>
-              </MarketplaceBeastCard>
-            ))}
+            {loading ? (
+              <div>Loading marketplace...</div>
+            ) : listings.length === 0 ? (
+              <div>No beasts for sale</div>
+            ) : (
+              listings.map((listing: any) => (
+                <MarketplaceBeastCard key={listing.id}>
+                  <BeastCardComponent
+                    beast={listing.beast}
+                    onSelect={() => console.log('Beast selected:', listing.beast.name)}
+                  />
+                  <BeastPrice>{listing.price} $WAM</BeastPrice>
+                  <BuyButton $fullWidth>
+                    BUY BEAST
+                  </BuyButton>
+                </MarketplaceBeastCard>
+              ))
+            )}
           </BeastGrid>
         </MarketplaceContainer>
       </AppLayout>
