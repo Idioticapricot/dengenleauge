@@ -13,9 +13,13 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:battle": "jest tests/battle-*.test.js",
     "test:db": "node tests/database.test.js",
     "test:api": "node tests/api.test.js",
-    "test:all": "npm run test:db && npm run test:api"
+    "test:all": "npm run test:db && npm run test:api && npm run test:battle"
   },
   "dependencies": {
     "@fal-ai/client": "^1.6.2",
@@ -84,9 +88,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "jest": "^30.0.5",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tsx": "^4.20.4",
