@@ -1,0 +1,111 @@
+"use client"
+
+import styled from "styled-components"
+
+const TokenCardContainer = styled.div<{ $selected?: boolean }>`
+  background: ${(props) => (props.$selected ? "var(--brutal-yellow)" : "var(--light-bg)")};
+  border: 4px solid var(--border-primary);
+  border-radius: 0;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: ${(props) => (props.$selected ? "6px 6px 0px 0px var(--border-primary)" : "4px 4px 0px 0px var(--border-primary)")};
+  font-family: var(--font-mono);
+  
+  &:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    background: var(--brutal-cyan);
+  }
+`
+
+const TokenLogo = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  background: var(--brutal-pink);
+  border: 3px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 12px;
+  font-weight: 900;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+`
+
+const TokenSymbol = styled.h3`
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`
+
+const TokenPrice = styled.p`
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  text-align: center;
+  font-weight: 900;
+`
+
+const TokenChange = styled.p<{ $positive: boolean }>`
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  background: ${(props) => (props.$positive ? "var(--brutal-lime)" : "var(--brutal-red)")};
+  text-align: center;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border: 2px solid var(--border-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+`
+
+const TokenPoints = styled.p`
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-primary);
+  text-align: center;
+  background: var(--brutal-violet);
+  padding: 6px 12px;
+  border: 2px solid var(--border-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+`
+
+interface TokenCardProps {
+  symbol: string
+  logo: string
+  price: number
+  change: number
+  points: number
+  selected?: boolean
+  onClick?: () => void
+}
+
+export function TokenCard({ symbol, logo, price, change, points, selected, onClick }: TokenCardProps) {
+  return (
+    <TokenCardContainer $selected={selected} onClick={onClick}>
+      <TokenLogo>{logo}</TokenLogo>
+      <TokenSymbol>{symbol}</TokenSymbol>
+      <TokenPrice>${price.toFixed(4)}</TokenPrice>
+      <TokenChange $positive={change >= 0}>
+        {change >= 0 ? "+" : ""}
+        {change.toFixed(2)}%
+      </TokenChange>
+      <TokenPoints>{points} pts</TokenPoints>
+    </TokenCardContainer>
+  )
+}
