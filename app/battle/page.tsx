@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Button } from "../../components/styled/GlobalStyles"
-import { mockBeasts } from "../../data/mockBeasts"
+
 import { Beast, Move } from "../../types/beast"
 import { BattleArena } from "../../components/battle/BattleArena"
 import { MoveSelector } from "../../components/battle/MoveSelector"
@@ -223,7 +223,7 @@ export default function BattlePage() {
   const [userId, setUserId] = useState<string | null>(null)
   const { wallet } = useWallet()
 
-  const player2Team = mockBeasts.slice(3, 6)
+  const [player2Team, setPlayer2Team] = useState<Beast[]>([])
 
   useEffect(() => {
     const loadUserTeam = async () => {
@@ -276,6 +276,78 @@ export default function BattlePage() {
               setPlayer1Team(teamBeasts)
             }
           }
+
+          // Fetch random opponent beasts for PvE
+          const opponentResponse = await fetch(`/api/beasts?userId=${user.id}`)
+          if (opponentResponse.ok) {
+            const allBeasts = await opponentResponse.json()
+            if (allBeasts.length >= 3) {
+              // Use different beasts as opponents
+              const shuffled = allBeasts.sort(() => 0.5 - Math.random())
+              setPlayer2Team(shuffled.slice(0, 3))
+            } else {
+              // Fallback: create basic opponent beasts
+              setPlayer2Team([
+                {
+                  id: 'opp1',
+                  name: 'Wild Fire Beast',
+                  tier: 'basic',
+                  level: 8,
+                  exp: { current: 400, required: 500 },
+                  stats: { health: 60, stamina: 50, power: 55 },
+                  elementType: 'fire',
+                  rarity: 'common',
+                  imageUrl: null,
+                  moves: [{
+                    id: 'fire_basic',
+                    name: 'Flame Burst',
+                    damage: 45,
+                    elementType: 'fire',
+                    cooldown: 2,
+                    description: 'Basic fire attack'
+                  }]
+                },
+                {
+                  id: 'opp2',
+                  name: 'Wild Water Beast',
+                  tier: 'basic',
+                  level: 7,
+                  exp: { current: 300, required: 400 },
+                  stats: { health: 65, stamina: 45, power: 50 },
+                  elementType: 'water',
+                  rarity: 'common',
+                  imageUrl: null,
+                  moves: [{
+                    id: 'water_basic',
+                    name: 'Water Pulse',
+                    damage: 40,
+                    elementType: 'water',
+                    cooldown: 2,
+                    description: 'Basic water attack'
+                  }]
+                },
+                {
+                  id: 'opp3',
+                  name: 'Wild Earth Beast',
+                  tier: 'basic',
+                  level: 9,
+                  exp: { current: 500, required: 600 },
+                  stats: { health: 70, stamina: 40, power: 60 },
+                  elementType: 'earth',
+                  rarity: 'common',
+                  imageUrl: null,
+                  moves: [{
+                    id: 'earth_basic',
+                    name: 'Rock Throw',
+                    damage: 50,
+                    elementType: 'earth',
+                    cooldown: 2,
+                    description: 'Basic earth attack'
+                  }]
+                }
+              ])
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading team:', error)
@@ -295,7 +367,7 @@ export default function BattlePage() {
   const startBattle = () => {
     if (!selectedMode) return
     
-    const opponentName = selectedMode === 'pve' ? 'Wild ' + player2Team[0].name : player2Team[0].name
+    const opponentName = selectedMode === 'pve' ? 'Wild ' + player2Team[0]?.name : player2Team[0]?.name
     const newBattle: BattleState = {
       id: 'battle_' + Date.now(),
       player1Team,

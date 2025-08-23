@@ -281,7 +281,27 @@ export default function MarketplacePage() {
       </AppLayout>
       
       {showSellModal && (
-        <SellModal onClose={() => setShowSellModal(false)} />
+        <SellModal 
+          onClose={() => setShowSellModal(false)} 
+          onSellComplete={() => {
+            // Refresh marketplace listings
+            const fetchMarketplaceListings = async () => {
+              try {
+                const params = new URLSearchParams()
+                if (filter !== 'all') params.append('element', filter)
+                
+                const response = await fetch(`/api/marketplace?${params}`)
+                if (response.ok) {
+                  const data = await response.json()
+                  setListings(data)
+                }
+              } catch (error) {
+                console.error('Error fetching marketplace:', error)
+              }
+            }
+            fetchMarketplaceListings()
+          }}
+        />
       )}
     </>
   )

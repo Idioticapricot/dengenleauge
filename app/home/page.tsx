@@ -8,7 +8,7 @@ import { useWallet } from "../../components/wallet/WalletProvider"
 import { TokenGrid } from "../../components/token/TokenGrid"
 import { ConnectWalletButton } from "../../components/wallet/ConnectWalletButton"
 import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
-import { mockBeasts } from "../../data/mockBeasts"
+
 import Link from "next/link"
 
 const TradingContainer = styled.div`
@@ -566,16 +566,51 @@ const ConnectWalletSubtitle = styled.p`
   margin-right: auto;
 `
 
-const mockCurrentTeam = [
-  mockBeasts[0], // Flame Warrior
-  mockBeasts[1], // Aqua Guardian  
-  null
-]
+
 
 export default function HomePage() {
   const [showAnnouncement, setShowAnnouncement] = useState(true)
   const [timeLeft, setTimeLeft] = useState("1m")
+  const [currentTeam, setCurrentTeam] = useState<(any | null)[]>([null, null, null])
+  const [loading, setLoading] = useState(true)
   const { wallet } = useWallet()
+
+  useEffect(() => {
+    const fetchUserTeam = async () => {
+      if (!wallet.isConnected || !wallet.address) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const userResponse = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: wallet.address,
+            username: `User_${wallet.address.slice(-6)}`
+          })
+        })
+
+        if (userResponse.ok) {
+          const user = await userResponse.json()
+          const teamResponse = await fetch(`/api/teams?userId=${user.id}`)
+          if (teamResponse.ok) {
+            const team = await teamResponse.json()
+            if (team && (team.beast1 || team.beast2 || team.beast3)) {
+              setCurrentTeam([team.beast1, team.beast2, team.beast3])
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching team:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserTeam()
+  }, [wallet.isConnected, wallet.address])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -623,11 +658,28 @@ export default function HomePage() {
           <CurrentTeamDisplay>
             <TeamTitle>MY TEAM</TeamTitle>
             <TeamGrid>
-              {mockCurrentTeam.map((beast, index) => (
+              {loading ? (
+                <TeamSlot><EmptyIcon>⏳</EmptyIcon><EmptyText>LOADING</EmptyText></TeamSlot>
+              ) : currentTeam.map((beast, index) => (
                 <TeamSlot key={index}>
                   {beast ? (
                     <>
-                      <BeastIcon>{beast.elementType === 'fire' ? '🔥' : beast.elementType === 'water' ? '🌊' : beast.elementType === 'earth' ? '🌍' : '⚡'}</BeastIcon>
+                      {beast.nftMetadataUri ? (
+                        <img 
+                          src={beast.nftMetadataUri} 
+                          alt={beast.name}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            objectFit: 'cover',
+                            border: '2px solid var(--border-primary)',
+                            marginBottom: '8px',
+                            imageRendering: 'pixelated'
+                          }}
+                        />
+                      ) : (
+                        <BeastIcon>{beast.elementType === 'FIRE' ? '🔥' : beast.elementType === 'WATER' ? '🌊' : beast.elementType === 'EARTH' ? '🌍' : '⚡'}</BeastIcon>
+                      )}
                       <BeastName>{beast.name}</BeastName>
                       <BeastLevel>LVL {beast.level}</BeastLevel>
                     </>
@@ -643,7 +695,7 @@ export default function HomePage() {
             
             <BattleButton 
               $fullWidth 
-              disabled={mockCurrentTeam.filter(Boolean).length !== 3}
+              disabled={loading || currentTeam.filter(Boolean).length !== 3}
             >
               ⚔️ BATTLE (20 $WAM)
             </BattleButton>
