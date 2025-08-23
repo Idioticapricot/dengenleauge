@@ -3,7 +3,7 @@
 import styled from "styled-components"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Home, Users, Calendar, Trophy, User } from "lucide-react"
+import { Users, Calendar, Trophy, User, Swords } from "lucide-react"
 
 const NavContainer = styled.nav`
   position: fixed;
@@ -27,27 +27,42 @@ const NavList = styled.div`
   align-items: center;
 `
 
-const NavItem = styled(Link)<{ $active: boolean }>`
+const NavItem = styled(Link)<{ $active: boolean; $isBattle?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px 12px;
+  padding: ${(props) => (props.$isBattle ? "12px 16px" : "8px 12px")};
   border-radius: 0;
   text-decoration: none;
   color: var(--text-primary);
-  background: ${(props) => (props.$active ? "var(--brutal-yellow)" : "transparent")};
-  border: ${(props) => (props.$active ? "3px solid var(--border-primary)" : "3px solid transparent")};
-  box-shadow: ${(props) => (props.$active ? "2px 2px 0px 0px var(--border-primary)" : "none")};
+  background: ${(props) => {
+    if (props.$isBattle && props.$active) return "var(--brutal-red)"
+    if (props.$isBattle) return "var(--brutal-orange)"
+    if (props.$active) return "var(--brutal-yellow)"
+    return "transparent"
+  }};
+  border: ${(props) => {
+    if (props.$isBattle) return "4px solid var(--border-primary)"
+    if (props.$active) return "3px solid var(--border-primary)"
+    return "3px solid transparent"
+  }};
+  box-shadow: ${(props) => {
+    if (props.$isBattle && props.$active) return "4px 4px 0px 0px var(--border-primary)"
+    if (props.$isBattle) return "3px 3px 0px 0px var(--border-primary)"
+    if (props.$active) return "2px 2px 0px 0px var(--border-primary)"
+    return "none"
+  }};
   transition: all 0.1s ease;
   font-weight: 900;
   text-transform: uppercase;
+  transform: ${(props) => (props.$isBattle ? "scale(1.1)" : "scale(1)")};
   
   &:hover {
-    background: var(--brutal-lime);
-    border: 3px solid var(--border-primary);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-    transform: translate(1px, 1px);
+    background: ${(props) => (props.$isBattle ? "var(--brutal-red)" : "var(--brutal-lime)")};
+    border: ${(props) => (props.$isBattle ? "4px" : "3px")} solid var(--border-primary);
+    box-shadow: ${(props) => (props.$isBattle ? "3px 3px" : "2px 2px")} 0px 0px var(--border-primary);
+    transform: ${(props) => (props.$isBattle ? "scale(1.1) translate(1px, 1px)" : "translate(1px, 1px)")};
   }
 `
 
@@ -67,9 +82,9 @@ const NavLabel = styled.span`
 `
 
 const navItems = [
-  { href: "/home", icon: Home, label: "Home" },
   { href: "/team", icon: Users, label: "Team" },
   { href: "/create", icon: Calendar, label: "Create" },
+  { href: "/home", icon: Swords, label: "Battle", isBattle: true },
   { href: "/leaderboard", icon: Trophy, label: "Ranks" },
   { href: "/profile", icon: User, label: "Profile" },
 ]
@@ -80,10 +95,10 @@ export function BottomNavigation() {
   return (
     <NavContainer>
       <NavList>
-        {navItems.map(({ href, icon: Icon, label }) => (
-          <NavItem key={href} href={href} $active={pathname === href}>
+        {navItems.map(({ href, icon: Icon, label, isBattle }) => (
+          <NavItem key={href} href={href} $active={pathname === href} $isBattle={isBattle}>
             <NavIcon>
-              <Icon size={20} />
+              <Icon size={isBattle ? 24 : 20} />
             </NavIcon>
             <NavLabel>{label}</NavLabel>
           </NavItem>
