@@ -372,77 +372,12 @@ const StatusDot = styled.div<{ $status: "live" | "ended" | "upcoming" }>`
   `}
 `
 
-const ReferralSection = styled.div`
-  margin-top: 24px;
-  padding: 20px;
-  background: rgba(30, 41, 59, 0.8);
-  border-radius: 16px;
-  border: 1px solid rgba(51, 65, 85, 0.5);
-`
 
-const ReferralTitle = styled.h3`
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-  font-family: var(--font-orbitron);
-  margin: 0 0 16px 0;
-`
-
-const ReferralCode = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(51, 65, 85, 0.5);
-  border-radius: 8px;
-  margin-bottom: 16px;
-`
-
-const CodeText = styled.span`
-  font-family: monospace;
-  color: var(--primary-green);
-  font-weight: 600;
-`
-
-const ShareButton = styled(Button)`
-  font-size: 14px;
-  padding: 8px 16px;
-`
-
-const ReferralStats = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 16px;
-`
-
-const StatCard = styled.div`
-  text-align: center;
-  padding: 16px;
-  background: rgba(51, 65, 85, 0.3);
-  border-radius: 12px;
-`
-
-const StatValue = styled.div`
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--primary-green);
-  font-family: var(--font-orbitron);
-  margin-bottom: 4px;
-`
-
-const StatLabel = styled.div`
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-family: var(--font-exo2);
-`
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Live")
   const [balance] = useState(0.0)
-  const [referralCode] = useState("CFL2025XYZ")
-  const [referralStats] = useState({ referred: 12, earned: 2.45 })
+
 
   const handleDeposit = () => {
     console.log("Deposit clicked")
@@ -464,14 +399,7 @@ export default function ProfilePage() {
     // TODO: Show toast notification
   }
 
-  const handleShareReferral = () => {
-    const shareText = `Join CFL with my referral code: ${referralCode}`
-    if (navigator.share) {
-      navigator.share({ text: shareText })
-    } else {
-      navigator.clipboard.writeText(shareText)
-    }
-  }
+
 
   return (
     <AppLayout>
@@ -559,25 +487,7 @@ export default function ProfilePage() {
         </EmptyState>
       )}
 
-      <ReferralSection>
-        <ReferralTitle>🎁 Referral Program</ReferralTitle>
-        <ReferralCode>
-          <CodeText>{referralCode}</CodeText>
-          <ShareButton $variant="outline" $size="sm" onClick={handleShareReferral}>
-            Share
-          </ShareButton>
-        </ReferralCode>
-        <ReferralStats>
-          <StatCard>
-            <StatValue>{referralStats.referred}</StatValue>
-            <StatLabel>Friends Referred</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>{referralStats.earned}</StatValue>
-            <StatLabel>$WAM Earned</StatLabel>
-          </StatCard>
-        </ReferralStats>
-      </ReferralSection>
+
     </AppLayout>
   )
 }

@@ -67,8 +67,8 @@ const NavLabel = styled.span`
 `
 
 const navItems = [
-  { href: "/home", icon: Home, label: "Battle" },
-  { href: "/marketplace", icon: Users, label: "Market" },
+  { href: "/home", icon: Home, label: "Home" },
+  { href: "/team", icon: Users, label: "Team" },
   { href: "/create", icon: Calendar, label: "Create" },
   { href: "/leaderboard", icon: Trophy, label: "Ranks" },
   { href: "/profile", icon: User, label: "Profile" },

@@ -62,14 +62,191 @@ const CloseButton = styled.button`
   }
 `
 
-const SquadDisplay = styled.div`
-  background: var(--light-bg);
-  border: 4px solid var(--border-primary);
+const BattleSection = styled.div`
+  background: var(--brutal-red);
+  border: 6px solid var(--border-primary);
   border-radius: 0;
-  padding: 24px;
+  padding: 32px;
   position: relative;
   overflow: visible;
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
+  font-family: var(--font-mono);
+  margin-bottom: 32px;
+`
+
+const BattleHeader = styled.div`
+  text-align: center;
+  margin-bottom: 24px;
+`
+
+const BattleTitle = styled.h1`
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-shadow: 3px 3px 0px var(--border-primary);
+`
+
+const BattleSubtitle = styled.p`
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+`
+
+const CurrentTeamDisplay = styled.div`
+  background: var(--light-bg);
+  border: 4px solid var(--border-primary);
+  padding: 24px;
+  box-shadow: 4px 4px 0px 0px var(--border-primary);
+`
+
+const TeamTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: var(--brutal-cyan);
+  padding: 8px 16px;
+  border: 3px solid var(--border-primary);
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+`
+
+const TeamGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+`
+
+const TeamSlot = styled.div`
+  background: var(--brutal-lime);
+  border: 4px solid var(--border-primary);
+  padding: 20px;
+  text-align: center;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+`
+
+const BeastIcon = styled.div`
+  font-size: 32px;
+  margin-bottom: 8px;
+`
+
+const BeastName = styled.div`
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+`
+
+const BeastLevel = styled.div`
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  background: var(--brutal-pink);
+  padding: 2px 6px;
+  border: 2px solid var(--border-primary);
+`
+
+const EmptyIcon = styled.div`
+  font-size: 32px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+`
+
+const EmptyText = styled.div`
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  opacity: 0.5;
+`
+
+const BattleButton = styled(Button)`
+  background: var(--brutal-orange);
+  font-size: 24px;
+  font-weight: 900;
+  padding: 20px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  border: 4px solid var(--border-primary);
   box-shadow: 6px 6px 0px 0px var(--border-primary);
+  
+  &:hover {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0px 0px var(--border-primary);
+    background: var(--brutal-yellow);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 6px 6px 0px 0px var(--border-primary);
+  }
+`
+
+const QuickActions = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+`
+
+const ActionCard = styled.div`
+  background: var(--light-bg);
+  border: 4px solid var(--border-primary);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  text-decoration: none;
+  
+  &:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    background: var(--brutal-cyan);
+  }
+`
+
+const ActionIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 12px;
+`
+
+const ActionTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`
+
+const ActionDesc = styled.p`
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
   font-family: var(--font-mono);
 `
 
@@ -360,18 +537,11 @@ const mockBeasts = [
   { id: 3, name: "Earth Golem", type: "earth", icon: "🌍", level: 7, hp: 120, attack: 60, defense: 90 },
 ]
 
-const mockSelectedBeast = {
-  id: 1,
-  name: "Fire Dragon",
-  type: "fire",
-  icon: "🔥",
-  level: 5,
-  hp: 100,
-  attack: 80,
-  defense: 60,
-  wins: 3,
-  losses: 1
-}
+const mockCurrentTeam = [
+  { id: 1, name: "Fire Dragon", type: "fire", icon: "🔥", level: 5 },
+  { id: 2, name: "Water Serpent", type: "water", icon: "🌊", level: 3 },
+  null
+]
 
 export default function HomePage() {
   const [showAnnouncement, setShowAnnouncement] = useState(true)
@@ -391,7 +561,7 @@ export default function HomePage() {
     return () => clearInterval(timer)
   }, [timeLeft])
 
-  const [selectedBeast, setSelectedBeast] = useState(mockSelectedBeast)
+
 
   return (
     <AppLayout>
@@ -407,75 +577,67 @@ export default function HomePage() {
 
         
 
-        <Card>
-          <SquadDisplay>
-            <SelectedSquadTitle>🐲 SELECTED BEAST</SelectedSquadTitle>
-            <SquadGrid>
-              <SquadSlot>
-                <TokenLogo>{mockSelectedBeast.icon}</TokenLogo>
-                <TokenSymbol>{mockSelectedBeast.name}</TokenSymbol>
-                <TokenPrice>Level {mockSelectedBeast.level}</TokenPrice>
-                <TokenChange $positive={mockSelectedBeast.wins > mockSelectedBeast.losses}>
-                  {mockSelectedBeast.wins}W - {mockSelectedBeast.losses}L
-                </TokenChange>
-              </SquadSlot>
-              
-              <SquadSlot>
-                <TokenSymbol>HP</TokenSymbol>
-                <TokenPrice>{mockSelectedBeast.hp}</TokenPrice>
-              </SquadSlot>
-              
-              <SquadSlot>
-                <TokenSymbol>ATK</TokenSymbol>
-                <TokenPrice>{mockSelectedBeast.attack}</TokenPrice>
-              </SquadSlot>
-              
-              <SquadSlot>
-                <TokenSymbol>DEF</TokenSymbol>
-                <TokenPrice>{mockSelectedBeast.defense}</TokenPrice>
-              </SquadSlot>
-              
-              <SquadSlot>
-                <TokenSymbol>TYPE</TokenSymbol>
-                <TokenPrice>{mockSelectedBeast.type.toUpperCase()}</TokenPrice>
-              </SquadSlot>
-            </SquadGrid>
-
-            <TimerDisplay>
-              <TimerIcon>⏱</TimerIcon>
-              <TimerText>{timeLeft}</TimerText>
-            </TimerDisplay>
-
-            <TradingControls>
-              <TradingButton $type="long" $variant="primary" $size="lg" disabled={!wallet}>
-                ⚔️ BATTLE (10 $WAM)
-              </TradingButton>
-            </TradingControls>
-
-            <Link href="/create">
-              <NewSquadButton $variant="secondary" $size="lg">
-                🐲 MINT BEAST
-              </NewSquadButton>
-            </Link>
+        <BattleSection>
+          <BattleHeader>
+            <BattleTitle>⚔️ BATTLE ARENA</BattleTitle>
+            <BattleSubtitle>Challenge other trainers</BattleSubtitle>
+          </BattleHeader>
+          
+          <CurrentTeamDisplay>
+            <TeamTitle>MY TEAM</TeamTitle>
+            <TeamGrid>
+              {mockCurrentTeam.map((beast, index) => (
+                <TeamSlot key={index}>
+                  {beast ? (
+                    <>
+                      <BeastIcon>{beast.icon}</BeastIcon>
+                      <BeastName>{beast.name}</BeastName>
+                      <BeastLevel>LVL {beast.level}</BeastLevel>
+                    </>
+                  ) : (
+                    <>
+                      <EmptyIcon>❓</EmptyIcon>
+                      <EmptyText>EMPTY</EmptyText>
+                    </>
+                  )}
+                </TeamSlot>
+              ))}
+            </TeamGrid>
             
-            <Link href="/marketplace">
-              <NewSquadButton $variant="secondary" $size="lg">
-                🏪 MARKETPLACE
-              </NewSquadButton>
-            </Link>
-
-            <StatsRow>
-              <StatItem>
-                <StatValue>23</StatValue>
-                <StatLabel>3.75%</StatLabel>
-              </StatItem>
-              <StatItem>
-                <StatValue>+</StatValue>
-                <StatLabel>Add New</StatLabel>
-              </StatItem>
-            </StatsRow>
-          </SquadDisplay>
-        </Card>
+            <BattleButton 
+              $fullWidth 
+              disabled={mockCurrentTeam.filter(Boolean).length !== 3}
+            >
+              ⚔️ BATTLE (20 $WAM)
+            </BattleButton>
+          </CurrentTeamDisplay>
+        </BattleSection>
+        
+        <QuickActions>
+          <Link href="/team">
+            <ActionCard>
+              <ActionIcon>👥</ActionIcon>
+              <ActionTitle>MANAGE TEAM</ActionTitle>
+              <ActionDesc>Select your 3 battle beasts</ActionDesc>
+            </ActionCard>
+          </Link>
+          
+          <Link href="/create">
+            <ActionCard>
+              <ActionIcon>🐲</ActionIcon>
+              <ActionTitle>MINT BEAST</ActionTitle>
+              <ActionDesc>Create new battle beasts</ActionDesc>
+            </ActionCard>
+          </Link>
+          
+          <Link href="/marketplace">
+            <ActionCard>
+              <ActionIcon>🏪</ActionIcon>
+              <ActionTitle>MARKETPLACE</ActionTitle>
+              <ActionDesc>Buy and sell beasts</ActionDesc>
+            </ActionCard>
+          </Link>
+        </QuickActions>
       </TradingContainer>
     </AppLayout>
   )
