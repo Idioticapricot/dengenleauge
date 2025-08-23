@@ -9,6 +9,7 @@ import { LevelUpModal } from "../../components/beast/LevelUpModal"
 import { LearnMoveModal } from "../../components/beast/LearnMoveModal"
 import { Beast } from "../../types/beast"
 import { getAvailableMoves } from "../../data/mockMoves"
+import { useWallet } from "../../components/wallet/WalletProvider"
 
 const TeamContainer = styled.div`
   display: flex;
@@ -215,26 +216,79 @@ export default function TeamPage() {
   const [learnMoveBeast, setLearnMoveBeast] = useState<string | null>(null)
   const [userBeasts, setUserBeasts] = useState<Beast[]>([])
   const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
+  const { wallet } = useWallet()
 
   useEffect(() => {
-    const fetchUserBeasts = async () => {
+    const initializeUser = async () => {
+      if (!wallet.isConnected || !wallet.address) {
+        setLoading(false)
+        return
+      }
+
       try {
-        // TODO: Get actual user ID from wallet context
-        const userId = 'temp-user-id'
-        const response = await fetch(`/api/beasts?userId=${userId}`)
-        if (response.ok) {
-          const beasts = await response.json()
-          setUserBeasts(beasts)
+        // Create or get user
+        const userResponse = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: wallet.address,
+            username: `User_${wallet.address.slice(-6)}`
+          })
+        })
+
+        if (userResponse.ok) {
+          const user = await userResponse.json()
+          setUserId(user.id)
+
+          // Fetch user's beasts
+          const beastsResponse = await fetch(`/api/beasts?userId=${user.id}`)
+          if (beastsResponse.ok) {
+            const beasts = await beastsResponse.json()
+            setUserBeasts(beasts)
+          }
+
+          // Fetch user's saved team
+          const teamResponse = await fetch(`/api/teams?userId=${user.id}`)
+          if (teamResponse.ok) {
+            const team = await teamResponse.json()
+            if (team && (team.beast1 || team.beast2 || team.beast3)) {
+              const savedTeam = [team.beast1, team.beast2, team.beast3].map(beast => {
+                if (!beast) return null
+                return {
+                  id: beast.id,
+                  name: beast.name,
+                  tier: beast.tier.toLowerCase(),
+                  level: beast.level,
+                  exp: { current: beast.currentExp, required: beast.requiredExp },
+                  stats: { health: beast.health, stamina: beast.stamina, power: beast.power },
+                  elementType: beast.elementType.toLowerCase(),
+                  rarity: beast.rarity.toLowerCase(),
+                  imageUrl: beast.nftMetadataUri,
+                  moves: beast.moves.map(bm => ({
+                    id: bm.move.id,
+                    name: bm.move.name,
+                    damage: bm.move.damage,
+                    elementType: bm.move.elementType.toLowerCase(),
+                    cooldown: bm.move.cooldown,
+                    description: bm.move.description
+                  }))
+                }
+              })
+              setCurrentTeam(savedTeam)
+              setSelectedBeasts(savedTeam.filter(Boolean).map(beast => beast.id))
+            }
+          }
         }
       } catch (error) {
-        console.error('Error fetching beasts:', error)
+        console.error('Error initializing user:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUserBeasts()
-  }, [])
+    initializeUser()
+  }, [wallet.isConnected, wallet.address])
 
   const handleBeastSelect = (beastId: string) => {
     const beast = userBeasts.find(b => b.id === beastId)
@@ -287,12 +341,13 @@ export default function TeamPage() {
       })
       
       if (response.ok) {
-        // Refresh user beasts to get updated moves
-        const userId = 'temp-user-id' // TODO: Get from wallet context
-        const beastsResponse = await fetch(`/api/beasts?userId=${userId}`)
-        if (beastsResponse.ok) {
-          const beasts = await beastsResponse.json()
-          setUserBeasts(beasts)
+        // Refresh user beasts
+        if (userId) {
+          const beastsResponse = await fetch(`/api/beasts?userId=${userId}`)
+          if (beastsResponse.ok) {
+            const beasts = await beastsResponse.json()
+            setUserBeasts(beasts)
+          }
         }
       }
     } catch (error) {
@@ -320,6 +375,29 @@ export default function TeamPage() {
     }
   }
 
+  const handleSaveTeam = async () => {
+    if (!userId || currentTeam.filter(Boolean).length !== 3) return
+    
+    try {
+      const response = await fetch('/api/teams', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          beast1Id: currentTeam[0]?.id || null,
+          beast2Id: currentTeam[1]?.id || null,
+          beast3Id: currentTeam[2]?.id || null
+        })
+      })
+      
+      if (response.ok) {
+        alert('Team saved successfully!')
+      }
+    } catch (error) {
+      console.error('Error saving team:', error)
+    }
+  }
+
   return (
     <AppLayout>
       <TeamContainer>
@@ -339,7 +417,22 @@ export default function TeamPage() {
               >
                 {beast ? (
                   <>
-                    <SlotIcon>{beast.elementType === 'fire' ? '🔥' : beast.elementType === 'water' ? '🌊' : beast.elementType === 'earth' ? '🌍' : '⚡'}</SlotIcon>
+                    {beast.imageUrl ? (
+                      <img 
+                        src={beast.imageUrl} 
+                        alt={beast.name}
+                        style={{
+                          width: '48px',
+                          height: '48px',
+                          objectFit: 'cover',
+                          border: '2px solid var(--border-primary)',
+                          marginBottom: '8px',
+                          imageRendering: 'pixelated'
+                        }}
+                      />
+                    ) : (
+                      <SlotIcon>{beast.elementType === 'fire' ? '🔥' : beast.elementType === 'water' ? '🌊' : beast.elementType === 'earth' ? '🌍' : '⚡'}</SlotIcon>
+                    )}
                     <BeastName>{beast.name}</BeastName>
                     <BeastLevel>LVL {beast.level}</BeastLevel>
                   </>
@@ -356,6 +449,7 @@ export default function TeamPage() {
           <SaveTeamButton 
             $fullWidth 
             disabled={currentTeam.filter(Boolean).length !== 3}
+            onClick={handleSaveTeam}
           >
             SAVE TEAM ({currentTeam.filter(Boolean).length}/3)
           </SaveTeamButton>
@@ -365,9 +459,17 @@ export default function TeamPage() {
           <SectionTitle>MY BEASTS</SectionTitle>
           <BeastGrid>
             {loading ? (
-              <div>Loading beasts...</div>
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>Loading beasts...</div>
+            ) : !wallet.isConnected ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                <h3>🔗 Wallet Connection Required</h3>
+                <p>Connect your wallet to view and manage your beasts</p>
+              </div>
             ) : userBeasts.length === 0 ? (
-              <div>No beasts found. Create your first beast!</div>
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                <h3>🐲 No Beasts Found</h3>
+                <p>Create your first beast to start building your team!</p>
+              </div>
             ) : (
               userBeasts.map((beast) => (
                 <BeastCardComponent

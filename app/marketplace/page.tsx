@@ -6,7 +6,7 @@ import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
 import { SellModal } from "../../components/marketplace/SellModal"
-// Removed mock data import - using API
+import { useWallet } from "../../components/wallet/WalletProvider"
 
 const MarketplaceContainer = styled.div`
   display: flex;
@@ -197,6 +197,7 @@ export default function MarketplacePage() {
   const [showSellModal, setShowSellModal] = useState(false)
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
+  const { wallet } = useWallet()
 
   useEffect(() => {
     const fetchMarketplaceListings = async () => {
@@ -248,8 +249,11 @@ export default function MarketplacePage() {
               ))}
             </FilterDropdown>
             
-            <SellButton onClick={() => setShowSellModal(true)}>
-              🏷️ SELL BEAST
+            <SellButton 
+              onClick={() => setShowSellModal(true)}
+              disabled={!wallet.isConnected}
+            >
+              🏷️ {wallet.isConnected ? 'SELL BEAST' : 'CONNECT WALLET'}
             </SellButton>
           </FilterContainer>
 

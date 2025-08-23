@@ -39,7 +39,38 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json(listings)
+    // Transform beast data to include imageUrl
+    const transformedListings = listings.map(listing => ({
+      ...listing,
+      beast: {
+        id: listing.beast.id,
+        name: listing.beast.name,
+        tier: listing.beast.tier.toLowerCase(),
+        level: listing.beast.level,
+        exp: {
+          current: listing.beast.currentExp,
+          required: listing.beast.requiredExp
+        },
+        stats: {
+          health: listing.beast.health,
+          stamina: listing.beast.stamina,
+          power: listing.beast.power
+        },
+        elementType: listing.beast.elementType.toLowerCase(),
+        rarity: listing.beast.rarity.toLowerCase(),
+        imageUrl: listing.beast.nftMetadataUri,
+        moves: listing.beast.moves.map(bm => ({
+          id: bm.move.id,
+          name: bm.move.name,
+          damage: bm.move.damage,
+          elementType: bm.move.elementType.toLowerCase(),
+          cooldown: bm.move.cooldown,
+          description: bm.move.description
+        }))
+      }
+    }))
+
+    return NextResponse.json(transformedListings)
   } catch (error) {
     console.error('Error fetching marketplace:', error)
     return NextResponse.json({ error: 'Failed to fetch marketplace' }, { status: 500 })
