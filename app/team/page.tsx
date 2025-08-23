@@ -4,6 +4,10 @@ import { useState } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
+import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
+import { LevelUpModal } from "../../components/beast/LevelUpModal"
+import { mockBeasts } from "../../data/mockBeasts"
+import { Beast } from "../../types/beast"
 
 const TeamContainer = styled.div`
   display: flex;
@@ -201,19 +205,17 @@ const SaveTeamButton = styled(Button)`
   }
 `
 
-const mockOwnedBeasts = [
-  { id: 1, name: "Fire Dragon", type: "fire", icon: "🔥", level: 5, hp: 100, attack: 80, defense: 60 },
-  { id: 2, name: "Water Serpent", type: "water", icon: "🌊", level: 3, hp: 90, attack: 70, defense: 70 },
-  { id: 3, name: "Earth Golem", type: "earth", icon: "🌍", level: 7, hp: 120, attack: 60, defense: 90 },
-  { id: 4, name: "Thunder Wolf", type: "electric", icon: "⚡", level: 4, hp: 85, attack: 95, defense: 65 },
-  { id: 5, name: "Ice Phoenix", type: "water", icon: "❄️", level: 6, hp: 95, attack: 85, defense: 75 },
-]
+
 
 export default function TeamPage() {
-  const [currentTeam, setCurrentTeam] = useState([null, null, null])
-  const [selectedBeasts, setSelectedBeasts] = useState<number[]>([])
+  const [currentTeam, setCurrentTeam] = useState<(Beast | null)[]>([null, null, null])
+  const [selectedBeasts, setSelectedBeasts] = useState<string[]>([])
+  const [levelUpBeast, setLevelUpBeast] = useState<string | null>(null)
 
-  const handleBeastSelect = (beast: any) => {
+  const handleBeastSelect = (beastId: string) => {
+    const beast = mockBeasts.find(b => b.id === beastId)
+    if (!beast) return
+    
     const emptySlotIndex = currentTeam.findIndex(slot => slot === null)
     if (emptySlotIndex !== -1 && !selectedBeasts.includes(beast.id)) {
       const newTeam = [...currentTeam]
@@ -223,9 +225,24 @@ export default function TeamPage() {
     }
   }
 
+  const handleLevelUp = (beastId: string) => {
+    setLevelUpBeast(beastId)
+  }
+
+  const handleConfirmLevelUp = async (beastId: string, newStats: { health: number; stamina: number; power: number }) => {
+    // TODO: Your backend friend will implement this
+    // await levelUpBeast(beastId, newStats)
+    console.log(`Leveling up beast ${beastId} with stats:`, newStats)
+    setLevelUpBeast(null)
+  }
+
+  const handleCloseLevelUp = () => {
+    setLevelUpBeast(null)
+  }
+
   const handleSlotClick = (index: number) => {
     if (currentTeam[index]) {
-      const beastId = currentTeam[index].id
+      const beastId = currentTeam[index]!.id
       const newTeam = [...currentTeam]
       newTeam[index] = null
       setCurrentTeam(newTeam)
@@ -252,7 +269,7 @@ export default function TeamPage() {
               >
                 {beast ? (
                   <>
-                    <SlotIcon>{beast.icon}</SlotIcon>
+                    <SlotIcon>{beast.elementType === 'fire' ? '🔥' : beast.elementType === 'water' ? '🌊' : beast.elementType === 'earth' ? '🌍' : '⚡'}</SlotIcon>
                     <BeastName>{beast.name}</BeastName>
                     <BeastLevel>LVL {beast.level}</BeastLevel>
                   </>
@@ -277,36 +294,29 @@ export default function TeamPage() {
         <MyBeastsSection>
           <SectionTitle>MY BEASTS</SectionTitle>
           <BeastGrid>
-            {mockOwnedBeasts.map((beast) => (
-              <BeastCard
+            {mockBeasts.map((beast) => (
+              <BeastCardComponent
                 key={beast.id}
-                $selected={selectedBeasts.includes(beast.id)}
-                onClick={() => handleBeastSelect(beast)}
-              >
-                <BeastIcon>{beast.icon}</BeastIcon>
-                <BeastCardName>{beast.name}</BeastCardName>
-                
-                <BeastStats>
-                  <StatItem>
-                    <StatLabel>HP</StatLabel>
-                    <StatValue>{beast.hp}</StatValue>
-                  </StatItem>
-                  <StatItem>
-                    <StatLabel>ATK</StatLabel>
-                    <StatValue>{beast.attack}</StatValue>
-                  </StatItem>
-                  <StatItem>
-                    <StatLabel>DEF</StatLabel>
-                    <StatValue>{beast.defense}</StatValue>
-                  </StatItem>
-                </BeastStats>
-                
-                <BeastLevel>Level {beast.level}</BeastLevel>
-              </BeastCard>
+                beast={beast}
+                selected={selectedBeasts.includes(beast.id)}
+                onSelect={handleBeastSelect}
+                onLevelUp={handleLevelUp}
+              />
             ))}
           </BeastGrid>
         </MyBeastsSection>
       </TeamContainer>
+
+      {levelUpBeast && (
+        <LevelUpModal
+          beastId={levelUpBeast}
+          beastName={mockBeasts.find(b => b.id === levelUpBeast)?.name || "Unknown Beast"}
+          currentLevel={mockBeasts.find(b => b.id === levelUpBeast)?.level || 1}
+          currentStats={mockBeasts.find(b => b.id === levelUpBeast)?.stats || { health: 0, stamina: 0, power: 0 }}
+          onConfirm={handleConfirmLevelUp}
+          onClose={handleCloseLevelUp}
+        />
+      )}
     </AppLayout>
   )
 }

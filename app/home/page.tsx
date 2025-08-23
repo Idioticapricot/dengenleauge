@@ -7,6 +7,8 @@ import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useWallet } from "../../components/wallet/WalletProvider"
 import { TokenGrid } from "../../components/token/TokenGrid"
 import { ConnectWalletButton } from "../../components/wallet/ConnectWalletButton"
+import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
+import { mockBeasts } from "../../data/mockBeasts"
 import Link from "next/link"
 
 const TradingContainer = styled.div`
@@ -564,16 +566,9 @@ const ConnectWalletSubtitle = styled.p`
   margin-right: auto;
 `
 
-// Mock beast data
-const mockBeasts = [
-  { id: 1, name: "Fire Dragon", type: "fire", icon: "🔥", level: 5, hp: 100, attack: 80, defense: 60 },
-  { id: 2, name: "Water Serpent", type: "water", icon: "🌊", level: 3, hp: 90, attack: 70, defense: 70 },
-  { id: 3, name: "Earth Golem", type: "earth", icon: "🌍", level: 7, hp: 120, attack: 60, defense: 90 },
-]
-
 const mockCurrentTeam = [
-  { id: 1, name: "Fire Dragon", type: "fire", icon: "🔥", level: 5 },
-  { id: 2, name: "Water Serpent", type: "water", icon: "🌊", level: 3 },
+  mockBeasts[0], // Flame Warrior
+  mockBeasts[1], // Aqua Guardian  
   null
 ]
 
@@ -632,7 +627,7 @@ export default function HomePage() {
                 <TeamSlot key={index}>
                   {beast ? (
                     <>
-                      <BeastIcon>{beast.icon}</BeastIcon>
+                      <BeastIcon>{beast.elementType === 'fire' ? '🔥' : beast.elementType === 'water' ? '🌊' : beast.elementType === 'earth' ? '🌍' : '⚡'}</BeastIcon>
                       <BeastName>{beast.name}</BeastName>
                       <BeastLevel>LVL {beast.level}</BeastLevel>
                     </>
