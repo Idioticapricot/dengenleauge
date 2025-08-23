@@ -442,6 +442,8 @@ export default function CreatePage() {
     stats: { health: 5, stamina: 5, power: 5 }
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const handleNext = () => {
     if (currentStep === 'tier' && beastData.tier) {
@@ -470,9 +472,33 @@ export default function CreatePage() {
     }
   }
 
+  const handleGenerate = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch('/api/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: beastData.description,
+          tier: beastData.tier,
+          stats: beastData.stats
+        })
+      })
+      
+      if (response.ok) {
+        const { imageUrl } = await response.json()
+        setGeneratedImage(imageUrl)
+      }
+    } catch (error) {
+      console.error('Error generating image:', error)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   const handleCreate = async () => {
     setIsLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise(resolve => setTimeout(resolve, 1000))
     setIsLoading(false)
     router.push("/home")
   }
@@ -596,7 +622,27 @@ export default function CreatePage() {
                   <OverviewStat>Power: {beastData.stats.power}</OverviewStat>
                 </OverviewStats>
               </OverviewItem>
+              {(generatedImage || isGenerating) && (
+                <OverviewItem>
+                  <OverviewLabel>GENERATED BEAST:</OverviewLabel>
+                  {isGenerating ? (
+                    <div style={{width: '300px', height: '300px', background: 'var(--brutal-lime)', border: '4px solid var(--border-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', animation: 'pulse 2s infinite'}}>
+                      🎨
+                    </div>
+                  ) : (
+                    <img src={generatedImage} alt="Generated Beast" style={{width: '100%', maxWidth: '300px', border: '4px solid var(--border-primary)'}} />
+                  )}
+                </OverviewItem>
+              )}
             </OverviewSection>
+            <MintButton
+              $fullWidth
+              disabled={isGenerating}
+              onClick={handleGenerate}
+              style={{marginBottom: '16px', background: 'var(--brutal-cyan)'}}
+            >
+              {isGenerating ? "GENERATING..." : "🎨 GENERATE IMAGE"}
+            </MintButton>
           </Card>
         )
     }
