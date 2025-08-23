@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
 import { LevelUpModal } from "../../components/beast/LevelUpModal"
 import { LearnMoveModal } from "../../components/beast/LearnMoveModal"
-import { mockBeasts } from "../../data/mockBeasts"
 import { Beast } from "../../types/beast"
 import { getAvailableMoves } from "../../data/mockMoves"
 
@@ -214,9 +213,31 @@ export default function TeamPage() {
   const [selectedBeasts, setSelectedBeasts] = useState<string[]>([])
   const [levelUpBeast, setLevelUpBeast] = useState<string | null>(null)
   const [learnMoveBeast, setLearnMoveBeast] = useState<string | null>(null)
+  const [userBeasts, setUserBeasts] = useState<Beast[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUserBeasts = async () => {
+      try {
+        // TODO: Get actual user ID from wallet context
+        const userId = 'temp-user-id'
+        const response = await fetch(`/api/beasts?userId=${userId}`)
+        if (response.ok) {
+          const beasts = await response.json()
+          setUserBeasts(beasts)
+        }
+      } catch (error) {
+        console.error('Error fetching beasts:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserBeasts()
+  }, [])
 
   const handleBeastSelect = (beastId: string) => {
-    const beast = mockBeasts.find(b => b.id === beastId)
+    const beast = userBeasts.find(b => b.id === beastId)
     if (!beast) return
     
     const emptySlotIndex = currentTeam.findIndex(slot => slot === null)
@@ -233,23 +254,51 @@ export default function TeamPage() {
   }
 
   const handleConfirmLevelUp = async (beastId: string, newStats: { health: number; stamina: number; power: number }) => {
-    // TODO: Your backend friend will implement this
-    // await levelUpBeast(beastId, newStats)
-    console.log(`Leveling up beast ${beastId} with stats:`, newStats)
-    
-    const beast = mockBeasts.find(b => b.id === beastId)
-    // Check if beast should learn a new move (every 5 levels)
-    if (beast && (beast.level + 1) % 5 === 0) {
-      setLearnMoveBeast(beastId)
+    try {
+      const response = await fetch('/api/beasts/level-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ beastId, newStats })
+      })
+      
+      if (response.ok) {
+        const { beast, shouldLearnMove } = await response.json()
+        
+        // Update local state
+        setUserBeasts(prev => prev.map(b => b.id === beastId ? { ...b, ...beast } : b))
+        
+        if (shouldLearnMove) {
+          setLearnMoveBeast(beastId)
+        }
+      }
+    } catch (error) {
+      console.error('Error leveling up beast:', error)
     }
     
     setLevelUpBeast(null)
   }
 
   const handleLearnMove = async (beastId: string, moveId: string, slotIndex: number) => {
-    // TODO: Your backend friend will implement this
-    // await learnMove(beastId, moveId, slotIndex)
-    console.log(`Beast ${beastId} learning move ${moveId} in slot ${slotIndex}`)
+    try {
+      const response = await fetch('/api/beasts/learn-move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ beastId, moveId, slotIndex })
+      })
+      
+      if (response.ok) {
+        // Refresh user beasts to get updated moves
+        const userId = 'temp-user-id' // TODO: Get from wallet context
+        const beastsResponse = await fetch(`/api/beasts?userId=${userId}`)
+        if (beastsResponse.ok) {
+          const beasts = await beastsResponse.json()
+          setUserBeasts(beasts)
+        }
+      }
+    } catch (error) {
+      console.error('Error learning move:', error)
+    }
+    
     setLearnMoveBeast(null)
   }
 
@@ -315,15 +364,21 @@ export default function TeamPage() {
         <MyBeastsSection>
           <SectionTitle>MY BEASTS</SectionTitle>
           <BeastGrid>
-            {mockBeasts.map((beast) => (
-              <BeastCardComponent
-                key={beast.id}
-                beast={beast}
-                selected={selectedBeasts.includes(beast.id)}
-                onSelect={handleBeastSelect}
-                onLevelUp={handleLevelUp}
-              />
-            ))}
+            {loading ? (
+              <div>Loading beasts...</div>
+            ) : userBeasts.length === 0 ? (
+              <div>No beasts found. Create your first beast!</div>
+            ) : (
+              userBeasts.map((beast) => (
+                <BeastCardComponent
+                  key={beast.id}
+                  beast={beast}
+                  selected={selectedBeasts.includes(beast.id)}
+                  onSelect={handleBeastSelect}
+                  onLevelUp={handleLevelUp}
+                />
+              ))
+            )}
           </BeastGrid>
         </MyBeastsSection>
       </TeamContainer>
@@ -331,9 +386,13 @@ export default function TeamPage() {
       {levelUpBeast && (
         <LevelUpModal
           beastId={levelUpBeast}
-          beastName={mockBeasts.find(b => b.id === levelUpBeast)?.name || "Unknown Beast"}
-          currentLevel={mockBeasts.find(b => b.id === levelUpBeast)?.level || 1}
-          currentStats={mockBeasts.find(b => b.id === levelUpBeast)?.stats || { health: 0, stamina: 0, power: 0 }}
+          beastName={userBeasts.find(b => b.id === levelUpBeast)?.name || "Unknown Beast"}
+          currentLevel={userBeasts.find(b => b.id === levelUpBeast)?.level || 1}
+          currentStats={userBeasts.find(b => b.id === levelUpBeast) ? {
+            health: userBeasts.find(b => b.id === levelUpBeast)!.health,
+            stamina: userBeasts.find(b => b.id === levelUpBeast)!.stamina,
+            power: userBeasts.find(b => b.id === levelUpBeast)!.power
+          } : { health: 0, stamina: 0, power: 0 }}
           onConfirm={handleConfirmLevelUp}
           onClose={handleCloseLevelUp}
         />
@@ -342,12 +401,12 @@ export default function TeamPage() {
       {learnMoveBeast && (
         <LearnMoveModal
           beastId={learnMoveBeast}
-          beastName={mockBeasts.find(b => b.id === learnMoveBeast)?.name || "Unknown Beast"}
-          currentLevel={mockBeasts.find(b => b.id === learnMoveBeast)?.level || 1}
-          currentMoves={mockBeasts.find(b => b.id === learnMoveBeast)?.moves || []}
+          beastName={userBeasts.find(b => b.id === learnMoveBeast)?.name || "Unknown Beast"}
+          currentLevel={userBeasts.find(b => b.id === learnMoveBeast)?.level || 1}
+          currentMoves={userBeasts.find(b => b.id === learnMoveBeast)?.moves || []}
           availableMoves={getAvailableMoves(
-            mockBeasts.find(b => b.id === learnMoveBeast)?.elementType || 'fire',
-            mockBeasts.find(b => b.id === learnMoveBeast)?.level || 1
+            userBeasts.find(b => b.id === learnMoveBeast)?.elementType || 'fire',
+            userBeasts.find(b => b.id === learnMoveBeast)?.level || 1
           )}
           onConfirm={handleLearnMove}
           onClose={handleCloseLearnMove}
