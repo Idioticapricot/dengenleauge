@@ -121,11 +121,15 @@ const SquadSlot = styled.div`
   }
 `
 
-const TokenLogo = styled.img`
+const TokenLogo = styled.div`
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   margin-bottom: 4px;
+  font-weight: 900;
 `
 
 const TokenSymbol = styled.p`
@@ -327,84 +331,47 @@ const TradingButton = styled(Button)<{ $type: "long" | "short" }>`
   flex: 1;
   font-family: var(--font-mono);
   font-weight: 900;
-  font-size: 16px;
-  padding: 16px;
+  font-size: 18px;
+  padding: 20px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  background: ${(props) => (props.$type === "long" ? "var(--brutal-lime)" : "var(--brutal-red)")};
+  letter-spacing: 2px;
+  background: var(--brutal-red);
   border: 4px solid var(--border-primary);
-  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  box-shadow: 6px 6px 0px 0px var(--border-primary);
   
   &:hover {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-    background: ${(props) => (props.$type === "long" ? "var(--brutal-cyan)" : "var(--brutal-orange)")};
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0px 0px var(--border-primary);
+    background: var(--brutal-orange);
   }
   
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
-    box-shadow: 4px 4px 0px 0px var(--border-primary);
+    box-shadow: 6px 6px 0px 0px var(--border-primary);
   }
 `
 
-// Mock deck data
-const mockDeckCards = [
-  { symbol: "BTC", logo: "₿", points: 1250 },
-  { symbol: "ETH", logo: "Ξ", points: 980 },
-  { symbol: "SOL", logo: "◎", points: 750 },
-  { symbol: "MATIC", logo: "⬟", points: 420 },
-  { symbol: "AVAX", logo: "🔺", points: 680 },
-  { symbol: "DOT", logo: "●", points: 540 },
-  { symbol: "LINK", logo: "🔗", points: 380 },
-  { symbol: "UNI", logo: "🦄", points: 290 },
+// Mock beast data
+const mockBeasts = [
+  { id: 1, name: "Fire Dragon", type: "fire", icon: "🔥", level: 5, hp: 100, attack: 80, defense: 60 },
+  { id: 2, name: "Water Serpent", type: "water", icon: "🌊", level: 3, hp: 90, attack: 70, defense: 70 },
+  { id: 3, name: "Earth Golem", type: "earth", icon: "🌍", level: 7, hp: 120, attack: 60, defense: 90 },
 ]
 
-const mockSelectedSquad = [
-  {
-    id: 2200000000,
-    ticker: "TINY",
-    name: "TINY",
-    price: 0.012243077248901361,
-    price1d: 0.011865804160324707,
-    image:
-      "https://algorand-wallet-mainnet.b-cdn.net/media/asset_verification_requests_logo_png/2024/07/29/238ed21b2e2c4ce9a5a11a7cfe4c50aa.png?format=png&height=256&width=256",
-  },
-  {
-    id: 1237529510,
-    ticker: "PGOLD",
-    name: "Polkagold",
-    price: 0.04653200614179065,
-    price1d: 0.044685438863521054,
-    image: "https://asa-list.tinyman.org/assets/1237529510/icon.png",
-  },
-  {
-    id: 2726252423,
-    ticker: "ALPHA",
-    name: "Alpha Arcade",
-    price: 0.015168105045798698,
-    price1d: 0.015,
-    image:
-      "https://algorand-wallet-mainnet.b-cdn.net/media/project_verification_requests_logo_png/2025/02/04/27439fb5280241e2bb8bea34e05fcb81.png?format=png&height=256&width=256",
-  },
-  {
-    id: 452399768,
-    ticker: "Vote",
-    name: "Vote Coin",
-    price: 0.03867739715147985,
-    price1d: 0.037229832572298324,
-    image: "https://asa-list.tinyman.org/assets/452399768/icon.png",
-  },
-  {
-    id: 400593267,
-    ticker: "Finite",
-    name: "DeFi-nite",
-    price: 0.010095833112723038,
-    price1d: 0.00975875190258752,
-    image: "https://asa-list.tinyman.org/assets/400593267/icon.png",
-  },
-]
+const mockSelectedBeast = {
+  id: 1,
+  name: "Fire Dragon",
+  type: "fire",
+  icon: "🔥",
+  level: 5,
+  hp: 100,
+  attack: 80,
+  defense: 60,
+  wins: 3,
+  losses: 1
+}
 
 export default function HomePage() {
   const [showAnnouncement, setShowAnnouncement] = useState(true)
@@ -424,9 +391,7 @@ export default function HomePage() {
     return () => clearInterval(timer)
   }, [timeLeft])
 
-  const calculateChange = (current: number, previous: number) => {
-    return ((current - previous) / previous) * 100
-  }
+  const [selectedBeast, setSelectedBeast] = useState(mockSelectedBeast)
 
   return (
     <AppLayout>
@@ -434,7 +399,7 @@ export default function HomePage() {
         {showAnnouncement && (
           <AnnouncementBanner>
             <AnnouncementText>
-              <strong>ANNOUNCEMENT!</strong> Claim your CFL username for free <span>here</span>
+              <strong>BATTLE BEASTS!</strong> Mint your first beast <span>here</span>
             </AnnouncementText>
             <CloseButton onClick={() => setShowAnnouncement(false)}>×</CloseButton>
           </AnnouncementBanner>
@@ -444,22 +409,36 @@ export default function HomePage() {
 
         <Card>
           <SquadDisplay>
-            <SelectedSquadTitle>Current Squad</SelectedSquadTitle>
+            <SelectedSquadTitle>🐲 SELECTED BEAST</SelectedSquadTitle>
             <SquadGrid>
-              {mockSelectedSquad.map((token) => {
-                const change = calculateChange(token.price, token.price1d)
-                return (
-                  <SquadSlot key={token.id}>
-                    <TokenLogo src={token.image} alt={token.name} />
-                    <TokenSymbol>{token.ticker}</TokenSymbol>
-                    <TokenPrice>${token.price.toFixed(4)}</TokenPrice>
-                    <TokenChange $positive={change >= 0}>
-                      {change >= 0 ? "+" : ""}
-                      {change.toFixed(2)}%
-                    </TokenChange>
-                  </SquadSlot>
-                )
-              })}
+              <SquadSlot>
+                <TokenLogo>{mockSelectedBeast.icon}</TokenLogo>
+                <TokenSymbol>{mockSelectedBeast.name}</TokenSymbol>
+                <TokenPrice>Level {mockSelectedBeast.level}</TokenPrice>
+                <TokenChange $positive={mockSelectedBeast.wins > mockSelectedBeast.losses}>
+                  {mockSelectedBeast.wins}W - {mockSelectedBeast.losses}L
+                </TokenChange>
+              </SquadSlot>
+              
+              <SquadSlot>
+                <TokenSymbol>HP</TokenSymbol>
+                <TokenPrice>{mockSelectedBeast.hp}</TokenPrice>
+              </SquadSlot>
+              
+              <SquadSlot>
+                <TokenSymbol>ATK</TokenSymbol>
+                <TokenPrice>{mockSelectedBeast.attack}</TokenPrice>
+              </SquadSlot>
+              
+              <SquadSlot>
+                <TokenSymbol>DEF</TokenSymbol>
+                <TokenPrice>{mockSelectedBeast.defense}</TokenPrice>
+              </SquadSlot>
+              
+              <SquadSlot>
+                <TokenSymbol>TYPE</TokenSymbol>
+                <TokenPrice>{mockSelectedBeast.type.toUpperCase()}</TokenPrice>
+              </SquadSlot>
             </SquadGrid>
 
             <TimerDisplay>
@@ -469,16 +448,19 @@ export default function HomePage() {
 
             <TradingControls>
               <TradingButton $type="long" $variant="primary" $size="lg" disabled={!wallet}>
-                📈 Long
-              </TradingButton>
-              <TradingButton $type="short" $variant="primary" $size="lg" disabled={!wallet}>
-                📉 Short
+                ⚔️ BATTLE (10 $WAM)
               </TradingButton>
             </TradingControls>
 
-            <Link href="/create-squad">
+            <Link href="/create">
               <NewSquadButton $variant="secondary" $size="lg">
-                + New Squad
+                🐲 MINT BEAST
+              </NewSquadButton>
+            </Link>
+            
+            <Link href="/marketplace">
+              <NewSquadButton $variant="secondary" $size="lg">
+                🏪 MARKETPLACE
               </NewSquadButton>
             </Link>
 

@@ -67,10 +67,10 @@ const NavLabel = styled.span`
 `
 
 const navItems = [
-  { href: "/home", icon: Home, label: "Home" },
-  { href: "/match", icon: Users, label: "Match" },
-  { href: "/tournament", icon: Calendar, label: "Tournament" },
-  { href: "/leaderboard", icon: Trophy, label: "Leaderboard" },
+  { href: "/home", icon: Home, label: "Battle" },
+  { href: "/marketplace", icon: Users, label: "Market" },
+  { href: "/create", icon: Calendar, label: "Create" },
+  { href: "/leaderboard", icon: Trophy, label: "Ranks" },
   { href: "/profile", icon: User, label: "Profile" },
 ]
 

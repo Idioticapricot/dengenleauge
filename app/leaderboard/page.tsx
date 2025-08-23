@@ -244,8 +244,8 @@ export default function LeaderboardPage() {
   const leaderboardData = [
     {
       rank: 1,
-      name: "CryptoKing",
-      avatar: "👑",
+      name: "BeastMaster",
+      avatar: "🐲",
       variant: "blue" as const,
       score: 15.67,
       matches: 45,
@@ -340,8 +340,8 @@ export default function LeaderboardPage() {
 
       <LeaderboardCard>
         <LeaderboardHeader>
-          <HeaderTitle>🏆 Leaderboard</HeaderTitle>
-          <HeaderSubtitle>Top performers in Crypto Fantasy League</HeaderSubtitle>
+          <HeaderTitle>🏆 BEAST MASTERS</HeaderTitle>
+          <HeaderSubtitle>Top battle beast trainers</HeaderSubtitle>
         </LeaderboardHeader>
 
         <FilterContainer>
@@ -365,9 +365,9 @@ export default function LeaderboardPage() {
                 <PlayerDetails>
                   <PlayerName>{player.name}</PlayerName>
                   <PlayerStats>
-                    <StatItem>🎮 {player.matches} matches</StatItem>
+                    <StatItem>⚔️ {player.matches} battles</StatItem>
                     <StatItem>📊 {player.winRate}% win rate</StatItem>
-                    <StatItem>💰 ${player.totalEarnings.toFixed(2)}</StatItem>
+                    <StatItem>💰 {player.totalEarnings} $WAM</StatItem>
                   </PlayerStats>
                 </PlayerDetails>
               </PlayerInfo>

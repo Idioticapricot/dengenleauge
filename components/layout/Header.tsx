@@ -145,8 +145,8 @@ export function Header() {
     <HeaderContainer>
       <LeftSection>
         <BalanceContainer>
-          <TokenIcon>₳</TokenIcon>
-          <Balance>{wallet.balance.toFixed(2)}</Balance>
+          <TokenIcon>$WAM</TokenIcon>
+          <Balance>{wallet.balance.toFixed(0)}</Balance>
           <AddButton>+</AddButton>
         </BalanceContainer>
       </LeftSection>

@@ -496,10 +496,10 @@ export default function ProfilePage() {
 
       <BalanceSection>
         <BalanceAmount>
-          <BalanceValue>{balance.toFixed(2)}</BalanceValue>
-          <TokenIcon>₳</TokenIcon>
+          <BalanceValue>{balance.toFixed(0)}</BalanceValue>
+          <TokenIcon>$WAM</TokenIcon>
         </BalanceAmount>
-        <USDValue>${balance.toFixed(2)} USD</USDValue>
+        <USDValue>{balance.toFixed(0)} $WAM TOKENS</USDValue>
 
         <ActionButtons>
           <ActionButton onClick={handleDeposit}>
@@ -519,43 +519,42 @@ export default function ProfilePage() {
 
       <TabContainer>
         <Tab $active={activeTab === "Live"} onClick={() => setActiveTab("Live")}>
-          Live
+          Live Battles
         </Tab>
         <Tab $active={activeTab === "Tournaments"} onClick={() => setActiveTab("Tournaments")}>
-          Tournaments
+          My Beasts
         </Tab>
         <Tab $active={activeTab === "Ended"} onClick={() => setActiveTab("Ended")}>
-          Ended
+          Battle History
         </Tab>
       </TabContainer>
 
       {activeTab === "Live" && (
         <EmptyState>
-          <EmptyIcon>⚽</EmptyIcon>
-          <EmptyTitle>No Active Matches</EmptyTitle>
+          <EmptyIcon>⚔️</EmptyIcon>
+          <EmptyTitle>No Active Battles</EmptyTitle>
           <EmptyDescription>
-            You're not participating in any matches right now. Open a match or go to the lobby to get started.
+            You're not in any battles right now. Select a beast and challenge other trainers to start battling.
           </EmptyDescription>
         </EmptyState>
       )}
 
       {activeTab === "Tournaments" && (
         <EmptyState>
-          <EmptyIcon>🏆</EmptyIcon>
-          <EmptyTitle>No Active Tournaments</EmptyTitle>
+          <EmptyIcon>🐲</EmptyIcon>
+          <EmptyTitle>No Beasts Owned</EmptyTitle>
           <EmptyDescription>
-            You haven't joined any tournaments yet. Check out the tournament section to participate in upcoming events.
+            You don't own any battle beasts yet. Visit the marketplace or mint new beasts to start your collection.
           </EmptyDescription>
         </EmptyState>
       )}
 
       {activeTab === "Ended" && (
         <EmptyState>
-          <EmptyIcon>📊</EmptyIcon>
-          <EmptyTitle>No Match History</EmptyTitle>
+          <EmptyIcon>📈</EmptyIcon>
+          <EmptyTitle>No Battle History</EmptyTitle>
           <EmptyDescription>
-            Your completed matches will appear here. Start playing to build your match history and track your
-            performance.
+            Your completed battles will appear here. Start battling to build your history and track your beast's performance.
           </EmptyDescription>
         </EmptyState>
       )}
@@ -575,7 +574,7 @@ export default function ProfilePage() {
           </StatCard>
           <StatCard>
             <StatValue>{referralStats.earned}</StatValue>
-            <StatLabel>ALGO Earned</StatLabel>
+            <StatLabel>$WAM Earned</StatLabel>
           </StatCard>
         </ReferralStats>
       </ReferralSection>
