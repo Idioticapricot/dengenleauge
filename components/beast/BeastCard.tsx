@@ -2,6 +2,7 @@
 
 import styled from "styled-components"
 import { Beast } from '../../types/beast'
+import { MoveSlots } from './MoveSlots'
 
 interface BeastCardProps {
   beast: Beast
@@ -89,13 +90,51 @@ const LevelDisplay = styled.div`
   text-transform: uppercase;
 `
 
+const BeastImagePlaceholder = styled.div<{ $elementType: string }>`
+  width: 100%;
+  height: 120px;
+  background: ${props => {
+    switch (props.$elementType) {
+      case 'fire': return 'var(--brutal-red)'
+      case 'water': return 'var(--brutal-cyan)'
+      case 'earth': return 'var(--brutal-lime)'
+      case 'electric': return 'var(--brutal-yellow)'
+      default: return 'var(--brutal-pink)'
+    }
+  }};
+  border: 4px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+`
+
+const ImageText = styled.div`
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.8;
+`
+
+const EXPBarSection = styled.div`
+  margin-bottom: 12px;
+`
+
 const EXPBar = styled.div`
-  width: 80px;
-  height: 8px;
+  width: 100%;
+  height: 12px;
   background: var(--light-bg);
   border: 2px solid var(--border-primary);
   position: relative;
   overflow: hidden;
+  margin-bottom: 4px;
 `
 
 const EXPFill = styled.div<{ $percentage: number }>`
@@ -224,6 +263,10 @@ export function BeastCard({ beast, onLevelUp, onSelect, selected }: BeastCardPro
         {getElementIcon(beast.elementType)}
       </ElementType>
       
+      <BeastImagePlaceholder $elementType={beast.elementType}>
+        <ImageText>BEAST IMAGE</ImageText>
+      </BeastImagePlaceholder>
+      
       <BeastHeader>
         <BeastInfo>
           <BeastName>{beast.name}</BeastName>
@@ -232,12 +275,15 @@ export function BeastCard({ beast, onLevelUp, onSelect, selected }: BeastCardPro
         
         <LevelSection>
           <LevelDisplay>LV {beast.level}</LevelDisplay>
-          <EXPBar>
-            <EXPFill $percentage={expPercentage} />
-          </EXPBar>
-          <EXPText>{beast.exp.current}/{beast.exp.required}</EXPText>
         </LevelSection>
       </BeastHeader>
+      
+      <EXPBarSection>
+        <EXPBar>
+          <EXPFill $percentage={expPercentage} />
+        </EXPBar>
+        <EXPText>{beast.exp.current}/{beast.exp.required}</EXPText>
+      </EXPBarSection>
 
       <StatsGrid>
         <StatItem>
@@ -253,6 +299,8 @@ export function BeastCard({ beast, onLevelUp, onSelect, selected }: BeastCardPro
           <StatValue>{beast.stats.power}</StatValue>
         </StatItem>
       </StatsGrid>
+
+      <MoveSlots moves={beast.moves} />
 
       {canLevelUp && onLevelUp && (
         <LevelUpButton onClick={handleLevelUp}>

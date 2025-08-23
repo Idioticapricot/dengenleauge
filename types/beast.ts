@@ -7,6 +7,7 @@ export interface Beast {
   stats: { health: number; stamina: number; power: number }
   elementType: 'fire' | 'water' | 'earth' | 'electric'
   rarity: 'common' | 'rare' | 'legendary'
+  moves: Move[]
 }
 
 export interface Move {
@@ -15,6 +16,7 @@ export interface Move {
   damage: number
   elementType: 'fire' | 'water' | 'earth' | 'electric'
   cooldown: number
+  description?: string
 }
 
 export interface BattleState {

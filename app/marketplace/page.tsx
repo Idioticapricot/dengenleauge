@@ -4,6 +4,9 @@ import { useState } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
+import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
+import { SellModal } from "../../components/marketplace/SellModal"
+import { mockBeasts } from "../../data/mockBeasts"
 
 const MarketplaceContainer = styled.div`
   display: flex;
@@ -40,24 +43,62 @@ const MarketplaceSubtitle = styled.p`
 
 const FilterContainer = styled.div`
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
 `
 
-const FilterButton = styled(Button)<{ $active?: boolean }>`
-  background: ${props => props.$active ? "var(--brutal-yellow)" : "var(--light-bg)"};
-  font-size: 14px;
+const FilterDropdown = styled.select`
+  background: var(--light-bg);
+  border: 4px solid var(--border-primary);
   padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
   
   &:hover {
     background: var(--brutal-cyan);
+  }
+  
+  &:focus {
+    outline: none;
+    background: var(--brutal-lime);
+  }
+`
+
+const SellButton = styled(Button)`
+  background: var(--brutal-orange);
+  font-size: 16px;
+  padding: 12px 24px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  
+  &:hover {
+    background: var(--brutal-red);
   }
 `
 
 const BeastGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+`
+
+const MarketplaceBeastCard = styled.div`
+  background: var(--light-bg);
+  border: 4px solid var(--border-primary);
+  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  padding: 16px;
+  transition: all 0.1s ease;
+  
+  &:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+  }
 `
 
 const BeastCard = styled(Card)`
@@ -149,75 +190,15 @@ const BuyButton = styled(Button)`
   }
 `
 
-const mockBeasts = [
-  {
-    id: 1,
-    name: "Flame Dragon",
-    type: "fire",
-    icon: "🔥",
-    level: 15,
-    stats: { hp: 95, attack: 135, defense: 75 },
-    price: 150,
-    owner: "CryptoKing"
-  },
-  {
-    id: 2,
-    name: "Aqua Serpent",
-    type: "water",
-    icon: "🌊",
-    level: 12,
-    stats: { hp: 110, attack: 100, defense: 95 },
-    price: 120,
-    owner: "TokenMaster"
-  },
-  {
-    id: 3,
-    name: "Stone Golem",
-    type: "earth",
-    icon: "🌍",
-    level: 18,
-    stats: { hp: 140, attack: 90, defense: 140 },
-    price: 200,
-    owner: "DeFiPro"
-  },
-  {
-    id: 4,
-    name: "Thunder Wolf",
-    type: "electric",
-    icon: "⚡",
-    level: 10,
-    stats: { hp: 80, attack: 125, defense: 80 },
-    price: 100,
-    owner: "AlgoTrader"
-  },
-  {
-    id: 5,
-    name: "Inferno Phoenix",
-    type: "fire",
-    icon: "🔥",
-    level: 25,
-    stats: { hp: 120, attack: 160, defense: 90 },
-    price: 350,
-    owner: "BlockchainBull"
-  },
-  {
-    id: 6,
-    name: "Frost Bear",
-    type: "water",
-    icon: "🌊",
-    level: 14,
-    stats: { hp: 125, attack: 105, defense: 110 },
-    price: 180,
-    owner: "SmartContract"
-  }
-]
+
 
 export default function MarketplacePage() {
   const [filter, setFilter] = useState("all")
+  const [showSellModal, setShowSellModal] = useState(false)
 
   const filteredBeasts = filter === "all" 
     ? mockBeasts 
-    : mockBeasts.filter(beast => beast.type === filter)
+    : mockBeasts.filter(beast => beast.elementType === filter)
 
   const filters = [
     { id: "all", label: "All" },
@@ -228,56 +209,51 @@ export default function MarketplacePage() {
   ]
 
   return (
-    <AppLayout>
-      <MarketplaceContainer>
-        <MarketplaceHeader>
-          <MarketplaceTitle>🏪 MARKETPLACE</MarketplaceTitle>
-          <MarketplaceSubtitle>Buy and sell battle beasts</MarketplaceSubtitle>
-        </MarketplaceHeader>
+    <>
+      <AppLayout>
+        <MarketplaceContainer>
+          <MarketplaceHeader>
+            <MarketplaceTitle>🏪 MARKETPLACE</MarketplaceTitle>
+            <MarketplaceSubtitle>Buy and sell battle beasts</MarketplaceSubtitle>
+          </MarketplaceHeader>
 
-        <FilterContainer>
-          {filters.map((filterOption) => (
-            <FilterButton
-              key={filterOption.id}
-              $active={filter === filterOption.id}
-              onClick={() => setFilter(filterOption.id)}
+          <FilterContainer>
+            <FilterDropdown 
+              value={filter} 
+              onChange={(e) => setFilter(e.target.value)}
             >
-              {filterOption.label}
-            </FilterButton>
-          ))}
-        </FilterContainer>
+              {filters.map((filterOption) => (
+                <option key={filterOption.id} value={filterOption.id}>
+                  {filterOption.label}
+                </option>
+              ))}
+            </FilterDropdown>
+            
+            <SellButton onClick={() => setShowSellModal(true)}>
+              🏷️ SELL BEAST
+            </SellButton>
+          </FilterContainer>
 
-        <BeastGrid>
-          {filteredBeasts.map((beast) => (
-            <BeastCard key={beast.id}>
-              <BeastIcon>{beast.icon}</BeastIcon>
-              <BeastName>{beast.name}</BeastName>
-              <BeastLevel>Level {beast.level}</BeastLevel>
-              
-              <BeastStats>
-                <StatItem>
-                  <StatLabel>HP</StatLabel>
-                  <StatValue>{beast.stats.hp}</StatValue>
-                </StatItem>
-                <StatItem>
-                  <StatLabel>ATK</StatLabel>
-                  <StatValue>{beast.stats.attack}</StatValue>
-                </StatItem>
-                <StatItem>
-                  <StatLabel>DEF</StatLabel>
-                  <StatValue>{beast.stats.defense}</StatValue>
-                </StatItem>
-              </BeastStats>
-              
-              <BeastPrice>{beast.price} $WAM</BeastPrice>
-              
-              <BuyButton $fullWidth>
-                BUY BEAST
-              </BuyButton>
-            </BeastCard>
-          ))}
-        </BeastGrid>
-      </MarketplaceContainer>
-    </AppLayout>
+          <BeastGrid>
+            {filteredBeasts.map((beast) => (
+              <MarketplaceBeastCard key={beast.id}>
+                <BeastCardComponent
+                  beast={beast}
+                  onSelect={() => console.log('Beast selected:', beast.name)}
+                />
+                <BeastPrice>{(beast.level * 10 + 50)} $WAM</BeastPrice>
+                <BuyButton $fullWidth>
+                  BUY BEAST
+                </BuyButton>
+              </MarketplaceBeastCard>
+            ))}
+          </BeastGrid>
+        </MarketplaceContainer>
+      </AppLayout>
+      
+      {showSellModal && (
+        <SellModal onClose={() => setShowSellModal(false)} />
+      )}
+    </>
   )
 }

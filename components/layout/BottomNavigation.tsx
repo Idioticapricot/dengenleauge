@@ -84,9 +84,9 @@ const NavLabel = styled.span`
 const navItems = [
   { href: "/team", icon: Users, label: "Team" },
   { href: "/create", icon: Calendar, label: "Create" },
-  { href: "/home", icon: Swords, label: "Battle", isBattle: true },
-  { href: "/leaderboard", icon: Trophy, label: "Ranks" },
-  { href: "/profile", icon: User, label: "Profile" },
+  { href: "/battle", icon: Swords, label: "Battle", isBattle: true },
+  { href: "/marketplace", icon: Trophy, label: "Market" },
+  { href: "/leaderboard", icon: User, label: "Ranks" },
 ]
 
 export function BottomNavigation() {
