@@ -6,6 +6,8 @@ import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useRouter } from "next/navigation"
 import { useWallet } from "../../components/wallet/WalletProvider"
+import MyNFTABI from "../../abi/MyNFT.json"
+import { ethers } from 'ethers'
 
 const BackButton = styled(Button)`
   background: var(--brutal-red);
@@ -160,6 +162,42 @@ const MintButton = styled(Button)`
   &:disabled {
     background: var(--brutal-red);
     opacity: 0.7;
+  }
+`
+
+const TransactionStatus = styled.div`
+  background: var(--brutal-cyan);
+  padding: 16px;
+  border: 3px solid var(--border-primary);
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  margin: 16px 0;
+  text-align: center;
+  font-family: var(--font-mono);
+`
+
+const TransactionHash = styled.div`
+  background: var(--brutal-lime);
+  padding: 8px 12px;
+  border: 2px solid var(--border-primary);
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-top: 8px;
+  word-break: break-all;
+`
+
+const LoadingSpinner = styled.div`
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--border-primary);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 `
 
@@ -422,6 +460,71 @@ const OverviewStat = styled.div`
   text-transform: uppercase;
 `
 
+const ConnectWalletButton = styled(Button)`
+  background: var(--brutal-lime);
+  font-size: 18px;
+  padding: 16px 32px;
+  margin: 24px 0;
+  
+  &:hover {
+    background: var(--brutal-cyan);
+  }
+`
+
+const WalletStatus = styled.div`
+  background: var(--brutal-violet);
+  padding: 16px;
+  border: 3px solid var(--border-primary);
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  margin-bottom: 24px;
+  text-align: center;
+`
+
+const ContractAddressInput = styled.input`
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--border-primary);
+  background: var(--light-bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+  
+  &:focus {
+    outline: none;
+    background: var(--brutal-lime);
+  }
+`
+
+const WalletAddress = styled.div`
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+`
+
+const NetworkStatus = styled.div`
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`
+
+const TestWalletButton = styled(Button)`
+  background: var(--brutal-orange);
+  font-size: 14px;
+  padding: 8px 16px;
+  margin: 8px;
+  
+  &:hover {
+    background: var(--brutal-red);
+  }
+`
+
 type Step = 'tier' | 'design' | 'stats' | 'final'
 
 interface BeastData {
@@ -437,9 +540,17 @@ interface BeastData {
   }
 }
 
+const NFT_CONTRACT_ADDRESS = "0xb8433deCc52A3a08600d6A13CfA161849C7a27Ee" // Add your deployed contract address here
+
+// Add a way to test with different contract addresses
+const CONTRACT_ADDRESSES = {
+  fuji: "0xb8433deCc52A3a08600d6A13CfA161849C7a27Ee", // Your Fuji contract
+  mainnet: "0x...", // Your mainnet contract (if any)
+}
+
 export default function CreatePage() {
   const router = useRouter()
-  const { wallet } = useWallet()
+  const { wallet, connectWallet } = useWallet()
   const [currentStep, setCurrentStep] = useState<Step>('tier')
   const [beastData, setBeastData] = useState<BeastData>({
     tier: null,
@@ -452,9 +563,18 @@ export default function CreatePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [createdBeast, setCreatedBeast] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [contractAddress, setContractAddress] = useState(CONTRACT_ADDRESSES.fuji)
+  const [transactionHash, setTransactionHash] = useState<string | null>(null)
+  const [isConfirming, setIsConfirming] = useState(false)
+
+  // Check if Core Wallet is available
+  const isCoreWalletAvailable = typeof window !== 'undefined' && window.avalanche
+  const isMetaMaskAvailable = typeof window !== 'undefined' && window.ethereum
+  const currentProvider = window.avalanche || window.ethereum
 
   // Get or create user when wallet connects
   useEffect(() => {
@@ -550,6 +670,177 @@ export default function CreatePage() {
   }
 
 
+  const handleCreate = async () => {
+    if (!currentProvider) {
+      setError("Please connect your wallet first")
+      return
+    }
+    
+    if (!generatedImage) {
+      setError("Please generate an image first")
+      return
+    }
+    
+    if (!contractAddress || contractAddress === "0x...") {
+      setError("Please set a valid contract address")
+      return
+    }
+    
+    setIsLoading(true)
+    setError(null)
+    setSuccess(null)
+    setTransactionHash(null)
+    setIsConfirming(false)
+    
+    try {
+      console.log('=== STARTING NFT MINT ===')
+      console.log('Provider available:', !!currentProvider)
+      console.log('Contract address:', contractAddress)
+      console.log('Generated image:', generatedImage)
+      
+      // Validate contract ABI
+      if (!MyNFTABI.abi || !Array.isArray(MyNFTABI.abi)) {
+        throw new Error("Invalid contract ABI")
+      }
+      
+      // Check if mint function exists in ABI
+      const mintFunction = MyNFTABI.abi.find((item: any) => 
+        item.type === 'function' && item.name === 'mint'
+      )
+      
+      if (!mintFunction) {
+        throw new Error("mint function not found in contract ABI")
+      }
+      
+      console.log('Contract ABI validation passed')
+      console.log('mint function found:', mintFunction)
+      console.log('Calling mint function...')
+      
+      // Create ethers provider and signer
+      const provider = new ethers.BrowserProvider(currentProvider)
+      await provider.send('eth_requestAccounts', [])
+      const signer = await provider.getSigner()
+      
+      // Get the connected account
+      const address = await signer.getAddress()
+      console.log('Connected account:', address)
+      
+      // Create contract instance
+      const contract = new ethers.Contract(contractAddress, MyNFTABI.abi, signer)
+      
+      // Try to read contract name (optional test)
+      try {
+        const name = await contract.name()
+        console.log('Contract name:', name)
+      } catch (readError) {
+        console.log('Could not read contract name, but continuing...')
+      }
+      
+      // Estimate gas for the mint function
+      console.log('Estimating gas for mint function...')
+      let gasEstimate
+      try {
+        gasEstimate = await contract.mint.estimateGas(generatedImage)
+        console.log('Gas estimate:', gasEstimate.toString())
+      } catch (gasError) {
+        console.log('Gas estimation failed, using default gas limit')
+        gasEstimate = 500000 // Default gas limit
+      }
+      
+      // Call mint function
+      console.log('Sending mint transaction...')
+      const tx = await contract.mint(generatedImage, { 
+        gasLimit: Math.ceil(Number(gasEstimate) * 1.2) // Add 20% buffer
+      })
+      
+      setTransactionHash(tx.hash)
+      console.log('Transaction submitted successfully:', tx.hash)
+      setSuccess("Transaction submitted! Waiting for confirmation...")
+      
+      // Wait for confirmation
+      setIsConfirming(true)
+      const receipt = await tx.wait()
+      setIsConfirming(false)
+      console.log('Transaction confirmed!')
+      setSuccess("🎉 NFT minted successfully! Redirecting to home...")
+      setIsLoading(false)
+      
+      // Only redirect after confirmation
+      setTimeout(() => {
+        router.push("/home")
+      }, 2000)
+      
+    } catch (error) {
+      console.error('=== NFT MINT ERROR ===')
+      console.error('Error details:', error)
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+      
+      if (error instanceof Error) {
+        if (error.message.includes('user rejected')) {
+          setError("Transaction was rejected by user")
+        } else if (error.message.includes('insufficient funds')) {
+          setError("Insufficient AVAX for gas fees")
+        } else if (error.message.includes('contract')) {
+          setError("Contract error - check contract address and ABI")
+        } else if (error.message.includes('estimateGas')) {
+          setError("Gas estimation failed - contract may not be deployed or function may not exist")
+        } else if (error.message.includes('CALL_EXCEPTION')) {
+          setError("Contract call failed - check if contract is deployed and function exists")
+        } else if (error.message.includes('execution reverted')) {
+          setError("Transaction reverted - check contract logic and parameters")
+        } else {
+          setError(`Transaction failed: ${error.message}`)
+        }
+      } else {
+        setError('Failed to mint NFT - check console for details')
+      }
+      
+      setIsLoading(false)
+    }
+  }
+
+  // Watch for transaction hash and confirmation
+  useEffect(() => {
+    if (transactionHash) {
+      console.log('Transaction hash received:', transactionHash)
+      setSuccess(`Transaction submitted! Hash: ${transactionHash.slice(0, 6)}...${transactionHash.slice(-4)}`)
+    }
+  }, [transactionHash])
+
+  // Watch for transaction confirmation
+  useEffect(() => {
+    if (transactionHash && !isConfirming) {
+      console.log('Transaction confirmed!')
+      setSuccess("🎉 NFT minted successfully! Redirecting to home...")
+      setIsLoading(false)
+      
+      // Only redirect after confirmation
+      setTimeout(() => {
+        router.push("/home")
+      }, 2000)
+    }
+  }, [transactionHash, isConfirming, router])
+
+  // Handle transaction errors
+  const handleTransactionError = () => {
+    setError("Transaction failed or was rejected. Please try again.")
+    setIsLoading(false)
+  }
+
+  // Add a timeout for transaction confirmation
+  useEffect(() => {
+    if (transactionHash && isConfirming) {
+      const timeout = setTimeout(() => {
+        if (isConfirming) {
+          console.log('Transaction taking longer than expected...')
+          setSuccess("Transaction submitted! Taking longer than expected to confirm. You can check the status using the explorer link below.")
+        }
+      }, 30000) // 30 seconds timeout
+      
+      return () => clearTimeout(timeout)
+    }
+  }, [transactionHash, isConfirming])
   
   const selectedTierData = tiers.find(t => t.id === beastData.tier)
   const getMaxPoints = () => {
@@ -565,6 +856,123 @@ export default function CreatePage() {
   
   const getRemainingPoints = () => {
     return getMaxPoints() - getTotalUsedPoints()
+  }
+
+  // Test contract deployment
+  const testContractDeployment = async () => {
+    try {
+      console.log('=== TESTING CONTRACT DEPLOYMENT ===')
+      console.log('Contract address:', contractAddress)
+      
+      if (!contractAddress || contractAddress === "0x...") {
+        setError("Please enter a valid contract address")
+        return
+      }
+      
+      // Try to read from the contract to see if it exists
+      const response = await fetch(`https://api.avax-test.network/ext/bc/C/rpc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_getCode',
+          params: [contractAddress, 'latest'],
+          id: 1
+        })
+      })
+      
+      const data = await response.json()
+      console.log('Contract code response:', data)
+      
+      if (data.result && data.result !== '0x') {
+        setSuccess("Contract found on blockchain! Ready to mint.")
+      } else {
+        setError("Contract not found at this address. Make sure it's deployed on Fuji testnet.")
+      }
+      
+    } catch (error) {
+      console.error('Contract test failed:', error)
+      setError(`Contract test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+
+
+  // Test wallet connection and signing
+  const testWalletConnection = async () => {
+    try {
+      console.log('=== TESTING WALLET CONNECTION ===')
+      console.log('Provider available:', !!currentProvider)
+      console.log('Core Wallet available:', isCoreWalletAvailable)
+      console.log('MetaMask available:', isMetaMaskAvailable)
+      
+      if (!currentProvider) {
+        setError("No wallet provider detected")
+        return
+      }
+      
+      // Test connection
+      const provider = new ethers.BrowserProvider(currentProvider)
+      const accounts = await provider.send('eth_requestAccounts', [])
+      console.log('Connected accounts:', accounts)
+      
+      if (accounts.length === 0) {
+        setError("No accounts found")
+        return
+      }
+      
+      setSuccess("Wallet connection test passed! Ready to mint.")
+      
+    } catch (error) {
+      console.error('Wallet test failed:', error)
+      setError(`Wallet test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  // Test contract call
+  const testContractCall = async () => {
+    try {
+      console.log('=== TESTING CONTRACT CALL ===')
+      
+      if (!currentProvider) {
+        setError("No wallet provider detected")
+        return
+      }
+      
+      if (!contractAddress || contractAddress === "0x...") {
+        setError("Please enter a valid contract address")
+        return
+      }
+      
+      // Test contract interaction
+      const provider = new ethers.BrowserProvider(currentProvider)
+      await provider.send('eth_requestAccounts', [])
+      const signer = await provider.getSigner()
+      
+      const contract = new ethers.Contract(contractAddress, MyNFTABI.abi, signer)
+      
+      // Try to read contract name
+      try {
+        const name = await contract.name()
+        console.log('Contract name:', name)
+        setSuccess(`Contract accessible! Name: ${name}`)
+      } catch (error) {
+        console.log('Could not read name, trying to estimate gas...')
+        
+        // Try to estimate gas for mint function
+        try {
+          const gasEstimate = await contract.mint.estimateGas("test-uri")
+          console.log('Gas estimate for mint:', gasEstimate.toString())
+          setSuccess("Contract accessible! Mint function is callable.")
+        } catch (gasError) {
+          throw new Error("Contract not accessible or mint function not found")
+        }
+      }
+      
+    } catch (error) {
+      console.error('Contract call test failed:', error)
+      setError(`Contract test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   const renderStep = () => {
@@ -720,9 +1128,9 @@ export default function CreatePage() {
                     <div style={{width: '300px', height: '300px', background: 'var(--brutal-lime)', border: '4px solid var(--border-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', animation: 'pulse 2s infinite'}}>
                       🎨
                     </div>
-                  ) : (
+                  ) : generatedImage ? (
                     <img src={generatedImage} alt="Generated Beast" style={{width: '100%', maxWidth: '300px', border: '4px solid var(--border-primary)'}} />
-                  )}
+                  ) : null}
                 </OverviewItem>
               )}
             </OverviewSection>
@@ -749,6 +1157,48 @@ export default function CreatePage() {
     }
   }
 
+  // Add wallet connection section at the top
+  const renderWalletSection = () => {
+    if (!currentProvider) {
+      return (
+        <WalletStatus>
+          <div style={{marginBottom: '16px'}}>
+            <div style={{fontSize: '18px', fontWeight: '900', marginBottom: '8px'}}>🔗 CONNECT WALLET</div>
+            <div style={{fontSize: '14px', marginBottom: '16px'}}>Connect your Core Wallet to create beasts</div>
+            <div style={{fontSize: '12px', marginBottom: '16px', opacity: 0.8}}>
+              Don't have Core Wallet? <a href="https://core.app" target="_blank" rel="noopener noreferrer" style={{color: 'var(--brutal-lime)', textDecoration: 'underline'}}>Download it here</a>
+            </div>
+            <div style={{fontSize: '12px', marginBottom: '16px', opacity: 0.8}}>
+              Make sure Core Wallet is installed and unlocked, then refresh the page
+            </div>
+          </div>
+          <ConnectWalletButton onClick={connectWallet}>
+            🚀 CONNECT CORE WALLET
+          </ConnectWalletButton>
+        </WalletStatus>
+      )
+    }
+
+    return (
+      <WalletStatus>
+        <WalletAddress>Wallet: Connected to Core Wallet</WalletAddress>
+        <NetworkStatus>
+          Network: Avalanche Fuji Testnet
+        </NetworkStatus>
+        <ContractAddressInput
+          type="text"
+          placeholder="Enter contract address (e.g., 0x...)"
+          value={contractAddress}
+          onChange={(e) => setContractAddress(e.target.value)}
+          style={{marginTop: '16px'}}
+        />
+        <div style={{fontSize: '10px', marginTop: '4px', opacity: 0.7, textAlign: 'center'}}>
+          Make sure this contract is deployed on Avalanche Fuji testnet (chain ID: 43113)
+        </div>
+      </WalletStatus>
+    )
+  }
+
   return (
     <AppLayout>
       <BackButton onClick={handleBack}>
@@ -766,7 +1216,135 @@ export default function CreatePage() {
           </CreateSubtitle>
         </CreateHeader>
         
+        {renderWalletSection()}
+        
+        {/* Test Wallet Button */}
+        {currentProvider && (
+          <div style={{textAlign: 'center', marginBottom: '16px'}}>
+            <TestWalletButton onClick={testWalletConnection}>
+              🧪 Test Wallet Connection
+            </TestWalletButton>
+            <TestWalletButton onClick={testContractDeployment}>
+              🔍 Test Contract Deployment
+            </TestWalletButton>
+            <TestWalletButton onClick={testContractCall}>
+              🔗 Test Contract Call
+            </TestWalletButton>
+          </div>
+        )}
+        
+        {error && (
+          <div style={{
+            background: 'var(--brutal-red)',
+            padding: '16px',
+            border: '3px solid var(--border-primary)',
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-mono)',
+            fontWeight: '900',
+            textAlign: 'center'
+          }}>
+            ⚠️ {error}
+            <div style={{marginTop: '8px'}}>
+              <Button 
+                onClick={() => {
+                  setError(null)
+                  setIsLoading(false)
+                }}
+                style={{
+                  background: 'var(--brutal-yellow)',
+                  fontSize: '12px',
+                  padding: '8px 16px'
+                }}
+              >
+                🔄 Try Again
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {success && (
+          <div style={{
+            background: 'var(--brutal-lime)',
+            padding: '16px',
+            border: '3px solid var(--border-primary)',
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-mono)',
+            fontWeight: '900',
+            textAlign: 'center'
+          }}>
+            ✅ {success}
+          </div>
+        )}
+        
         {renderStep()}
+
+        {/* Transaction Status Display */}
+        {transactionHash && (
+          <TransactionStatus>
+            <div style={{fontSize: '16px', fontWeight: '900', marginBottom: '8px'}}>
+              {isConfirming ? '⏳ CONFIRMING TRANSACTION...' : '✅ TRANSACTION CONFIRMED!'}
+            </div>
+            <div style={{fontSize: '14px', marginBottom: '8px'}}>
+              {isConfirming ? 'Waiting for blockchain confirmation...' : 'Your NFT has been minted successfully!'}
+            </div>
+            <TransactionHash>
+              Hash: {transactionHash}
+            </TransactionHash>
+            <div style={{marginTop: '8px'}}>
+              <a 
+                href={`https://testnet.snowtrace.io/tx/${transactionHash}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  color: 'var(--brutal-lime)', 
+                  textDecoration: 'underline',
+                  fontSize: '12px',
+                  fontWeight: '700'
+                }}
+              >
+                🔍 View on Snowtrace Explorer
+              </a>
+            </div>
+            {!isConfirming && (
+              <div style={{marginTop: '8px', fontSize: '12px', opacity: 0.8}}>
+                Redirecting to home in 2 seconds...
+              </div>
+            )}
+            {!isConfirming && (
+              <div style={{marginTop: '16px'}}>
+                <Button 
+                  onClick={() => {
+                    setGeneratedImage(null)
+                    setCurrentStep('tier')
+                    setSuccess(null)
+                    setError(null)
+                  }}
+                  style={{
+                    background: 'var(--brutal-lime)',
+                    fontSize: '12px',
+                    padding: '8px 16px'
+                  }}
+                >
+                  🆕 Create Another Beast
+                </Button>
+              </div>
+            )}
+            {isConfirming && (
+              <div style={{marginTop: '16px'}}>
+                <Button 
+                  onClick={() => window.open(`https://testnet.snowtrace.io/tx/${transactionHash}`, '_blank')}
+                  style={{
+                    background: 'var(--brutal-yellow)',
+                    fontSize: '12px',
+                    padding: '8px 16px'
+                  }}
+                >
+                  🔄 Check Status on Explorer
+                </Button>
+              </div>
+            )}
+          </TransactionStatus>
+        )}
 
         {currentStep !== 'final' ? (
           <MintButton
@@ -780,7 +1358,30 @@ export default function CreatePage() {
           >
             NEXT
           </MintButton>
-        ) : null}
+<<<<<<< HEAD
+        ) : (
+          <MintButton
+            $fullWidth
+            disabled={isLoading || isConfirming || !generatedImage || !currentProvider || !!transactionHash}
+            onClick={handleCreate}
+          >
+            {isLoading ? (
+              <>
+                <LoadingSpinner />
+                SUBMITTING TRANSACTION...
+              </>
+            ) : isConfirming ? (
+              <>
+                <LoadingSpinner />
+                CONFIRMING TRANSACTION...
+              </>
+            ) : transactionHash ? (
+              "✅ NFT MINTED SUCCESSFULLY!"
+            ) : (
+              "🔗 MINT BEAST NFT"
+            )}
+          </MintButton>
+        )}
       </CreateContainer>
     </AppLayout>
   )
