@@ -108,47 +108,6 @@ const BeastTypeDescription = styled.p`
   font-family: var(--font-mono);
 `
 
-const BeastStats = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
-`
-
-const StatItem = styled.div`
-  background: var(--brutal-pink);
-  padding: 8px;
-  border: 2px solid var(--border-primary);
-  text-align: center;
-`
-
-const StatLabel = styled.div`
-  font-size: 10px;
-  font-weight: 900;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-`
-
-const StatValue = styled.div`
-  font-size: 16px;
-  font-weight: 900;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-`
-
-const MintCost = styled.div`
-  background: var(--brutal-violet);
-  padding: 8px 12px;
-  border: 2px solid var(--border-primary);
-  font-size: 14px;
-  font-weight: 900;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-`
-
 const MintButton = styled(Button)`
   background: var(--brutal-lime);
   font-size: 18px;
@@ -200,64 +159,6 @@ const LoadingSpinner = styled.div`
     to { transform: rotate(360deg); }
   }
 `
-
-const tiers = [
-  {
-    id: "basic",
-    name: "Basic Tier",
-    cost: 50,
-    multiplier: 1,
-    abilities: ["Standard Stats"],
-    color: "var(--brutal-lime)"
-  },
-  {
-    id: "advanced",
-    name: "Advanced Tier",
-    cost: 100,
-    multiplier: 1.3,
-    abilities: ["Enhanced Stats", "Regeneration"],
-    color: "var(--brutal-cyan)"
-  },
-  {
-    id: "legendary",
-    name: "Legendary Tier",
-    cost: 200,
-    multiplier: 1.6,
-    abilities: ["Superior Stats", "Regeneration", "Critical Strike"],
-    color: "var(--brutal-yellow)"
-  }
-]
-
-const beastTypes = [
-  {
-    id: "fire",
-    name: "Fire Beast",
-    icon: "🔥",
-    description: "High attack, low defense",
-    baseStats: { hp: 80, attack: 120, defense: 60 }
-  },
-  {
-    id: "water",
-    name: "Water Beast",
-    icon: "🌊",
-    description: "Balanced stats",
-    baseStats: { hp: 100, attack: 90, defense: 90 }
-  },
-  {
-    id: "earth",
-    name: "Earth Beast",
-    icon: "🌍",
-    description: "High defense, low speed",
-    baseStats: { hp: 120, attack: 80, defense: 120 }
-  },
-  {
-    id: "electric",
-    name: "Electric Beast",
-    icon: "⚡",
-    description: "Fast and deadly",
-    baseStats: { hp: 70, attack: 110, defense: 70 }
-  }
-]
 
 const TierSelector = styled.div`
   display: grid;
@@ -540,13 +441,68 @@ interface BeastData {
   }
 }
 
-const NFT_CONTRACT_ADDRESS = "0xb8433deCc52A3a08600d6A13CfA161849C7a27Ee" // Add your deployed contract address here
-
-// Add a way to test with different contract addresses
 const CONTRACT_ADDRESSES = {
-  fuji: "0xb8433deCc52A3a08600d6A13CfA161849C7a27Ee", // Your Fuji contract
-  mainnet: "0x...", // Your mainnet contract (if any)
+  fuji: "0xb8433deCc52A3a08600d6A13CfA161849C7a27Ee",
+  mainnet: "0x...",
 }
+
+const tiers = [
+  {
+    id: "basic",
+    name: "Basic Tier",
+    cost: 50,
+    multiplier: 1,
+    abilities: ["Standard Stats"],
+    color: "var(--brutal-lime)"
+  },
+  {
+    id: "advanced",
+    name: "Advanced Tier",
+    cost: 100,
+    multiplier: 1.3,
+    abilities: ["Enhanced Stats", "Regeneration"],
+    color: "var(--brutal-cyan)"
+  },
+  {
+    id: "legendary",
+    name: "Legendary Tier",
+    cost: 200,
+    multiplier: 1.6,
+    abilities: ["Superior Stats", "Regeneration", "Critical Strike"],
+    color: "var(--brutal-yellow)"
+  }
+]
+
+const beastTypes = [
+  {
+    id: "fire",
+    name: "Fire Beast",
+    icon: "🔥",
+    description: "High attack, low defense",
+    baseStats: { hp: 80, attack: 120, defense: 60 }
+  },
+  {
+    id: "water",
+    name: "Water Beast",
+    icon: "🌊",
+    description: "Balanced stats",
+    baseStats: { hp: 100, attack: 90, defense: 90 }
+  },
+  {
+    id: "earth",
+    name: "Earth Beast",
+    icon: "🌍",
+    description: "High defense, low speed",
+    baseStats: { hp: 120, attack: 80, defense: 120 }
+  },
+  {
+    id: "electric",
+    name: "Electric Beast",
+    icon: "⚡",
+    description: "Fast and deadly",
+    baseStats: { hp: 70, attack: 110, defense: 70 }
+  }
+]
 
 export default function CreatePage() {
   const router = useRouter()
@@ -572,9 +528,7 @@ export default function CreatePage() {
   const [isConfirming, setIsConfirming] = useState(false)
 
   // Check if Core Wallet is available
-  const isCoreWalletAvailable = typeof window !== 'undefined' && window.avalanche
-  const isMetaMaskAvailable = typeof window !== 'undefined' && window.ethereum
-  const currentProvider = window.avalanche || window.ethereum
+  const currentProvider = typeof window !== 'undefined' ? (window.avalanche || window.ethereum) : null
 
   // Get or create user when wallet connects
   useEffect(() => {
@@ -669,7 +623,6 @@ export default function CreatePage() {
     }
   }
 
-
   const handleCreate = async () => {
     if (!currentProvider) {
       setError("Please connect your wallet first")
@@ -693,155 +646,52 @@ export default function CreatePage() {
     setIsConfirming(false)
     
     try {
-      console.log('=== STARTING NFT MINT ===')
-      console.log('Provider available:', !!currentProvider)
-      console.log('Contract address:', contractAddress)
-      console.log('Generated image:', generatedImage)
-      
-      // Validate contract ABI
-      if (!MyNFTABI.abi || !Array.isArray(MyNFTABI.abi)) {
-        throw new Error("Invalid contract ABI")
-      }
-      
-      // Check if mint function exists in ABI
-      const mintFunction = MyNFTABI.abi.find((item: any) => 
-        item.type === 'function' && item.name === 'mint'
-      )
-      
-      if (!mintFunction) {
-        throw new Error("mint function not found in contract ABI")
-      }
-      
-      console.log('Contract ABI validation passed')
-      console.log('mint function found:', mintFunction)
-      console.log('Calling mint function...')
-      
-      // Create ethers provider and signer
       const provider = new ethers.BrowserProvider(currentProvider)
       await provider.send('eth_requestAccounts', [])
       const signer = await provider.getSigner()
       
-      // Get the connected account
-      const address = await signer.getAddress()
-      console.log('Connected account:', address)
-      
-      // Create contract instance
       const contract = new ethers.Contract(contractAddress, MyNFTABI.abi, signer)
       
-      // Try to read contract name (optional test)
-      try {
-        const name = await contract.name()
-        console.log('Contract name:', name)
-      } catch (readError) {
-        console.log('Could not read contract name, but continuing...')
-      }
-      
-      // Estimate gas for the mint function
-      console.log('Estimating gas for mint function...')
       let gasEstimate
       try {
         gasEstimate = await contract.mint.estimateGas(generatedImage)
-        console.log('Gas estimate:', gasEstimate.toString())
       } catch (gasError) {
-        console.log('Gas estimation failed, using default gas limit')
-        gasEstimate = 500000 // Default gas limit
+        gasEstimate = 500000
       }
       
-      // Call mint function
-      console.log('Sending mint transaction...')
       const tx = await contract.mint(generatedImage, { 
-        gasLimit: Math.ceil(Number(gasEstimate) * 1.2) // Add 20% buffer
+        gasLimit: Math.ceil(Number(gasEstimate) * 1.2)
       })
       
       setTransactionHash(tx.hash)
-      console.log('Transaction submitted successfully:', tx.hash)
       setSuccess("Transaction submitted! Waiting for confirmation...")
       
-      // Wait for confirmation
       setIsConfirming(true)
       const receipt = await tx.wait()
       setIsConfirming(false)
-      console.log('Transaction confirmed!')
       setSuccess("🎉 NFT minted successfully! Redirecting to home...")
       setIsLoading(false)
       
-      // Only redirect after confirmation
       setTimeout(() => {
         router.push("/home")
       }, 2000)
       
     } catch (error) {
-      console.error('=== NFT MINT ERROR ===')
-      console.error('Error details:', error)
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
-      
       if (error instanceof Error) {
         if (error.message.includes('user rejected')) {
           setError("Transaction was rejected by user")
         } else if (error.message.includes('insufficient funds')) {
           setError("Insufficient AVAX for gas fees")
-        } else if (error.message.includes('contract')) {
-          setError("Contract error - check contract address and ABI")
-        } else if (error.message.includes('estimateGas')) {
-          setError("Gas estimation failed - contract may not be deployed or function may not exist")
-        } else if (error.message.includes('CALL_EXCEPTION')) {
-          setError("Contract call failed - check if contract is deployed and function exists")
-        } else if (error.message.includes('execution reverted')) {
-          setError("Transaction reverted - check contract logic and parameters")
         } else {
           setError(`Transaction failed: ${error.message}`)
         }
       } else {
-        setError('Failed to mint NFT - check console for details')
+        setError('Failed to mint NFT')
       }
-      
       setIsLoading(false)
     }
   }
 
-  // Watch for transaction hash and confirmation
-  useEffect(() => {
-    if (transactionHash) {
-      console.log('Transaction hash received:', transactionHash)
-      setSuccess(`Transaction submitted! Hash: ${transactionHash.slice(0, 6)}...${transactionHash.slice(-4)}`)
-    }
-  }, [transactionHash])
-
-  // Watch for transaction confirmation
-  useEffect(() => {
-    if (transactionHash && !isConfirming) {
-      console.log('Transaction confirmed!')
-      setSuccess("🎉 NFT minted successfully! Redirecting to home...")
-      setIsLoading(false)
-      
-      // Only redirect after confirmation
-      setTimeout(() => {
-        router.push("/home")
-      }, 2000)
-    }
-  }, [transactionHash, isConfirming, router])
-
-  // Handle transaction errors
-  const handleTransactionError = () => {
-    setError("Transaction failed or was rejected. Please try again.")
-    setIsLoading(false)
-  }
-
-  // Add a timeout for transaction confirmation
-  useEffect(() => {
-    if (transactionHash && isConfirming) {
-      const timeout = setTimeout(() => {
-        if (isConfirming) {
-          console.log('Transaction taking longer than expected...')
-          setSuccess("Transaction submitted! Taking longer than expected to confirm. You can check the status using the explorer link below.")
-        }
-      }, 30000) // 30 seconds timeout
-      
-      return () => clearTimeout(timeout)
-    }
-  }, [transactionHash, isConfirming])
-  
   const selectedTierData = tiers.find(t => t.id === beastData.tier)
   const getMaxPoints = () => {
     if (beastData.tier === 'basic') return 20
@@ -856,123 +706,6 @@ export default function CreatePage() {
   
   const getRemainingPoints = () => {
     return getMaxPoints() - getTotalUsedPoints()
-  }
-
-  // Test contract deployment
-  const testContractDeployment = async () => {
-    try {
-      console.log('=== TESTING CONTRACT DEPLOYMENT ===')
-      console.log('Contract address:', contractAddress)
-      
-      if (!contractAddress || contractAddress === "0x...") {
-        setError("Please enter a valid contract address")
-        return
-      }
-      
-      // Try to read from the contract to see if it exists
-      const response = await fetch(`https://api.avax-test.network/ext/bc/C/rpc`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'eth_getCode',
-          params: [contractAddress, 'latest'],
-          id: 1
-        })
-      })
-      
-      const data = await response.json()
-      console.log('Contract code response:', data)
-      
-      if (data.result && data.result !== '0x') {
-        setSuccess("Contract found on blockchain! Ready to mint.")
-      } else {
-        setError("Contract not found at this address. Make sure it's deployed on Fuji testnet.")
-      }
-      
-    } catch (error) {
-      console.error('Contract test failed:', error)
-      setError(`Contract test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
-
-
-
-  // Test wallet connection and signing
-  const testWalletConnection = async () => {
-    try {
-      console.log('=== TESTING WALLET CONNECTION ===')
-      console.log('Provider available:', !!currentProvider)
-      console.log('Core Wallet available:', isCoreWalletAvailable)
-      console.log('MetaMask available:', isMetaMaskAvailable)
-      
-      if (!currentProvider) {
-        setError("No wallet provider detected")
-        return
-      }
-      
-      // Test connection
-      const provider = new ethers.BrowserProvider(currentProvider)
-      const accounts = await provider.send('eth_requestAccounts', [])
-      console.log('Connected accounts:', accounts)
-      
-      if (accounts.length === 0) {
-        setError("No accounts found")
-        return
-      }
-      
-      setSuccess("Wallet connection test passed! Ready to mint.")
-      
-    } catch (error) {
-      console.error('Wallet test failed:', error)
-      setError(`Wallet test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
-
-  // Test contract call
-  const testContractCall = async () => {
-    try {
-      console.log('=== TESTING CONTRACT CALL ===')
-      
-      if (!currentProvider) {
-        setError("No wallet provider detected")
-        return
-      }
-      
-      if (!contractAddress || contractAddress === "0x...") {
-        setError("Please enter a valid contract address")
-        return
-      }
-      
-      // Test contract interaction
-      const provider = new ethers.BrowserProvider(currentProvider)
-      await provider.send('eth_requestAccounts', [])
-      const signer = await provider.getSigner()
-      
-      const contract = new ethers.Contract(contractAddress, MyNFTABI.abi, signer)
-      
-      // Try to read contract name
-      try {
-        const name = await contract.name()
-        console.log('Contract name:', name)
-        setSuccess(`Contract accessible! Name: ${name}`)
-      } catch (error) {
-        console.log('Could not read name, trying to estimate gas...')
-        
-        // Try to estimate gas for mint function
-        try {
-          const gasEstimate = await contract.mint.estimateGas("test-uri")
-          console.log('Gas estimate for mint:', gasEstimate.toString())
-          setSuccess("Contract accessible! Mint function is callable.")
-        } catch (gasError) {
-          throw new Error("Contract not accessible or mint function not found")
-        }
-      }
-      
-    } catch (error) {
-      console.error('Contract call test failed:', error)
-      setError(`Contract test failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
   }
 
   const renderStep = () => {
@@ -1157,7 +890,6 @@ export default function CreatePage() {
     }
   }
 
-  // Add wallet connection section at the top
   const renderWalletSection = () => {
     if (!currentProvider) {
       return (
@@ -1165,12 +897,6 @@ export default function CreatePage() {
           <div style={{marginBottom: '16px'}}>
             <div style={{fontSize: '18px', fontWeight: '900', marginBottom: '8px'}}>🔗 CONNECT WALLET</div>
             <div style={{fontSize: '14px', marginBottom: '16px'}}>Connect your Core Wallet to create beasts</div>
-            <div style={{fontSize: '12px', marginBottom: '16px', opacity: 0.8}}>
-              Don't have Core Wallet? <a href="https://core.app" target="_blank" rel="noopener noreferrer" style={{color: 'var(--brutal-lime)', textDecoration: 'underline'}}>Download it here</a>
-            </div>
-            <div style={{fontSize: '12px', marginBottom: '16px', opacity: 0.8}}>
-              Make sure Core Wallet is installed and unlocked, then refresh the page
-            </div>
           </div>
           <ConnectWalletButton onClick={connectWallet}>
             🚀 CONNECT CORE WALLET
@@ -1182,9 +908,7 @@ export default function CreatePage() {
     return (
       <WalletStatus>
         <WalletAddress>Wallet: Connected to Core Wallet</WalletAddress>
-        <NetworkStatus>
-          Network: Avalanche Fuji Testnet
-        </NetworkStatus>
+        <NetworkStatus>Network: Avalanche Fuji Testnet</NetworkStatus>
         <ContractAddressInput
           type="text"
           placeholder="Enter contract address (e.g., 0x...)"
@@ -1192,9 +916,6 @@ export default function CreatePage() {
           onChange={(e) => setContractAddress(e.target.value)}
           style={{marginTop: '16px'}}
         />
-        <div style={{fontSize: '10px', marginTop: '4px', opacity: 0.7, textAlign: 'center'}}>
-          Make sure this contract is deployed on Avalanche Fuji testnet (chain ID: 43113)
-        </div>
       </WalletStatus>
     )
   }
@@ -1218,21 +939,6 @@ export default function CreatePage() {
         
         {renderWalletSection()}
         
-        {/* Test Wallet Button */}
-        {currentProvider && (
-          <div style={{textAlign: 'center', marginBottom: '16px'}}>
-            <TestWalletButton onClick={testWalletConnection}>
-              🧪 Test Wallet Connection
-            </TestWalletButton>
-            <TestWalletButton onClick={testContractDeployment}>
-              🔍 Test Contract Deployment
-            </TestWalletButton>
-            <TestWalletButton onClick={testContractCall}>
-              🔗 Test Contract Call
-            </TestWalletButton>
-          </div>
-        )}
-        
         {error && (
           <div style={{
             background: 'var(--brutal-red)',
@@ -1244,21 +950,6 @@ export default function CreatePage() {
             textAlign: 'center'
           }}>
             ⚠️ {error}
-            <div style={{marginTop: '8px'}}>
-              <Button 
-                onClick={() => {
-                  setError(null)
-                  setIsLoading(false)
-                }}
-                style={{
-                  background: 'var(--brutal-yellow)',
-                  fontSize: '12px',
-                  padding: '8px 16px'
-                }}
-              >
-                🔄 Try Again
-              </Button>
-            </div>
           </div>
         )}
         
@@ -1278,71 +969,12 @@ export default function CreatePage() {
         
         {renderStep()}
 
-        {/* Transaction Status Display */}
         {transactionHash && (
           <TransactionStatus>
             <div style={{fontSize: '16px', fontWeight: '900', marginBottom: '8px'}}>
               {isConfirming ? '⏳ CONFIRMING TRANSACTION...' : '✅ TRANSACTION CONFIRMED!'}
             </div>
-            <div style={{fontSize: '14px', marginBottom: '8px'}}>
-              {isConfirming ? 'Waiting for blockchain confirmation...' : 'Your NFT has been minted successfully!'}
-            </div>
-            <TransactionHash>
-              Hash: {transactionHash}
-            </TransactionHash>
-            <div style={{marginTop: '8px'}}>
-              <a 
-                href={`https://testnet.snowtrace.io/tx/${transactionHash}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{
-                  color: 'var(--brutal-lime)', 
-                  textDecoration: 'underline',
-                  fontSize: '12px',
-                  fontWeight: '700'
-                }}
-              >
-                🔍 View on Snowtrace Explorer
-              </a>
-            </div>
-            {!isConfirming && (
-              <div style={{marginTop: '8px', fontSize: '12px', opacity: 0.8}}>
-                Redirecting to home in 2 seconds...
-              </div>
-            )}
-            {!isConfirming && (
-              <div style={{marginTop: '16px'}}>
-                <Button 
-                  onClick={() => {
-                    setGeneratedImage(null)
-                    setCurrentStep('tier')
-                    setSuccess(null)
-                    setError(null)
-                  }}
-                  style={{
-                    background: 'var(--brutal-lime)',
-                    fontSize: '12px',
-                    padding: '8px 16px'
-                  }}
-                >
-                  🆕 Create Another Beast
-                </Button>
-              </div>
-            )}
-            {isConfirming && (
-              <div style={{marginTop: '16px'}}>
-                <Button 
-                  onClick={() => window.open(`https://testnet.snowtrace.io/tx/${transactionHash}`, '_blank')}
-                  style={{
-                    background: 'var(--brutal-yellow)',
-                    fontSize: '12px',
-                    padding: '8px 16px'
-                  }}
-                >
-                  🔄 Check Status on Explorer
-                </Button>
-              </div>
-            )}
+            <TransactionHash>Hash: {transactionHash}</TransactionHash>
           </TransactionStatus>
         )}
 
@@ -1358,7 +990,6 @@ export default function CreatePage() {
           >
             NEXT
           </MintButton>
-<<<<<<< HEAD
         ) : (
           <MintButton
             $fullWidth

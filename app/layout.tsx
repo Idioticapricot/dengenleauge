@@ -18,9 +18,14 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: "CFL - Crypto Fantasy League",
-  description: "Fantasy Football meets Crypto Gaming",
+  title: "Beastiar - Battle Beast Arena",
+  description: "Create, battle, and trade powerful beasts in the ultimate NFT arena",
   generator: "v0.app",
+  icons: {
+    icon: "/wolf-removebg-preview.png",
+    shortcut: "/wolf-removebg-preview.png",
+    apple: "/wolf-removebg-preview.png",
+  },
 }
 
 export default function RootLayout({
