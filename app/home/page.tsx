@@ -6,6 +6,7 @@ import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useWallet } from "../../components/wallet/WalletProvider"
 import { TokenGrid } from "../../components/token/TokenGrid"
+import { ConnectWalletButton } from "../../components/wallet/ConnectWalletButton"
 import Link from "next/link"
 
 const TradingContainer = styled.div`
@@ -530,6 +531,39 @@ const TradingButton = styled(Button)<{ $type: "long" | "short" }>`
   }
 `
 
+const ConnectWalletSection = styled.div`
+  background: var(--brutal-violet);
+  border: 6px solid var(--border-primary);
+  border-radius: 0;
+  padding: 40px;
+  text-align: center;
+  margin-bottom: 32px;
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
+  font-family: var(--font-mono);
+`
+
+const ConnectWalletTitle = styled.h1`
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 3px 3px 0px var(--border-primary);
+`
+
+const ConnectWalletSubtitle = styled.p`
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 24px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+`
+
 // Mock beast data
 const mockBeasts = [
   { id: 1, name: "Fire Dragon", type: "fire", icon: "🔥", level: 5, hp: 100, attack: 80, defense: 60 },
@@ -561,8 +595,6 @@ export default function HomePage() {
     return () => clearInterval(timer)
   }, [timeLeft])
 
-
-
   return (
     <AppLayout>
       <TradingContainer>
@@ -575,7 +607,17 @@ export default function HomePage() {
           </AnnouncementBanner>
         )}
 
-        
+        {!wallet.isConnected && (
+          <ConnectWalletSection>
+            <ConnectWalletTitle>🔗 CONNECT WALLET</ConnectWalletTitle>
+            <ConnectWalletSubtitle>
+              Connect your Avalanche wallet to start battling, minting beasts, and earning rewards
+            </ConnectWalletSubtitle>
+            <ConnectWalletButton variant="primary">
+              Connect Wallet
+            </ConnectWalletButton>
+          </ConnectWalletSection>
+        )}
 
         <BattleSection>
           <BattleHeader>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
+import { useWallet } from "../../components/wallet/WalletProvider"
 
 const ProfileHeader = styled.div`
   display: flex;
@@ -372,12 +373,29 @@ const StatusDot = styled.div<{ $status: "live" | "ended" | "upcoming" }>`
   `}
 `
 
+const ConnectWalletButton = styled(Button)`
+  margin-top: 20px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--brutal-violet);
+  border: 4px solid var(--border-primary);
+  color: var(--text-primary);
+  transition: all 0.1s ease;
+
+  &:hover {
+    background: var(--brutal-pink);
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+  }
+`
 
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Live")
-  const [balance] = useState(0.0)
-
+  const { wallet, connectWallet } = useWallet()
 
   const handleDeposit = () => {
     console.log("Deposit clicked")
@@ -395,11 +413,29 @@ export default function ProfilePage() {
   }
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText("5WbC****H9KJ")
-    // TODO: Show toast notification
+    if (wallet.address) {
+      navigator.clipboard.writeText(wallet.address)
+      // TODO: Show toast notification
+    }
   }
 
-
+  // If wallet is not connected, show connect prompt
+  if (!wallet.isConnected) {
+    return (
+      <AppLayout>
+        <EmptyState>
+          <EmptyIcon>🔗</EmptyIcon>
+          <EmptyTitle>Wallet Not Connected</EmptyTitle>
+          <EmptyDescription>
+            Connect your wallet to view your profile and manage your assets.
+          </EmptyDescription>
+          <ConnectWalletButton onClick={connectWallet} disabled={wallet.connecting}>
+            {wallet.connecting ? "Connecting..." : "Connect Wallet"}
+          </ConnectWalletButton>
+        </EmptyState>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout>
@@ -411,7 +447,7 @@ export default function ProfilePage() {
             <EditIcon>✏️</EditIcon>
           </ProfileName>
           <WalletAddress>
-            5WbC****H9KJ
+            {wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : "Connecting..."}
             <CopyButton onClick={handleCopyAddress}>📋</CopyButton>
           </WalletAddress>
           <SocialIcons>
@@ -424,10 +460,10 @@ export default function ProfilePage() {
 
       <BalanceSection>
         <BalanceAmount>
-          <BalanceValue>{balance.toFixed(0)}</BalanceValue>
-          <TokenIcon>$WAM</TokenIcon>
+          <BalanceValue>{parseFloat(wallet.balance).toFixed(2)}</BalanceValue>
+          <TokenIcon>AVAX</TokenIcon>
         </BalanceAmount>
-        <USDValue>{balance.toFixed(0)} $WAM TOKENS</USDValue>
+        <USDValue>{parseFloat(wallet.balance).toFixed(2)} AVAX</USDValue>
 
         <ActionButtons>
           <ActionButton onClick={handleDeposit}>
