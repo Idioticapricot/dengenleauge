@@ -8,6 +8,7 @@ export interface Beast {
   elementType: 'fire' | 'water' | 'earth' | 'electric'
   rarity: 'common' | 'rare' | 'legendary'
   imageUrl?: string
+  isForSale?: boolean
   moves: Move[]
 }
 

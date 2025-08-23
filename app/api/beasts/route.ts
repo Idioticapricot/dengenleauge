@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
       elementType: beast.elementType.toLowerCase(),
       rarity: beast.rarity.toLowerCase(),
       imageUrl: beast.nftMetadataUri,
+      isForSale: beast.isForSale,
       moves: beast.moves.map(bm => ({
         id: bm.move.id,
         name: bm.move.name,

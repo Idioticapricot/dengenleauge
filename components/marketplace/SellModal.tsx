@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
 import { BeastCard as BeastCardComponent } from "../beast/BeastCard"
-import { mockBeasts } from "../../data/mockBeasts"
+import { useWallet } from "../wallet/WalletProvider"
+import { Beast } from "../../types/beast"
 
 interface SellModalProps {
   onClose: () => void
+  onSellComplete?: () => void
 }
 
 const PopupOverlay = styled.div`
@@ -151,12 +153,51 @@ const BackButton = styled(Button)`
   }
 `
 
-export function SellModal({ onClose }: SellModalProps) {
+export function SellModal({ onClose, onSellComplete }: SellModalProps) {
   const [step, setStep] = useState<'select' | 'price'>('select')
   const [selectedBeast, setSelectedBeast] = useState<string | null>(null)
   const [price, setPrice] = useState('')
+  const [userBeasts, setUserBeasts] = useState<Beast[]>([])
+  const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
+  const { wallet } = useWallet()
 
-  const userBeasts = mockBeasts.slice(0, 3)
+  useEffect(() => {
+    const fetchUserBeasts = async () => {
+      if (!wallet.isConnected || !wallet.address) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const userResponse = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: wallet.address,
+            username: `User_${wallet.address.slice(-6)}`
+          })
+        })
+
+        if (userResponse.ok) {
+          const user = await userResponse.json()
+          setUserId(user.id)
+
+          const beastsResponse = await fetch(`/api/beasts?userId=${user.id}`)
+          if (beastsResponse.ok) {
+            const beasts = await beastsResponse.json()
+            setUserBeasts(beasts.filter((beast: Beast) => !beast.isForSale))
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user beasts:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserBeasts()
+  }, [wallet.isConnected, wallet.address])
 
   const handleBeastSelect = (beastId: string) => {
     setSelectedBeast(beastId)
@@ -168,10 +209,29 @@ export function SellModal({ onClose }: SellModalProps) {
     }
   }
 
-  const handleConfirmSell = () => {
-    if (selectedBeast && price) {
-      console.log(`Listing beast ${selectedBeast} for ${price} $WAM`)
-      onClose()
+  const handleConfirmSell = async () => {
+    if (selectedBeast && price && userId) {
+      try {
+        const response = await fetch('/api/marketplace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            beastId: selectedBeast,
+            sellerId: userId,
+            price: parseFloat(price)
+          })
+        })
+
+        if (response.ok) {
+          onSellComplete?.()
+          onClose()
+        } else {
+          alert('Failed to list beast for sale')
+        }
+      } catch (error) {
+        console.error('Error listing beast:', error)
+        alert('Failed to list beast for sale')
+      }
     }
   }
 
@@ -186,18 +246,26 @@ export function SellModal({ onClose }: SellModalProps) {
           <StepTitle>Step 1: Select Beast to Sell</StepTitle>
           
           <BeastGrid>
-            {userBeasts.map((beast) => (
-              <SelectableBeastCard
-                key={beast.id}
-                $selected={selectedBeast === beast.id}
-                onClick={() => handleBeastSelect(beast.id)}
-              >
-                <BeastCardComponent
-                  beast={beast}
-                  selected={selectedBeast === beast.id}
-                />
-              </SelectableBeastCard>
-            ))}
+            {loading ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>Loading beasts...</div>
+            ) : !wallet.isConnected ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>Connect wallet to sell beasts</div>
+            ) : userBeasts.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>No beasts available for sale</div>
+            ) : (
+              userBeasts.map((beast) => (
+                <SelectableBeastCard
+                  key={beast.id}
+                  $selected={selectedBeast === beast.id}
+                  onClick={() => handleBeastSelect(beast.id)}
+                >
+                  <BeastCardComponent
+                    beast={beast}
+                    selected={selectedBeast === beast.id}
+                  />
+                </SelectableBeastCard>
+              ))
+            )}
           </BeastGrid>
           
           <PopupButtons>
