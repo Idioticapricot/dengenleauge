@@ -1,9 +1,10 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { WagmiProvider, useAccount, useBalance, useDisconnect, useConnect } from 'wagmi'
+import { WagmiProvider, useAccount, useBalance, useDisconnect, useConnect, useSwitchChain } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { config } from '../../lib/wallet-config'
+import { avalancheFuji } from 'wagmi/chains'
 
 interface WalletState {
   isConnected: boolean
@@ -39,6 +40,7 @@ function WalletProviderInner({ children }: WalletProviderProps) {
   const { address, isConnected, chainId } = useAccount()
   const { connect, connectors, isPending } = useConnect()
   const { disconnect } = useDisconnect()
+  const { switchChain } = useSwitchChain()
   const { data: balanceData } = useBalance({
     address,
   })
@@ -87,8 +89,27 @@ function WalletProviderInner({ children }: WalletProviderProps) {
     setWallet(prev => ({ ...prev, connecting: true }))
     
     try {
+      console.log('Available connectors:', connectors)
+      
+      // Try to connect with available connectors
       if (connectors.length > 0) {
-        await connect({ connector: connectors[0] })
+        // Prefer Core Wallet if available
+        const coreWallet = connectors.find(c => c.id === 'CoreWallet')
+        const connector = coreWallet || connectors[0]
+        
+        console.log('Using connector:', connector)
+        
+        await connect({ connector })
+        
+        // After connection, try to switch to Fuji testnet if not already on it
+        if (chainId && chainId !== avalancheFuji.id) {
+          try {
+            console.log('Switching to Avalanche Fuji testnet...')
+            await switchChain({ chainId: avalancheFuji.id })
+          } catch (switchError) {
+            console.log('User rejected network switch or already on correct network')
+          }
+        }
       } else {
         throw new Error("No connectors available")
       }
@@ -109,9 +130,7 @@ function WalletProviderInner({ children }: WalletProviderProps) {
 
   const switchNetwork = async (targetChainId: number) => {
     try {
-      // This would need to be implemented with the actual wallet provider
-      // For now, we'll just log the request
-      console.log(`Requesting network switch to chain ID: ${targetChainId}`)
+      await switchChain({ chainId: targetChainId })
     } catch (error) {
       console.error("Failed to switch network:", error)
       throw error
