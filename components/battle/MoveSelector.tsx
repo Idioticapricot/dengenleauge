@@ -6,6 +6,8 @@ import { Move } from '../../types/beast'
 interface MoveSelectorProps {
   moves: Move[]
   onMoveSelect: (move: Move) => void
+  onSwitch: () => void
+  canSwitch: boolean
   disabled?: boolean
 }
 
@@ -35,10 +37,38 @@ const SelectorTitle = styled.h3<{ $disabled?: boolean }>`
   }
 `
 
+const ActionsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`
+
 const MovesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+`
+
+const SwitchButton = styled.button<{ $disabled?: boolean }>`
+  background: ${props => props.$disabled ? 'var(--brutal-red)' : 'var(--brutal-orange)'};
+  border: 4px solid var(--border-primary);
+  padding: 12px 16px;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.1s ease;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  opacity: ${props => props.$disabled ? 0.6 : 1};
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: var(--font-mono);
+  
+  &:hover:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
+    background: var(--brutal-yellow);
+  }
 `
 
 const MoveButton = styled.button<{ $elementType: string; $disabled?: boolean }>`
@@ -134,30 +164,42 @@ const getTypeIcon = (type: string) => {
   }
 }
 
-export function MoveSelector({ moves, onMoveSelect, disabled = false }: MoveSelectorProps) {
+export function MoveSelector({ moves, onMoveSelect, onSwitch, canSwitch, disabled = false }: MoveSelectorProps) {
   return (
     <MoveSelectorContainer $disabled={disabled}>
-      <SelectorTitle $disabled={disabled}>SELECT MOVE</SelectorTitle>
+      <SelectorTitle $disabled={disabled}>SELECT ACTION</SelectorTitle>
       
-      <MovesGrid>
-        {moves.map((move) => (
-          <MoveButton
-            key={move.id}
-            $elementType={move.elementType}
-            $disabled={disabled}
-            disabled={disabled}
-            onClick={() => !disabled && onMoveSelect(move)}
+      <ActionsContainer>
+        <MovesGrid>
+          {moves.map((move) => (
+            <MoveButton
+              key={move.id}
+              $elementType={move.elementType}
+              $disabled={disabled}
+              disabled={disabled}
+              onClick={() => !disabled && onMoveSelect(move)}
+            >
+              <MoveIcon>{getTypeIcon(move.elementType)}</MoveIcon>
+              <MoveName>{move.name}</MoveName>
+              <MoveDetails>
+                <MoveType>{move.elementType}</MoveType>
+                <MoveDamage>{move.damage} DMG</MoveDamage>
+              </MoveDetails>
+              <MoveCooldown>Cooldown: {move.cooldown}T</MoveCooldown>
+            </MoveButton>
+          ))}
+        </MovesGrid>
+        
+        {canSwitch && (
+          <SwitchButton
+            $disabled={disabled || !canSwitch}
+            disabled={disabled || !canSwitch}
+            onClick={() => !disabled && canSwitch && onSwitch()}
           >
-            <MoveIcon>{getTypeIcon(move.elementType)}</MoveIcon>
-            <MoveName>{move.name}</MoveName>
-            <MoveDetails>
-              <MoveType>{move.elementType}</MoveType>
-              <MoveDamage>{move.damage} DMG</MoveDamage>
-            </MoveDetails>
-            <MoveCooldown>Cooldown: {move.cooldown}T</MoveCooldown>
-          </MoveButton>
-        ))}
-      </MovesGrid>
+            🔄 SWITCH BEAST
+          </SwitchButton>
+        )}
+      </ActionsContainer>
     </MoveSelectorContainer>
   )
 }

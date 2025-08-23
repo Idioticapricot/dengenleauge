@@ -1,12 +1,22 @@
 "use client"
 
 import styled from "styled-components"
-import { Beast } from '../../types/beast'
+interface BattleBeast {
+  id: string
+  name: string
+  maxHP: number
+  currentHP: number
+  power: number
+  stamina: number
+  elementType: string
+  imageUrl: string | null
+}
 
 interface BattleArenaProps {
-  playerBeast: Beast
-  opponentBeast: Beast
+  playerBeast: BattleBeast
+  opponentBeast: BattleBeast
   isPlayerTurn: boolean
+  winner?: string | null
 }
 
 const ArenaContainer = styled.div`
@@ -210,16 +220,23 @@ const getElementIcon = (type: string) => {
   }
 }
 
-export function BattleArena({ playerBeast, opponentBeast, isPlayerTurn }: BattleArenaProps) {
-  // Mock health percentages (in real game, this would come from battle state)
-  const playerHealth = 85
-  const opponentHealth = 72
+export function BattleArena({ playerBeast, opponentBeast, isPlayerTurn, winner }: BattleArenaProps) {
+  const playerHealthPercentage = (playerBeast.currentHP / playerBeast.maxHP) * 100
+  const opponentHealthPercentage = (opponentBeast.currentHP / opponentBeast.maxHP) * 100
 
   return (
     <ArenaContainer>
-      <TurnIndicator $isPlayerTurn={isPlayerTurn}>
-        {isPlayerTurn ? 'YOUR TURN' : 'OPPONENT TURN'}
-      </TurnIndicator>
+      {!winner && (
+        <TurnIndicator $isPlayerTurn={isPlayerTurn}>
+          {isPlayerTurn ? 'YOUR TURN' : 'OPPONENT TURN'}
+        </TurnIndicator>
+      )}
+      
+      {winner && (
+        <TurnIndicator $isPlayerTurn={winner === 'player1'}>
+          {winner === 'player1' ? 'YOU WIN!' : 'YOU LOSE!'}
+        </TurnIndicator>
+      )}
       
       <ArenaTitle>BATTLE ARENA</ArenaTitle>
       
@@ -248,17 +265,17 @@ export function BattleArena({ playerBeast, opponentBeast, isPlayerTurn }: Battle
             </BeastIcon>
           )}
           <BeastName>{playerBeast.name}</BeastName>
-          <BeastLevel>LV {playerBeast.level}</BeastLevel>
+          <BeastLevel>HP {playerBeast.currentHP}/{playerBeast.maxHP}</BeastLevel>
           
           <HealthBar>
-            <HealthFill $percentage={playerHealth} />
-            <HealthText>{playerHealth}%</HealthText>
+            <HealthFill $percentage={playerHealthPercentage} />
+            <HealthText>{Math.round(playerHealthPercentage)}%</HealthText>
           </HealthBar>
           
           <StatsRow>
-            <StatBadge>HP {playerBeast.stats.health}</StatBadge>
-            <StatBadge>STA {playerBeast.stats.stamina}</StatBadge>
-            <StatBadge>PWR {playerBeast.stats.power}</StatBadge>
+            <StatBadge>HP {playerBeast.maxHP}</StatBadge>
+            <StatBadge>STA {playerBeast.stamina}</StatBadge>
+            <StatBadge>PWR {playerBeast.power}</StatBadge>
           </StatsRow>
         </BeastBattleCard>
 
@@ -286,17 +303,17 @@ export function BattleArena({ playerBeast, opponentBeast, isPlayerTurn }: Battle
             </BeastIcon>
           )}
           <BeastName>{opponentBeast.name}</BeastName>
-          <BeastLevel>LV {opponentBeast.level}</BeastLevel>
+          <BeastLevel>HP {opponentBeast.currentHP}/{opponentBeast.maxHP}</BeastLevel>
           
           <HealthBar>
-            <HealthFill $percentage={opponentHealth} />
-            <HealthText>{opponentHealth}%</HealthText>
+            <HealthFill $percentage={opponentHealthPercentage} />
+            <HealthText>{Math.round(opponentHealthPercentage)}%</HealthText>
           </HealthBar>
           
           <StatsRow>
-            <StatBadge>HP {opponentBeast.stats.health}</StatBadge>
-            <StatBadge>STA {opponentBeast.stats.stamina}</StatBadge>
-            <StatBadge>PWR {opponentBeast.stats.power}</StatBadge>
+            <StatBadge>HP {opponentBeast.maxHP}</StatBadge>
+            <StatBadge>STA {opponentBeast.stamina}</StatBadge>
+            <StatBadge>PWR {opponentBeast.power}</StatBadge>
           </StatsRow>
         </BeastBattleCard>
       </BeastBattleGrid>

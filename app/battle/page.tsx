@@ -200,16 +200,29 @@ const BeastLevel = styled.div`
   border: 2px solid var(--border-primary);
 `
 
+interface BattleBeast {
+  id: string
+  name: string
+  maxHP: number
+  currentHP: number
+  power: number
+  stamina: number
+  elementType: string
+  imageUrl: string | null
+  moves: Move[]
+}
+
 interface BattleState {
   id: string
+  player1Beast: BattleBeast
+  player2Beast: BattleBeast
   player1Team: Beast[]
   player2Team: Beast[]
-  currentTurn: number
-  phase: 'setup' | 'battle' | 'ended'
-  winner?: string
-  activeBeast1: Beast
-  activeBeast2: Beast
-  log: string[]
+  currentTurn: 'player1' | 'player2'
+  battleLog: string[]
+  winner: string | null
+  isProcessing: boolean
+  pot: number
 }
 
 export default function BattlePage() {
@@ -217,7 +230,7 @@ export default function BattlePage() {
   const [selectedMode, setSelectedMode] = useState<'pvp' | 'pve' | null>(null)
   const [battleState, setBattleState] = useState<BattleState | null>(null)
   const [selectedMove, setSelectedMove] = useState<Move | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [showSwitcher, setShowSwitcher] = useState(false)
   const [player1Team, setPlayer1Team] = useState<Beast[]>([])
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
@@ -364,56 +377,153 @@ export default function BattlePage() {
     setBattleMode('arena')
   }
 
+  const convertToBattleBeast = (beast: Beast): BattleBeast => ({
+    id: beast.id,
+    name: beast.name,
+    maxHP: beast.stats.health,
+    currentHP: beast.stats.health,
+    power: beast.stats.power,
+    stamina: beast.stats.stamina,
+    elementType: beast.elementType,
+    imageUrl: beast.imageUrl,
+    moves: beast.moves
+  })
+
   const startBattle = () => {
-    if (!selectedMode) return
+    if (!selectedMode || !player1Team[0] || !player2Team[0]) return
     
-    const opponentName = selectedMode === 'pve' ? 'Wild ' + player2Team[0]?.name : player2Team[0]?.name
+    const player1Beast = convertToBattleBeast(player1Team[0])
+    const player2Beast = convertToBattleBeast(player2Team[0])
+    
+    // Determine first turn by stamina (speed)
+    const firstTurn = player1Beast.stamina >= player2Beast.stamina ? 'player1' : 'player2'
+    
     const newBattle: BattleState = {
       id: 'battle_' + Date.now(),
+      player1Beast,
+      player2Beast,
       player1Team,
       player2Team,
-      currentTurn: 1,
-      phase: 'battle',
-      activeBeast1: player1Team[0],
-      activeBeast2: player2Team[0],
-      log: [
+      currentTurn: firstTurn,
+      battleLog: [
         selectedMode === 'pve' ? 'PvE Battle started!' : 'PvP Battle started!',
-        `${player1Team[0].name} vs ${opponentName}`
-      ]
+        `${player1Beast.name} vs ${player2Beast.name}`,
+        `${firstTurn === 'player1' ? player1Beast.name : player2Beast.name} goes first!`
+      ],
+      winner: null,
+      isProcessing: false,
+      pot: selectedMode === 'pvp' ? 20 : 0
     }
     setBattleState(newBattle)
     setBattleMode('combat')
   }
 
-  const handleMoveSelect = async (move: Move) => {
-    if (!battleState || isProcessing) return
+  const calculateDamage = (attacker: BattleBeast, defender: BattleBeast, move: Move): number => {
+    const baseDamage = (attacker.power * move.damage) / 100
+    const typeMultiplier = getTypeEffectiveness(move.elementType, defender.elementType)
+    const critChance = 0.0625 + (attacker.power / 1000) // Base 6.25% + power bonus
+    const isCrit = Math.random() < critChance
+    const critMultiplier = isCrit ? 1.5 : 1
+    const randomFactor = 0.85 + Math.random() * 0.3 // 0.85 - 1.15
     
-    setIsProcessing(true)
+    return Math.floor(baseDamage * typeMultiplier * critMultiplier * randomFactor)
+  }
+
+  const getTypeEffectiveness = (attackType: string, defenseType: string): number => {
+    const effectiveness: Record<string, Record<string, number>> = {
+      fire: { earth: 2, water: 0.5, electric: 1, fire: 1 },
+      earth: { electric: 2, fire: 0.5, water: 1, earth: 1 },
+      electric: { water: 2, earth: 0.5, fire: 1, electric: 1 },
+      water: { fire: 2, electric: 0.5, earth: 1, water: 1 }
+    }
+    return effectiveness[attackType]?.[defenseType] || 1
+  }
+
+  const handleAttack = async (move: Move) => {
+    if (!battleState || battleState.isProcessing || battleState.currentTurn !== 'player1') return
+    
+    setBattleState(prev => prev ? { ...prev, isProcessing: true } : null)
     setSelectedMove(move)
 
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    const damage = Math.floor(move.damage * (0.8 + Math.random() * 0.4))
-    const newLog = [
-      ...battleState.log,
-      `${battleState.activeBeast1.name} used ${move.name}!`,
-      `Dealt ${damage} damage to ${battleState.activeBeast2.name}!`
+    const damage = calculateDamage(battleState.player1Beast, battleState.player2Beast, move)
+    const newPlayer2HP = Math.max(0, battleState.player2Beast.currentHP - damage)
+    
+    let newLog = [
+      ...battleState.battleLog,
+      `${battleState.player1Beast.name} used ${move.name}!`,
+      `Dealt ${damage} damage to ${battleState.player2Beast.name}!`
     ]
 
-    const aiMove = battleState.activeBeast2.moves[Math.floor(Math.random() * battleState.activeBeast2.moves.length)]
-    const aiDamage = Math.floor(aiMove.damage * (0.8 + Math.random() * 0.4))
+    // Check if opponent is defeated
+    if (newPlayer2HP <= 0) {
+      newLog.push(`${battleState.player2Beast.name} fainted!`)
+      newLog.push(`${battleState.player1Beast.name} wins!`)
+      
+      setBattleState(prev => prev ? {
+        ...prev,
+        player2Beast: { ...prev.player2Beast, currentHP: 0 },
+        battleLog: newLog,
+        winner: 'player1',
+        isProcessing: false
+      } : null)
+      setSelectedMove(null)
+      return
+    }
+
+    // AI turn
+    await new Promise(resolve => setTimeout(resolve, 1000))
     
-    newLog.push(`${battleState.activeBeast2.name} used ${aiMove.name}!`)
-    newLog.push(`Dealt ${aiDamage} damage to ${battleState.activeBeast1.name}!`)
+    const aiMove = battleState.player2Beast.moves[Math.floor(Math.random() * battleState.player2Beast.moves.length)]
+    const aiDamage = calculateDamage(battleState.player2Beast, battleState.player1Beast, aiMove)
+    const newPlayer1HP = Math.max(0, battleState.player1Beast.currentHP - aiDamage)
+    
+    newLog.push(`${battleState.player2Beast.name} used ${aiMove.name}!`)
+    newLog.push(`Dealt ${aiDamage} damage to ${battleState.player1Beast.name}!`)
 
-    setBattleState({
-      ...battleState,
-      currentTurn: battleState.currentTurn + 1,
-      log: newLog
-    })
+    // Check if player is defeated
+    if (newPlayer1HP <= 0) {
+      newLog.push(`${battleState.player1Beast.name} fainted!`)
+      newLog.push(`${battleState.player2Beast.name} wins!`)
+      
+      setBattleState(prev => prev ? {
+        ...prev,
+        player1Beast: { ...prev.player1Beast, currentHP: 0 },
+        player2Beast: { ...prev.player2Beast, currentHP: newPlayer2HP },
+        battleLog: newLog,
+        winner: 'player2',
+        isProcessing: false
+      } : null)
+    } else {
+      setBattleState(prev => prev ? {
+        ...prev,
+        player1Beast: { ...prev.player1Beast, currentHP: newPlayer1HP },
+        player2Beast: { ...prev.player2Beast, currentHP: newPlayer2HP },
+        battleLog: newLog,
+        isProcessing: false
+      } : null)
+    }
 
-    setIsProcessing(false)
     setSelectedMove(null)
+  }
+
+  const handleSwitch = (beastId: string) => {
+    if (!battleState || battleState.isProcessing) return
+    
+    const newBeast = battleState.player1Team.find(b => b.id === beastId)
+    if (!newBeast || newBeast.id === battleState.player1Beast.id) return
+    
+    const switchedBeast = convertToBattleBeast(newBeast)
+    
+    setBattleState(prev => prev ? {
+      ...prev,
+      player1Beast: switchedBeast,
+      battleLog: [...prev.battleLog, `Switched to ${switchedBeast.name}!`],
+      currentTurn: 'player2'
+    } : null)
+    
+    setShowSwitcher(false)
   }
 
   const handleEndBattle = () => {
@@ -559,19 +669,62 @@ export default function BattlePage() {
 
         <BattleContent>
           <BattleArena
-            playerBeast={battleState.activeBeast1}
-            opponentBeast={battleState.activeBeast2}
-            isPlayerTurn={!isProcessing}
+            playerBeast={battleState.player1Beast}
+            opponentBeast={battleState.player2Beast}
+            isPlayerTurn={battleState.currentTurn === 'player1' && !battleState.isProcessing}
+            winner={battleState.winner}
           />
           
-          <MoveSelector
-            moves={battleState.activeBeast1.moves}
-            onMoveSelect={handleMoveSelect}
-            disabled={isProcessing}
-          />
+          {!battleState.winner && (
+            <>
+              <MoveSelector
+                moves={battleState.player1Beast.moves}
+                onMoveSelect={handleAttack}
+                disabled={battleState.isProcessing || battleState.currentTurn !== 'player1'}
+                onSwitch={() => setShowSwitcher(true)}
+                canSwitch={battleState.player1Team.length > 1}
+              />
+              
+              {showSwitcher && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(0,0,0,0.8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000
+                }}>
+                  <div style={{
+                    background: 'var(--light-bg)',
+                    border: '4px solid var(--border-primary)',
+                    padding: '24px',
+                    maxWidth: '400px'
+                  }}>
+                    <h3>Switch Beast</h3>
+                    {battleState.player1Team.filter(b => b.id !== battleState.player1Beast.id).map(beast => (
+                      <Button
+                        key={beast.id}
+                        onClick={() => handleSwitch(beast.id)}
+                        style={{ display: 'block', margin: '8px 0', width: '100%' }}
+                      >
+                        {beast.name} (HP: {beast.stats.health})
+                      </Button>
+                    ))}
+                    <Button onClick={() => setShowSwitcher(false)} style={{ marginTop: '16px' }}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           
           <BattleLog 
-            log={battleState.log}
+            log={battleState.battleLog}
             maxEntries={10}
           />
           
