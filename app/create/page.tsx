@@ -7,6 +7,7 @@ import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useRouter } from "next/navigation"
 import { useWallet } from "../../components/wallet/WalletProvider"
 import MyNFTABI from "../../abi/MyNFT.json"
+import WamWithDispenserABI from "../../abi/WamWithDispenser.json"
 import { ethers } from 'ethers'
 
 const BackButton = styled(Button)`
@@ -526,6 +527,10 @@ export default function CreatePage() {
   const [contractAddress, setContractAddress] = useState(CONTRACT_ADDRESSES.fuji)
   const [transactionHash, setTransactionHash] = useState<string | null>(null)
   const [isConfirming, setIsConfirming] = useState(false)
+  const [avaxAmount, setAvaxAmount] = useState<string>('1')
+  const [isBuyingTokens, setIsBuyingTokens] = useState(false)
+  const [buyTokensHash, setBuyTokensHash] = useState<string | null>(null)
+  const [wamContractAddress, setWamContractAddress] = useState('0x...')
 
   // Check if Core Wallet is available
   const currentProvider = typeof window !== 'undefined' ? (window.avalanche || window.ethereum) : null
@@ -620,6 +625,96 @@ export default function CreatePage() {
       alert('Failed to create beast. Please try again.')
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const handleBuyTokens = async () => {
+    console.log('Starting buy tokens transaction...')
+    console.log('AVAX Amount:', avaxAmount)
+    console.log('WAM Contract Address:', wamContractAddress)
+    
+    if (!currentProvider) {
+      console.error('No provider available')
+      setError("Please connect your wallet first")
+      return
+    }
+    
+    if (!wamContractAddress || wamContractAddress === "0x...") {
+      console.error('Invalid WAM contract address')
+      setError("Please set a valid WAM contract address")
+      return
+    }
+    
+    if (!avaxAmount || parseFloat(avaxAmount) <= 0) {
+      console.error('Invalid AVAX amount')
+      setError("Please enter a valid AVAX amount")
+      return
+    }
+    
+    setIsBuyingTokens(true)
+    setError(null)
+    setSuccess(null)
+    setBuyTokensHash(null)
+    
+    try {
+      console.log('Creating provider and signer...')
+      const provider = new ethers.BrowserProvider(currentProvider)
+      await provider.send('eth_requestAccounts', [])
+      const signer = await provider.getSigner()
+      
+      console.log('Signer address:', await signer.getAddress())
+      console.log('Creating contract instance with ABI...')
+      const contract = new ethers.Contract(wamContractAddress, WamWithDispenserABI, signer)
+      
+      console.log('Contract instance created:', contract.target)
+      console.log('Parsing AVAX amount:', avaxAmount)
+      const valueInWei = ethers.parseEther(avaxAmount)
+      console.log('Value in Wei:', valueInWei.toString())
+      
+      console.log('Estimating gas for buyTokens...')
+      let gasEstimate
+      try {
+        gasEstimate = await contract.buyTokens.estimateGas({ value: valueInWei })
+        console.log('Gas estimate:', gasEstimate.toString())
+      } catch (gasError) {
+        console.warn('Gas estimation failed, using default:', gasError)
+        gasEstimate = 500000n
+      }
+      
+      console.log('Calling buyTokens with value:', valueInWei.toString())
+      const tx = await contract.buyTokens({ 
+        value: valueInWei,
+        gasLimit: gasEstimate * 120n / 100n
+      })
+      
+      console.log('Transaction submitted:', tx.hash)
+      setBuyTokensHash(tx.hash)
+      setSuccess("Buy tokens transaction submitted! Waiting for confirmation...")
+      
+      console.log('Waiting for transaction confirmation...')
+      const receipt = await tx.wait()
+      console.log('Transaction confirmed:', receipt)
+      console.log('Block number:', receipt.blockNumber)
+      console.log('Gas used:', receipt.gasUsed.toString())
+      
+      setSuccess("🎉 Tokens purchased successfully!")
+      setIsBuyingTokens(false)
+      
+    } catch (error) {
+      console.error('Buy tokens error:', error)
+      if (error instanceof Error) {
+        console.error('Error message:', error.message)
+        if (error.message.includes('user rejected')) {
+          setError("Transaction was rejected by user")
+        } else if (error.message.includes('insufficient funds')) {
+          setError("Insufficient AVAX for transaction")
+        } else {
+          setError(`Transaction failed: ${error.message}`)
+        }
+      } else {
+        setError('Failed to buy tokens')
+      }
+      setIsBuyingTokens(false)
     }
   }
 
