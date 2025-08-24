@@ -493,7 +493,7 @@ export default function ProfilePage() {
   const [showWithdrawPopup, setShowWithdrawPopup] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState("")
   const [withdrawAddress, setWithdrawAddress] = useState("")
-  const wamContractAddress = '0x286AcCEd7205655F3Aab711d805E64A728c96B06'
+  const wamContractAddress = '0x3841F6eeE655a48945CDD8102fE0dba51a2a8b43'
   const [isBuyingTokens, setIsBuyingTokens] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
