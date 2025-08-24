@@ -5,6 +5,8 @@ import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useWallet } from "../../components/wallet/WalletProvider"
+import WamWithDispenserABI from "../../abi/WamWithDispenser.json"
+import { ethers } from 'ethers'
 
 const ProfileHeader = styled.div`
   display: flex;
@@ -491,6 +493,10 @@ export default function ProfilePage() {
   const [showWithdrawPopup, setShowWithdrawPopup] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState("")
   const [withdrawAddress, setWithdrawAddress] = useState("")
+  const wamContractAddress = '0x286AcCEd7205655F3Aab711d805E64A728c96B06'
+  const [isBuyingTokens, setIsBuyingTokens] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const handleDeposit = () => {
     setShowDepositPopup(true)
@@ -508,6 +514,86 @@ export default function ProfilePage() {
 
   const handleMaxWithdraw = () => {
     setWithdrawAmount(wallet.balance)
+  }
+
+  const handleBuyTokens = async () => {
+    console.log('Starting buy tokens transaction...')
+    console.log('AVAX Amount:', withdrawAmount)
+    console.log('WAM Contract Address:', wamContractAddress)
+    
+    const currentProvider = typeof window !== 'undefined' ? (window.avalanche || window.ethereum) : null
+    
+    if (!currentProvider) {
+      console.error('No provider available')
+      setError("Please connect your wallet first")
+      return
+    }
+    
+
+    
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      console.error('Invalid AVAX amount')
+      setError("Please enter a valid AVAX amount")
+      return
+    }
+    
+    setIsBuyingTokens(true)
+    setError(null)
+    setSuccess(null)
+    const ABI = [
+      "function buyTokens() payable",
+      "function balanceOf(address account) view returns (uint256)",
+      "function decimals() view returns (uint8)",
+      "function symbol() view returns (string)"
+    ];
+    try {
+      console.log('Creating provider and signer...')
+      const provider = new ethers.BrowserProvider(currentProvider)
+      await provider.send('eth_requestAccounts', [])
+      const signer = await provider.getSigner()
+      
+      console.log('Signer address:', await signer.getAddress())
+      console.log('Creating contract instance with ABI...')
+      const contract = new ethers.Contract(wamContractAddress, WamWithDispenserABI.abi, signer)
+      
+      console.log('Contract instance created:', contract.target)
+      console.log('Parsing AVAX amount:', withdrawAmount)
+      const valueInWei = ethers.parseEther(withdrawAmount)
+      console.log('Value in Wei:', valueInWei.toString())
+      
+      console.log('Calling buyTokens with value:', valueInWei.toString())
+      const tx = await contract.buyTokens({ value: valueInWei })
+      
+      console.log('Transaction submitted:', tx.hash)
+      setSuccess("Buy tokens transaction submitted! Waiting for confirmation...")
+      
+      console.log('Waiting for transaction confirmation...')
+      const receipt = await tx.wait()
+      console.log('Transaction confirmed:', receipt)
+      console.log('Block number:', receipt.blockNumber)
+      console.log('Gas used:', receipt.gasUsed.toString())
+      
+      setSuccess("🎉 Tokens purchased successfully!")
+      setShowDepositPopup(false)
+      setWithdrawAmount('')
+      
+    } catch (error) {
+      console.error('Buy tokens error:', error)
+      if (error instanceof Error) {
+        console.error('Error message:', error.message)
+        if (error.message.includes('user rejected')) {
+          setError("Transaction was rejected by user")
+        } else if (error.message.includes('insufficient funds')) {
+          setError("Insufficient AVAX for transaction")
+        } else {
+          setError(`Transaction failed: ${error.message}`)
+        }
+      } else {
+        setError('Failed to buy tokens')
+      }
+    } finally {
+      setIsBuyingTokens(false)
+    }
   }
 
   const handleConfirmWithdraw = () => {
@@ -628,6 +714,7 @@ export default function ProfilePage() {
             <PopupText>
               Exchange your AVAX for $WAM tokens. Enter the amount of AVAX to spend.
             </PopupText>
+
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <InputField
                 type="number"
@@ -638,24 +725,41 @@ export default function ProfilePage() {
               />
               <MaxButton onClick={handleMaxWithdraw}>MAX</MaxButton>
             </div>
-            <PopupText style={{ fontSize: '12px', margin: '8px 0' }}>
-              You will receive: {withdrawAmount ? (parseFloat(withdrawAmount) * 100).toFixed(0) : '0'} $WAM
-              <br />Rate: 1 AVAX = 100 $WAM
-            </PopupText>
+            {error && (
+              <div style={{
+                background: 'var(--brutal-red)',
+                padding: '8px',
+                border: '2px solid var(--border-primary)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '12px',
+                margin: '8px 0'
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+            {success && (
+              <div style={{
+                background: 'var(--brutal-lime)',
+                padding: '8px',
+                border: '2px solid var(--border-primary)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '12px',
+                margin: '8px 0'
+              }}>
+                ✅ {success}
+              </div>
+            )}
             <PopupButtons>
               <PopupButton onClick={() => setShowDepositPopup(false)}>
                 CANCEL
               </PopupButton>
               <PopupButton 
-                onClick={() => {
-                  // TODO: Call smart contract to buy $WAM
-                  console.log(`Buying ${withdrawAmount ? (parseFloat(withdrawAmount) * 100).toFixed(0) : '0'} $WAM for ${withdrawAmount} AVAX`)
-                  setShowDepositPopup(false)
-                  setWithdrawAmount('')
-                }}
-                disabled={!withdrawAmount}
+                onClick={handleBuyTokens}
+                disabled={!withdrawAmount || isBuyingTokens}
               >
-                BUY $WAM
+                {isBuyingTokens ? 'BUYING...' : 'BUY $WAM'}
               </PopupButton>
             </PopupButtons>
           </PopupContent>
