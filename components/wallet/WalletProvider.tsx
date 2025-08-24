@@ -20,6 +20,8 @@ interface WalletContextType {
   connectWallet: () => Promise<void>
   disconnectWallet: () => void
   switchNetwork: (chainId: number) => Promise<void>
+  createMatch: (opponent: string, amount: number, duration: number) => Promise<string>
+  joinTournament: (tournamentId: string, entryFee: number) => Promise<void>
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -137,6 +139,16 @@ function WalletProviderInner({ children }: WalletProviderProps) {
     }
   }
 
+  const createMatch = async (opponent: string, amount: number, duration: number) => {
+    const matchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    console.log(`Creating match against ${opponent} for ${amount} tokens, duration: ${duration}s`)
+    return matchId
+  }
+
+  const joinTournament = async (tournamentId: string, entryFee: number) => {
+    console.log(`Joining tournament ${tournamentId} with entry fee ${entryFee}`)
+  }
+
   return (
     <WalletContext.Provider
       value={{
@@ -144,6 +156,8 @@ function WalletProviderInner({ children }: WalletProviderProps) {
         connectWallet,
         disconnectWallet,
         switchNetwork,
+        createMatch,
+        joinTournament,
       }}
     >
       {children}
