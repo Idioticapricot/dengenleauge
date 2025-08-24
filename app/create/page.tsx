@@ -442,7 +442,7 @@ interface BeastData {
 }
 
 const CONTRACT_ADDRESSES = {
-  fuji: "0x72Fcb845CD13C918912E25738fD66B92389CF58C",
+  fuji: "0x4161c6e2B8f787E1d4d06EeDCb83E00b709d5C7c",
   mainnet: "0x...",
 }
 
