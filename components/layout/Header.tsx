@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
 import { useWallet } from "../wallet/WalletProvider"
 import { useRouter } from "next/navigation"
+import WamWithDispenserABI from "../../abi/WamWithDispenser.json"
+import { ethers } from 'ethers'
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -207,6 +209,8 @@ export function Header() {
   const { wallet, switchNetwork } = useWallet()
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
+  const [wamBalance, setWamBalance] = useState('0')
+  const TOKEN_ADDRESS = "0x286AcCEd7205655F3Aab711d805E64A728c96B06"
 
   const handleWamClick = () => {
     setShowWamPopup(true)
@@ -228,6 +232,43 @@ export function Header() {
       switchNetwork(43114) // Switch to Avalanche mainnet
     }
   }
+
+  const fetchWamBalance = async () => {
+    if (!wallet.isConnected || !wallet.address) {
+      console.log('Wallet not connected or no address')
+      return
+    }
+    
+    try {
+      console.log('Fetching WAM balance for:', wallet.address)
+      const currentProvider = typeof window !== 'undefined' ? (window.avalanche || window.ethereum) : null
+      if (!currentProvider) {
+        console.log('No provider available')
+        return
+      }
+      
+      const provider = new ethers.BrowserProvider(currentProvider)
+      const signer = await provider.getSigner()
+      console.log('Creating contract with address:', TOKEN_ADDRESS)
+      const contract = new ethers.Contract(TOKEN_ADDRESS, WamWithDispenserABI.abi, signer)
+      
+      console.log('Calling balanceOf...')
+      const balance = await contract.balanceOf(wallet.address)
+      console.log('Raw WAM balance (BigInt):', balance)
+      console.log('Raw WAM balance (toString):', balance.toString())
+      console.log('Raw WAM balance (Number):', Number(balance))
+      
+      // Show the raw integer value, not the decimal wei value
+      setWamBalance(balance.toString())
+    } catch (error) {
+      console.error('Error fetching WAM balance:', error)
+      setWamBalance('0')
+    }
+  }
+
+  useEffect(() => {
+    fetchWamBalance()
+  }, [wallet.isConnected, wallet.address])
 
   const getNetworkName = () => {
     switch (wallet.network) {
@@ -265,7 +306,7 @@ export function Header() {
       <LeftSection>
         <BalanceContainer>
           <TokenIcon>$WAM</TokenIcon>
-          <Balance>{parseFloat(wallet.balance).toFixed(2)}</Balance>
+          <Balance>{wamBalance}</Balance>
           <AddButton onClick={handleWamClick}>+</AddButton>
         </BalanceContainer>
         {wallet.isConnected && (
