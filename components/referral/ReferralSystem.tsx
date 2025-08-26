@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useWallet } from "../wallet/WalletProvider"
+import { useAlgorandWallet } from "../wallet/AlgorandWalletProvider"
 
 interface ReferralData {
   code: string
@@ -20,7 +20,7 @@ interface ReferralRecord {
 }
 
 export function useReferralSystem() {
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
   const [referralData, setReferralData] = useState<ReferralData>({
     code: "",
     totalReferrals: 0,

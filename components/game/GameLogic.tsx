@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useWallet } from "../wallet/WalletProvider"
+import { useAlgorandWallet } from "../wallet/AlgorandWalletProvider"
 
 interface GameState {
   isActive: boolean
@@ -45,7 +45,12 @@ interface LiveMatch {
 }
 
 export function useGameLogic() {
-  const { wallet, createMatch } = useWallet()
+  const { wallet } = useAlgorandWallet()
+  // TODO: Implement createMatch for Algorand
+  const createMatch = async (opponent: string, amount: number, duration: number) => {
+    console.log('Creating match on Algorand:', { opponent, amount, duration })
+    return `match_${Date.now()}`
+  }
   const [gameState, setGameState] = useState<GameState>({
     isActive: false,
     timeRemaining: 0,
@@ -246,7 +251,11 @@ export function useRealTimeMatches() {
 }
 
 export function useTournamentLogic() {
-  const { wallet, joinTournament } = useWallet()
+  const { wallet } = useAlgorandWallet()
+  // TODO: Implement joinTournament for Algorand
+  const joinTournament = async (tournamentId: string, entryFee: number) => {
+    console.log('Joining tournament on Algorand:', { tournamentId, entryFee })
+  }
   const [activeTournaments, setActiveTournaments] = useState<any[]>([])
 
   const joinTournamentHandler = async (tournamentId: string, entryFee: number) => {

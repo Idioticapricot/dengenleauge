@@ -4,10 +4,9 @@ import { useState, useEffect } from "react"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
 import { BeastCard as BeastCardComponent } from "../beast/BeastCard"
-import { useWallet } from "../wallet/WalletProvider"
+import { useAlgorandWallet } from "../wallet/AlgorandWalletProvider"
 import { Beast } from "../../types/beast"
-import { ethers } from "ethers"
-import Marketplace from  "../../abi/ERC20MarketplaceWithIndex.json"
+import { algodClient } from "../../lib/algorand-config"
 
 interface SellModalProps {
   onClose: () => void
@@ -165,7 +164,7 @@ export function SellModal({ onClose, onSellComplete }: SellModalProps) {
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [selling, setSelling] = useState(false)
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
   const [txHash, setTxHash] = useState<string | null>(null)
   const [txStatus, setTxStatus] = useState<'idle' | 'pending' | 'confirming' | 'success' | 'error'>('idle')
 

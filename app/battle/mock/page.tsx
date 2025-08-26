@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { useWallet } from '@/components/wallet/WalletProvider'
+import { useAlgorandWallet } from '@/components/wallet/AlgorandWalletProvider'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { MoveSelector } from '@/components/battle/MoveSelector'
 import { BattleLog } from '@/components/battle/BattleLog'
@@ -135,7 +135,7 @@ const generateRandomBeast = (id: string) => {
 
 export default function MockBattlePage() {
   const router = useRouter()
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
   
   const [playerBeast, setPlayerBeast] = useState(() => generateRandomBeast('1'))
   const [opponentBeast, setOpponentBeast] = useState(() => generateRandomBeast('2'))

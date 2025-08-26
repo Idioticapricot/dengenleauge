@@ -4,9 +4,9 @@ import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
-import { useWallet } from "../../components/wallet/WalletProvider"
+import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
 import { TokenGrid } from "../../components/token/TokenGrid"
-import { ConnectWalletButton } from "../../components/wallet/ConnectWalletButton"
+import { AlgorandConnectButton } from "../../components/wallet/AlgorandConnectButton"
 import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
 
 import Link from "next/link"
@@ -573,7 +573,7 @@ export default function HomePage() {
   const [timeLeft, setTimeLeft] = useState("1m")
   const [currentTeam, setCurrentTeam] = useState<(any | null)[]>([null, null, null])
   const [loading, setLoading] = useState(true)
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
 
   useEffect(() => {
     const fetchUserTeam = async () => {
@@ -643,9 +643,9 @@ export default function HomePage() {
             <ConnectWalletSubtitle>
               Connect your Avalanche wallet to start battling, minting beasts, and earning rewards
             </ConnectWalletSubtitle>
-            <ConnectWalletButton variant="primary">
+            <AlgorandConnectButton variant="primary">
               Connect Wallet
-            </ConnectWalletButton>
+            </AlgorandConnectButton>
           </ConnectWalletSection>
         )}
 

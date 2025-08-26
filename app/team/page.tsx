@@ -4,12 +4,8 @@ import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
-import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
-import { LevelUpModal } from "../../components/beast/LevelUpModal"
-import { LearnMoveModal } from "../../components/beast/LearnMoveModal"
-import { Beast } from "../../types/beast"
-import { getAvailableMoves } from "../../data/mockMoves"
-import { useWallet } from "../../components/wallet/WalletProvider"
+import { MemeCard } from "../../components/meme/MemeCard"
+import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
 
 const TeamContainer = styled.div`
   display: flex;
@@ -210,200 +206,66 @@ const SaveTeamButton = styled(Button)`
 
 
 export default function TeamPage() {
-  const [currentTeam, setCurrentTeam] = useState<(Beast | null)[]>([null, null, null])
-  const [selectedBeasts, setSelectedBeasts] = useState<string[]>([])
-  const [levelUpBeast, setLevelUpBeast] = useState<string | null>(null)
-  const [learnMoveBeast, setLearnMoveBeast] = useState<string | null>(null)
-  const [userBeasts, setUserBeasts] = useState<Beast[]>([])
+  const [currentTeam, setCurrentTeam] = useState<any[]>([null, null, null])
+  const [selectedCoins, setSelectedCoins] = useState<number[]>([])
+  const [memeCoins, setMemeCoins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState<string | null>(null)
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
+
+  const fetchMemeCoins = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('https://api.vestigelabs.org/assets/list?network_id=0&exclude_labels=8,7&denominating_asset_id=31566704&limit=20&offset=0&order_by=rank&order_dir=asc')
+      const data = await response.json()
+      setMemeCoins(data.results || [])
+    } catch (error) {
+      console.error('Failed to fetch meme coins:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const initializeUser = async () => {
-      if (!wallet.isConnected || !wallet.address) {
-        setLoading(false)
-        return
-      }
+    fetchMemeCoins()
+  }, [])
 
-      try {
-        // Create or get user
-        const userResponse = await fetch('/api/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            walletAddress: wallet.address,
-            username: `User_${wallet.address.slice(-6)}`
-          })
-        })
-
-        if (userResponse.ok) {
-          const user = await userResponse.json()
-          setUserId(user.id)
-
-          // Fetch user's beasts
-          const beastsResponse = await fetch(`/api/beasts?userId=${user.id}`)
-          if (beastsResponse.ok) {
-            const beasts = await beastsResponse.json()
-            setUserBeasts(beasts)
-          }
-
-          // Fetch user's saved team
-          const teamResponse = await fetch(`/api/teams?userId=${user.id}`)
-          if (teamResponse.ok) {
-            const team = await teamResponse.json()
-            if (team && (team.beast1 || team.beast2 || team.beast3)) {
-              const savedTeam = [team.beast1, team.beast2, team.beast3].map(beast => {
-                if (!beast) return null
-                return {
-                  id: beast.id,
-                  name: beast.name,
-                  tier: beast.tier.toLowerCase(),
-                  level: beast.level,
-                  exp: { current: beast.currentExp, required: beast.requiredExp },
-                  stats: { health: beast.health, stamina: beast.stamina, power: beast.power },
-                  elementType: beast.elementType.toLowerCase(),
-                  rarity: beast.rarity.toLowerCase(),
-                  imageUrl: beast.nftMetadataUri,
-                  moves: beast.moves.map(bm => ({
-                    id: bm.move.id,
-                    name: bm.move.name,
-                    damage: bm.move.damage,
-                    elementType: bm.move.elementType.toLowerCase(),
-                    cooldown: bm.move.cooldown,
-                    description: bm.move.description
-                  }))
-                }
-              })
-              setCurrentTeam(savedTeam)
-              setSelectedBeasts(savedTeam.filter(Boolean).map(beast => beast.id))
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing user:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    initializeUser()
-  }, [wallet.isConnected, wallet.address])
-
-  const handleBeastSelect = (beastId: string) => {
-    const beast = userBeasts.find(b => b.id === beastId)
-    if (!beast) return
+  const handleCoinSelect = (assetId: number) => {
+    const coin = memeCoins.find(c => c.asset_id === assetId)
+    if (!coin) return
     
     const emptySlotIndex = currentTeam.findIndex(slot => slot === null)
-    if (emptySlotIndex !== -1 && !selectedBeasts.includes(beast.id)) {
+    if (emptySlotIndex !== -1 && !selectedCoins.includes(coin.asset_id)) {
       const newTeam = [...currentTeam]
-      newTeam[emptySlotIndex] = beast
+      newTeam[emptySlotIndex] = coin
       setCurrentTeam(newTeam)
-      setSelectedBeasts([...selectedBeasts, beast.id])
+      setSelectedCoins([...selectedCoins, coin.asset_id])
     }
   }
 
-  const handleLevelUp = (beastId: string) => {
-    setLevelUpBeast(beastId)
-  }
 
-  const handleConfirmLevelUp = async (beastId: string, newStats: { health: number; stamina: number; power: number }) => {
-    try {
-      const response = await fetch('/api/beasts/level-up', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ beastId, newStats })
-      })
-      
-      if (response.ok) {
-        const { beast, shouldLearnMove } = await response.json()
-        
-        // Update local state
-        setUserBeasts(prev => prev.map(b => b.id === beastId ? { ...b, ...beast } : b))
-        
-        if (shouldLearnMove) {
-          setLearnMoveBeast(beastId)
-        }
-      }
-    } catch (error) {
-      console.error('Error leveling up beast:', error)
-    }
-    
-    setLevelUpBeast(null)
-  }
-
-  const handleLearnMove = async (beastId: string, moveId: string, slotIndex: number) => {
-    try {
-      const response = await fetch('/api/beasts/learn-move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ beastId, moveId, slotIndex })
-      })
-      
-      if (response.ok) {
-        // Refresh user beasts
-        if (userId) {
-          const beastsResponse = await fetch(`/api/beasts?userId=${userId}`)
-          if (beastsResponse.ok) {
-            const beasts = await beastsResponse.json()
-            setUserBeasts(beasts)
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error learning move:', error)
-    }
-    
-    setLearnMoveBeast(null)
-  }
-
-  const handleCloseLearnMove = () => {
-    setLearnMoveBeast(null)
-  }
-
-  const handleCloseLevelUp = () => {
-    setLevelUpBeast(null)
-  }
 
   const handleSlotClick = (index: number) => {
     if (currentTeam[index]) {
-      const beastId = currentTeam[index]!.id
+      const assetId = currentTeam[index]!.asset_id
       const newTeam = [...currentTeam]
       newTeam[index] = null
       setCurrentTeam(newTeam)
-      setSelectedBeasts(selectedBeasts.filter(id => id !== beastId))
+      setSelectedCoins(selectedCoins.filter(id => id !== assetId))
     }
   }
 
-  const handleSaveTeam = async () => {
-    if (!userId || currentTeam.filter(Boolean).length !== 3) return
-    
-    try {
-      const response = await fetch('/api/teams', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          beast1Id: currentTeam[0]?.id || null,
-          beast2Id: currentTeam[1]?.id || null,
-          beast3Id: currentTeam[2]?.id || null
-        })
-      })
-      
-      if (response.ok) {
-        alert('Team saved successfully!')
-      }
-    } catch (error) {
-      console.error('Error saving team:', error)
-    }
+  const handleSaveTeam = () => {
+    if (currentTeam.filter(Boolean).length !== 3) return
+    localStorage.setItem('selectedTeam', JSON.stringify(currentTeam.filter(Boolean)))
+    alert('Team saved successfully!')
   }
 
   return (
     <AppLayout>
       <TeamContainer>
         <TeamHeader>
-          <TeamTitle>⚔️ MY TEAM</TeamTitle>
-          <TeamSubtitle>Select 3 beasts for battle</TeamSubtitle>
+          <TeamTitle>⚔️ MEME COIN BATTLE</TeamTitle>
+          <TeamSubtitle>Select 3 meme coins and battle other players</TeamSubtitle>
         </TeamHeader>
 
         <CurrentTeamSection>
@@ -412,30 +274,15 @@ export default function TeamPage() {
             {currentTeam.map((beast, index) => (
               <TeamSlot 
                 key={index} 
-                $filled={!!beast}
+                $filled={!!currentTeam[index]}
                 onClick={() => handleSlotClick(index)}
               >
-                {beast ? (
+                {currentTeam[index] ? (
                   <>
-                    
-                    {beast.imageUrl ? (
-                      <img 
-                        src={beast.imageUrl} 
-                        alt={beast.name}
-                        style={{
-                          width: '100px',
-                          height: '100px',
-                          objectFit: 'cover',
-                          border: '2px solid var(--border-primary)',
-                          imageRendering: 'pixelated'
-                        }}
-                      />
-                    ) : (
-                      <div style={{ height: '70px' }} />
-                    )}
+                    <SlotIcon>🪙</SlotIcon>
                     <div>
-                      <BeastName>{beast.name}</BeastName>
-                      <BeastLevel>LVL {beast.level}</BeastLevel>
+                      <BeastName>{currentTeam[index].name || 'Unknown'}</BeastName>
+                      <BeastLevel>{currentTeam[index].unit_name || 'N/A'}</BeastLevel>
                     </div>
                   </>
                 ) : (
@@ -453,69 +300,32 @@ export default function TeamPage() {
             disabled={currentTeam.filter(Boolean).length !== 3}
             onClick={handleSaveTeam}
           >
-            SAVE TEAM ({currentTeam.filter(Boolean).length}/3)
+            START BATTLE ({currentTeam.filter(Boolean).length}/3)
           </SaveTeamButton>
         </CurrentTeamSection>
 
         <MyBeastsSection>
-          <SectionTitle>MY BEASTS</SectionTitle>
+          <SectionTitle>AVAILABLE MEME COINS</SectionTitle>
           <BeastGrid>
             {loading ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>Loading beasts...</div>
-            ) : !wallet.isConnected ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>Loading meme coins...</div>
+            ) : memeCoins.length === 0 ? (
               <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>
-                <h3>🔗 Wallet Connection Required</h3>
-                <p>Connect your wallet to view and manage your beasts</p>
-              </div>
-            ) : userBeasts.length === 0 ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>
-                <h3>🐲 No Beasts Found</h3>
-                <p>Create your first beast to start building your team!</p>
+                <h3>🪙 No Meme Coins Found</h3>
+                <p>No meme coins available at the moment. Check back later!</p>
               </div>
             ) : (
-              userBeasts.map((beast) => (
-                <BeastCardComponent
-                  key={beast.id}
-                  beast={beast}
-                  selected={selectedBeasts.includes(beast.id)}
-                  onSelect={handleBeastSelect}
-                  onLevelUp={handleLevelUp}
-                />
+              memeCoins.map((coin) => (
+                <div key={coin.asset_id} onClick={() => handleCoinSelect(coin.asset_id)}>
+                  <MemeCard asset={coin} />
+                </div>
               ))
             )}
           </BeastGrid>
         </MyBeastsSection>
       </TeamContainer>
 
-      {levelUpBeast && (
-        <LevelUpModal
-          beastId={levelUpBeast}
-          beastName={userBeasts.find(b => b.id === levelUpBeast)?.name || "Unknown Beast"}
-          currentLevel={userBeasts.find(b => b.id === levelUpBeast)?.level || 1}
-          currentStats={userBeasts.find(b => b.id === levelUpBeast) ? {
-            health: userBeasts.find(b => b.id === levelUpBeast)!.health,
-            stamina: userBeasts.find(b => b.id === levelUpBeast)!.stamina,
-            power: userBeasts.find(b => b.id === levelUpBeast)!.power
-          } : { health: 0, stamina: 0, power: 0 }}
-          onConfirm={handleConfirmLevelUp}
-          onClose={handleCloseLevelUp}
-        />
-      )}
 
-      {learnMoveBeast && (
-        <LearnMoveModal
-          beastId={learnMoveBeast}
-          beastName={userBeasts.find(b => b.id === learnMoveBeast)?.name || "Unknown Beast"}
-          currentLevel={userBeasts.find(b => b.id === learnMoveBeast)?.level || 1}
-          currentMoves={userBeasts.find(b => b.id === learnMoveBeast)?.moves || []}
-          availableMoves={getAvailableMoves(
-            userBeasts.find(b => b.id === learnMoveBeast)?.elementType || 'fire',
-            userBeasts.find(b => b.id === learnMoveBeast)?.level || 1
-          )}
-          onConfirm={handleLearnMove}
-          onClose={handleCloseLearnMove}
-        />
-      )}
     </AppLayout>
   )
 }

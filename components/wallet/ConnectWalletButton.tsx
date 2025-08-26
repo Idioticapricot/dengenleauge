@@ -50,13 +50,13 @@ export function ConnectWalletButton({
   children = "Connect Wallet",
   className 
 }: ConnectWalletButtonProps) {
-  const { wallet, connectWallet } = useWallet()
+  const { wallet, connectWallet, disconnectWallet } = useWallet()
 
   if (wallet.isConnected) {
     return (
-      <ConnectButton $variant={variant} className={className} disabled>
+      <ConnectButton $variant={variant} className={className} onClick={disconnectWallet}>
         <WalletIcon>🔗</WalletIcon>
-        Connected
+        Disconnect
       </ConnectButton>
     )
   }

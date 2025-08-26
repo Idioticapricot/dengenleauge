@@ -5,7 +5,7 @@ import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useTournamentLogic } from "../../components/game/GameLogic"
-import { useWallet } from "../../components/wallet/WalletProvider"
+import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
 
 const CalendarContainer = styled.div`
   background: var(--light-bg);
@@ -348,7 +348,7 @@ export default function TournamentPage() {
   })
   const [notification, setNotification] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null)
 
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
   const { joinTournament } = useTournamentLogic()
 
   useEffect(() => {

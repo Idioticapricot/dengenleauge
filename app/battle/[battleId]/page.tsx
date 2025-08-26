@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { useWallet } from '@/components/wallet/WalletProvider'
+import { useAlgorandWallet } from '@/components/wallet/AlgorandWalletProvider'
 import { supabase } from '@/lib/supabase'
 import styled from 'styled-components'
 import { Button } from '@/components/styled/GlobalStyles'
@@ -252,7 +252,7 @@ const VSIndicator = styled.div`
 export default function BattlePage() {
   const params = useParams()
   const battleId = params.battleId as string
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
   
   const [battle, setBattle] = useState<any>(null)
   const [isMyTurn, setIsMyTurn] = useState(false)

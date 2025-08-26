@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
-import { useWallet } from "../wallet/WalletProvider"
+import { useAlgorandWallet } from "../wallet/AlgorandWalletProvider"
 import { useRouter } from "next/navigation"
-import WamWithDispenserABI from "../../abi/WamWithDispenser.json"
-import { ethers } from 'ethers'
+import { algodClient } from "../../lib/algorand-config"
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -206,7 +205,7 @@ const NetworkDot = styled.div<{ $network: string }>`
 `
 
 export function Header() {
-  const { wallet, switchNetwork } = useWallet()
+  const { wallet } = useAlgorandWallet()
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
   const [wamBalance, setWamBalance] = useState('0')
@@ -226,40 +225,21 @@ export function Header() {
   }
 
   const handleNetworkSwitch = () => {
-    if (wallet.network === "avalanche") {
-      switchNetwork(43113) // Switch to Fuji testnet
-    } else {
-      switchNetwork(43114) // Switch to Avalanche mainnet
-    }
+    // Algorand doesn't need network switching like EVM chains
+    console.log('Network switching not needed on Algorand')
   }
 
   const fetchWamBalance = async () => {
-    if (!wallet.isConnected || !wallet.address) {
-      console.log('Wallet not connected or no address')
-      return
-    }
+    if (!wallet.isConnected || !wallet.address) return
     
     try {
-      console.log('Fetching WAM balance for:', wallet.address)
-      const currentProvider = typeof window !== 'undefined' ? (window.avalanche || window.ethereum) : null
-      if (!currentProvider) {
-        console.log('No provider available')
-        return
-      }
+      // TODO: Replace with actual WAM ASA ID when deployed
+      const WAM_ASA_ID = 0 // Placeholder
+      const accountInfo = await algodClient.accountInformation(wallet.address).do()
       
-      const provider = new ethers.BrowserProvider(currentProvider)
-      const signer = await provider.getSigner()
-      console.log('Creating contract with address:', TOKEN_ADDRESS)
-      const contract = new ethers.Contract(TOKEN_ADDRESS, WamWithDispenserABI.abi, signer)
-      
-      console.log('Calling balanceOf...')
-      const balance = await contract.balanceOf(wallet.address)
-      console.log('Raw WAM balance (BigInt):', balance)
-      console.log('Raw WAM balance (toString):', balance.toString())
-      console.log('Raw WAM balance (Number):', Number(balance))
-      
-      // Show the raw integer value, not the decimal wei value
-      setWamBalance(balance.toString())
+      // Find WAM asset in account assets
+      const wamAsset = accountInfo.assets?.find((asset: any) => asset['asset-id'] === WAM_ASA_ID)
+      setWamBalance(wamAsset ? wamAsset.amount.toString() : '0')
     } catch (error) {
       console.error('Error fetching WAM balance:', error)
       setWamBalance('0')
@@ -271,14 +251,7 @@ export function Header() {
   }, [wallet.isConnected, wallet.address])
 
   const getNetworkName = () => {
-    switch (wallet.network) {
-      case "avalanche":
-        return "AVAX"
-      case "avalancheFuji":
-        return "FUJI"
-      default:
-        return "UNKNOWN"
-    }
+    return "ALGO" // Algorand network
   }
 
   return (
@@ -311,7 +284,7 @@ export function Header() {
         </BalanceContainer>
         {wallet.isConnected && (
           <NetworkIndicator onClick={handleNetworkSwitch}>
-            <NetworkDot $network={wallet.network} />
+            <NetworkDot $network="algorand" />
             {getNetworkName()}
           </NetworkIndicator>
         )}

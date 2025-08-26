@@ -6,8 +6,7 @@ import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { BeastCard as BeastCardComponent } from "../../components/beast/BeastCard"
 import { SellModal } from "../../components/marketplace/SellModal"
-import { useWallet } from "../../components/wallet/WalletProvider"
-import { ethers } from "ethers"
+import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
 
 const MarketplaceContainer = styled.div`
   display: flex;
@@ -199,7 +198,7 @@ export default function MarketplacePage() {
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [buying, setBuying] = useState<string | null>(null)
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
 
   const marketplaceAddress = "0x3863776EDAb845787a4342FFE29d274A98ebF9Ff"
   const marketplaceAbi = [

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Button } from './styled/GlobalStyles'
 import { useRouter } from 'next/navigation'
-import { useWallet } from './wallet/WalletProvider'
+import { useAlgorandWallet } from './wallet/AlgorandWalletProvider'
 
 const QuickMatchContainer = styled.div`
   display: flex;
@@ -101,7 +101,7 @@ interface QuickMatchProps {
 }
 
 export function QuickMatch({ userId, teamId, onBattleStart }: QuickMatchProps) {
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
   const router = useRouter()
   const [isStarting, setIsStarting] = useState(false)
 

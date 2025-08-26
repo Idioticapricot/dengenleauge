@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { QuickMatch } from '@/components/QuickMatch'
-import { useWallet } from '@/components/wallet/WalletProvider'
+import { useAlgorandWallet } from '@/components/wallet/AlgorandWalletProvider'
 import styled from 'styled-components'
 
 const QuickMatchContainer = styled.div`
@@ -38,7 +38,7 @@ const BackButton = styled.button`
 
 export default function QuickMatchPage() {
   const router = useRouter()
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
   const [userId, setUserId] = useState<string | null>(null)
   const [teamId, setTeamId] = useState<string | null>(null)
 

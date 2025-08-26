@@ -5,9 +5,8 @@ import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { useRouter } from "next/navigation"
-import { useWallet } from "../../components/wallet/WalletProvider"
+import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
 import MyNFTABI from "../../abi/MyNFT.json"
-import { ethers } from 'ethers'
 
 const BackButton = styled(Button)`
   background: var(--brutal-red);
@@ -361,7 +360,7 @@ const OverviewStat = styled.div`
   text-transform: uppercase;
 `
 
-const ConnectWalletButton = styled(Button)`
+const AlgorandConnectButton = styled(Button)`
   background: var(--brutal-lime);
   font-size: 18px;
   padding: 16px 32px;
@@ -506,7 +505,7 @@ const beastTypes = [
 
 export default function CreatePage() {
   const router = useRouter()
-  const { wallet, connectWallet } = useWallet()
+  const { wallet, connectWallet } = useAlgorandWallet()
   const [currentStep, setCurrentStep] = useState<Step>('tier')
   const [beastData, setBeastData] = useState<BeastData>({
     tier: null,
@@ -916,9 +915,9 @@ export default function CreatePage() {
             <div style={{fontSize: '18px', fontWeight: '900', marginBottom: '8px'}}>🔗 CONNECT WALLET</div>
             <div style={{fontSize: '14px', marginBottom: '16px'}}>Connect your Core Wallet to create beasts</div>
           </div>
-          <ConnectWalletButton onClick={connectWallet}>
+          <AlgorandConnectButton onClick={connectWallet}>
             🚀 CONNECT CORE WALLET
-          </ConnectWalletButton>
+          </AlgorandConnectButton>
         </WalletStatus>
       )
     }

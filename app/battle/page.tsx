@@ -9,7 +9,7 @@ import { Beast, Move } from "../../types/beast"
 import { BattleArena } from "../../components/battle/BattleArena"
 import { MoveSelector } from "../../components/battle/MoveSelector"
 import { BattleLog } from "../../components/battle/BattleLog"
-import { useWallet } from "../../components/wallet/WalletProvider"
+import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
 
 const BattleContainer = styled.div`
   display: flex;
@@ -234,7 +234,7 @@ export default function BattlePage() {
   const [player1Team, setPlayer1Team] = useState<Beast[]>([])
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  const { wallet } = useWallet()
+  const { wallet } = useAlgorandWallet()
 
   const [player2Team, setPlayer2Team] = useState<Beast[]>([])
   const [currentOpponentIndex, setCurrentOpponentIndex] = useState(0)

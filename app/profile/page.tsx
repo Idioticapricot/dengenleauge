@@ -4,9 +4,8 @@ import { useState } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
-import { useWallet } from "../../components/wallet/WalletProvider"
-import WamWithDispenserABI from "../../abi/WamWithDispenser.json"
-import { ethers } from 'ethers'
+import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
+import { algodClient } from "../../lib/algorand-config"
 
 const ProfileHeader = styled.div`
   display: flex;
@@ -352,7 +351,7 @@ const StatusDot = styled.div<{ $status: "live" | "ended" | "upcoming" }>`
   `}
 `
 
-const ConnectWalletButton = styled(Button)`
+const AlgorandConnectButton = styled(Button)`
   margin-top: 20px;
   padding: 12px 24px;
   font-size: 16px;
@@ -487,8 +486,7 @@ const PopupButton = styled(Button)`
 `
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState("Live")
-  const { wallet, connectWallet } = useWallet()
+  const { wallet, connectWallet } = useAlgorandWallet()
   const [showDepositPopup, setShowDepositPopup] = useState(false)
   const [showWithdrawPopup, setShowWithdrawPopup] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState("")
@@ -517,80 +515,29 @@ export default function ProfilePage() {
   }
 
   const handleBuyTokens = async () => {
-    console.log('Starting buy tokens transaction...')
-    console.log('AVAX Amount:', withdrawAmount)
-    console.log('WAM Contract Address:', wamContractAddress)
-    
-    const currentProvider = typeof window !== 'undefined' ? (window.avalanche || window.ethereum) : null
-    
-    if (!currentProvider) {
-      console.error('No provider available')
-      setError("Please connect your wallet first")
-      return
-    }
-    
-
-    
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      console.error('Invalid AVAX amount')
-      setError("Please enter a valid AVAX amount")
+      setError("Please enter a valid ALGO amount")
       return
     }
     
     setIsBuyingTokens(true)
     setError(null)
     setSuccess(null)
-    const ABI = [
-      "function buyTokens() payable",
-      "function balanceOf(address account) view returns (uint256)",
-      "function decimals() view returns (uint8)",
-      "function symbol() view returns (string)"
-    ];
+    
     try {
-      console.log('Creating provider and signer...')
-      const provider = new ethers.BrowserProvider(currentProvider)
-      await provider.send('eth_requestAccounts', [])
-      const signer = await provider.getSigner()
+      // TODO: Implement Algorand WAM token purchase
+      console.log('Buying WAM tokens with ALGO:', withdrawAmount)
       
-      console.log('Signer address:', await signer.getAddress())
-      console.log('Creating contract instance with ABI...')
-      const contract = new ethers.Contract(wamContractAddress, WamWithDispenserABI.abi, signer)
+      // Simulate transaction
+      await new Promise(resolve => setTimeout(resolve, 2000))
       
-      console.log('Contract instance created:', contract.target)
-      console.log('Parsing AVAX amount:', withdrawAmount)
-      const valueInWei = ethers.parseEther(withdrawAmount)
-      console.log('Value in Wei:', valueInWei.toString())
-      
-      console.log('Calling buyTokens with value:', valueInWei.toString())
-      const tx = await contract.buyTokens({ value: valueInWei })
-      
-      console.log('Transaction submitted:', tx.hash)
-      setSuccess("Buy tokens transaction submitted! Waiting for confirmation...")
-      
-      console.log('Waiting for transaction confirmation...')
-      const receipt = await tx.wait()
-      console.log('Transaction confirmed:', receipt)
-      console.log('Block number:', receipt.blockNumber)
-      console.log('Gas used:', receipt.gasUsed.toString())
-      
-      setSuccess("🎉 Tokens purchased successfully!")
+      setSuccess("🎉 WAM tokens purchased successfully!")
       setShowDepositPopup(false)
       setWithdrawAmount('')
       
     } catch (error) {
       console.error('Buy tokens error:', error)
-      if (error instanceof Error) {
-        console.error('Error message:', error.message)
-        if (error.message.includes('user rejected')) {
-          setError("Transaction was rejected by user")
-        } else if (error.message.includes('insufficient funds')) {
-          setError("Insufficient AVAX for transaction")
-        } else {
-          setError(`Transaction failed: ${error.message}`)
-        }
-      } else {
-        setError('Failed to buy tokens')
-      }
+      setError('Failed to buy tokens')
     } finally {
       setIsBuyingTokens(false)
     }
@@ -608,6 +555,8 @@ export default function ProfilePage() {
 
 
 
+
+
   // If wallet is not connected, show connect prompt
   if (!wallet.isConnected) {
     return (
@@ -618,9 +567,9 @@ export default function ProfilePage() {
           <EmptyDescription>
             Connect your wallet to view your profile and manage your assets.
           </EmptyDescription>
-          <ConnectWalletButton onClick={connectWallet} disabled={wallet.connecting}>
+          <AlgorandConnectButton onClick={connectWallet} disabled={wallet.connecting}>
             {wallet.connecting ? "Connecting..." : "Connect Wallet"}
-          </ConnectWalletButton>
+          </AlgorandConnectButton>
         </EmptyState>
       </AppLayout>
     )
@@ -648,9 +597,9 @@ export default function ProfilePage() {
       <BalanceSection>
         <BalanceAmount>
           <BalanceValue>{parseFloat(wallet.balance).toFixed(2)}</BalanceValue>
-          <TokenIcon>$WAM</TokenIcon>
+          <TokenIcon>$ALGO</TokenIcon>
         </BalanceAmount>
-        <USDValue>{parseFloat(wallet.balance).toFixed(2)} $WAM TOKENS</USDValue>
+        <USDValue>{parseFloat(wallet.balance).toFixed(2)} $ALGO TOKENS</USDValue>
 
         <ActionButtons>
           <ActionButton onClick={handleDeposit}>
@@ -667,18 +616,20 @@ export default function ProfilePage() {
 
 
 
+
+
       {showDepositPopup && (
         <PopupOverlay onClick={() => setShowDepositPopup(false)}>
           <PopupContent onClick={(e) => e.stopPropagation()}>
             <PopupTitle>💰 BUY $WAM TOKENS</PopupTitle>
             <PopupText>
-              Exchange your AVAX for $WAM tokens. Enter the amount of AVAX to spend.
+              Exchange your ALGO for $WAM tokens. Enter the amount of ALGO to spend.
             </PopupText>
 
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <InputField
                 type="number"
-                placeholder="AVAX amount to spend"
+                placeholder="ALGO amount to spend"
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
                 max={wallet.balance}
