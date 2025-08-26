@@ -139,16 +139,15 @@ export default function MatchmakingPage() {
       setMatchFound(true)
       setOpponent(players.find((p: any) => p.id !== wallet.address))
       
+      setTimeout(() => {
+        router.push(`/battle/room/${roomId}`)
+      }, 3000)
+      
       const countdownInterval = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownInterval)
-            router.push(`/battle/room/${roomId}`)
-            return 0
-          }
-          return prev - 1
-        })
+        setCountdown(prev => prev - 1)
       }, 1000)
+      
+      setTimeout(() => clearInterval(countdownInterval), 3000)
     })
 
     return () => {
