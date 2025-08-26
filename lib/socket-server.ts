@@ -23,9 +23,12 @@ export class BattleServer {
   constructor(server: any) {
     this.io = new Server(server, {
       cors: { 
-        origin: process.env.NODE_ENV === 'production' 
-          ? [process.env.NEXT_PUBLIC_BASE_URL || 'https://your-app.vercel.app']
-          : "*"
+        origin: [
+          'http://localhost:3000',
+          'https://your-app.vercel.app',
+          process.env.NEXT_PUBLIC_BASE_URL
+        ].filter(Boolean),
+        methods: ['GET', 'POST']
       }
     })
     this.setupEventHandlers()
