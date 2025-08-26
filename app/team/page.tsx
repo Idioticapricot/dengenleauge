@@ -15,29 +15,53 @@ const TeamContainer = styled.div`
 
 const TeamHeader = styled.div`
   text-align: center;
-  background: var(--brutal-violet);
-  padding: 24px;
+  background: linear-gradient(135deg, var(--brutal-violet) 0%, var(--brutal-red) 100%);
+  padding: 32px;
   border: 4px solid var(--border-primary);
-  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
   font-family: var(--font-mono);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    animation: shine 3s infinite;
+  }
+  
+  @keyframes shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
 `
 
 const TeamTitle = styled.h1`
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 900;
   color: var(--text-primary);
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
   text-transform: uppercase;
-  letter-spacing: 3px;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px #00ff41, 2px 2px 0px var(--border-primary);
+  position: relative;
+  z-index: 1;
 `
 
 const TeamSubtitle = styled.p`
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px #ff1493;
+  position: relative;
+  z-index: 1;
 `
 
 const CurrentTeamSection = styled.div`
@@ -203,6 +227,45 @@ const SaveTeamButton = styled(Button)`
   }
 `
 
+const SelectableCoinCard = styled.div<{ $selected: boolean }>`
+  cursor: pointer;
+  border: ${props => props.$selected ? '4px solid #00ff41' : '2px solid transparent'};
+  background: ${props => props.$selected ? 'rgba(0, 255, 65, 0.1)' : 'transparent'};
+  padding: ${props => props.$selected ? '4px' : '6px'};
+  transition: all 0.2s ease;
+  border-radius: 12px;
+  position: relative;
+  
+  ${props => props.$selected && `
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.3), inset 0 0 20px rgba(0, 255, 65, 0.1);
+    
+    &::before {
+      content: '✓';
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #00ff41;
+      color: #000;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      z-index: 10;
+      box-shadow: 0 0 10px #00ff41;
+    }
+  `}
+  
+  &:hover {
+    background: ${props => props.$selected ? 'rgba(0, 255, 65, 0.15)' : 'rgba(0, 255, 65, 0.05)'};
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 255, 65, 0.2);
+  }
+`
+
 
 
 export default function TeamPage() {
@@ -210,14 +273,17 @@ export default function TeamPage() {
   const [selectedCoins, setSelectedCoins] = useState<number[]>([])
   const [memeCoins, setMemeCoins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [favoriteCoins, setFavoriteCoins] = useState<number[]>([])
+  const [teamPresets, setTeamPresets] = useState<any[]>([])
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const { wallet } = useAlgorandWallet()
 
   const fetchMemeCoins = async () => {
     setLoading(true)
     try {
-      const response = await fetch('https://api.vestigelabs.org/assets/list?network_id=0&exclude_labels=8,7&denominating_asset_id=31566704&limit=20&offset=0&order_by=rank&order_dir=asc')
+      const response = await fetch('/api/meme-coins?symbols=DOGE,SHIB,PEPE,FLOKI,BONK,WIF,BABYDOGE,ELON,KISHU,SAFEMOON')
       const data = await response.json()
-      setMemeCoins(data.results || [])
+      setMemeCoins(data.coins || [])
     } catch (error) {
       console.error('Failed to fetch meme coins:', error)
     } finally {
@@ -228,17 +294,56 @@ export default function TeamPage() {
   useEffect(() => {
     fetchMemeCoins()
   }, [])
+  
+  useEffect(() => {
+    if (wallet?.address) {
+      initializeUser()
+    }
+  }, [wallet?.address])
+  
+  const initializeUser = async () => {
+    try {
+      if (!wallet?.address) return
+      
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: wallet.address })
+      })
+      
+      const data = await response.json()
+      if (data.user) {
+        setCurrentUser(data.user)
+        setFavoriteCoins(data.user.favorites.map((f: any) => f.coinId))
+        setTeamPresets(data.user.presets)
+      }
+    } catch (error) {
+      console.error('Failed to initialize user:', error)
+    }
+  }
 
-  const handleCoinSelect = (assetId: number) => {
-    const coin = memeCoins.find(c => c.asset_id === assetId)
+  const handleCoinSelect = (coinId: number) => {
+    const coin = memeCoins.find(c => c.id === coinId)
     if (!coin) return
     
-    const emptySlotIndex = currentTeam.findIndex(slot => slot === null)
-    if (emptySlotIndex !== -1 && !selectedCoins.includes(coin.asset_id)) {
-      const newTeam = [...currentTeam]
-      newTeam[emptySlotIndex] = coin
-      setCurrentTeam(newTeam)
-      setSelectedCoins([...selectedCoins, coin.asset_id])
+    if (selectedCoins.includes(coinId)) {
+      // Deselect coin
+      const coinIndex = currentTeam.findIndex(slot => slot?.id === coinId)
+      if (coinIndex !== -1) {
+        const newTeam = [...currentTeam]
+        newTeam[coinIndex] = null
+        setCurrentTeam(newTeam)
+        setSelectedCoins(selectedCoins.filter(id => id !== coinId))
+      }
+    } else if (selectedCoins.length < 3) {
+      // Select coin
+      const emptySlotIndex = currentTeam.findIndex(slot => slot === null)
+      if (emptySlotIndex !== -1) {
+        const newTeam = [...currentTeam]
+        newTeam[emptySlotIndex] = coin
+        setCurrentTeam(newTeam)
+        setSelectedCoins([...selectedCoins, coin.id])
+      }
     }
   }
 
@@ -257,7 +362,77 @@ export default function TeamPage() {
   const handleSaveTeam = () => {
     if (currentTeam.filter(Boolean).length !== 3) return
     localStorage.setItem('selectedTeam', JSON.stringify(currentTeam.filter(Boolean)))
-    alert('Team saved successfully!')
+    window.location.href = '/battle-meme'
+  }
+  
+  const toggleFavorite = async (coinId: number, coinName: string) => {
+    if (!currentUser) return
+    
+    try {
+      if (favoriteCoins.includes(coinId)) {
+        await fetch('/api/favorites', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, coinId })
+        })
+        setFavoriteCoins(favoriteCoins.filter(id => id !== coinId))
+      } else {
+        await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, coinId, coinName })
+        })
+        setFavoriteCoins([...favoriteCoins, coinId])
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error)
+    }
+  }
+  
+  const saveTeamPreset = async () => {
+    if (!currentUser || currentTeam.filter(Boolean).length !== 3) return
+    
+    try {
+      const response = await fetch('/api/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          name: `Team ${teamPresets.length + 1}`,
+          coins: currentTeam.filter(Boolean)
+        })
+      })
+      
+      const data = await response.json()
+      if (data.preset) {
+        setTeamPresets([...teamPresets, data.preset])
+      }
+    } catch (error) {
+      console.error('Failed to save preset:', error)
+    }
+  }
+  
+  const loadTeamPreset = (preset: any) => {
+    const coins = [
+      { id: preset.coin1Id, ticker: preset.coin1Name },
+      { id: preset.coin2Id, ticker: preset.coin2Name },
+      { id: preset.coin3Id, ticker: preset.coin3Name }
+    ]
+    setCurrentTeam(coins)
+    setSelectedCoins([preset.coin1Id, preset.coin2Id, preset.coin3Id])
+  }
+
+  if (!wallet?.address) {
+    return (
+      <AppLayout>
+        <TeamContainer>
+          <TeamHeader>
+            <TeamTitle>🔗 CONNECT WALLET</TeamTitle>
+            <TeamSubtitle>Connect your Pera wallet to build your team</TeamSubtitle>
+          </TeamHeader>
+        </TeamContainer>
+      </AppLayout>
+    )
   }
 
   return (
@@ -281,8 +456,8 @@ export default function TeamPage() {
                   <>
                     <SlotIcon>🪙</SlotIcon>
                     <div>
-                      <BeastName>{currentTeam[index].name || 'Unknown'}</BeastName>
-                      <BeastLevel>{currentTeam[index].unit_name || 'N/A'}</BeastLevel>
+                      <BeastName>{currentTeam[index].ticker}</BeastName>
+                      <BeastLevel>${currentTeam[index].price?.toFixed(6) || '0'}</BeastLevel>
                     </div>
                   </>
                 ) : (
@@ -295,13 +470,47 @@ export default function TeamPage() {
             ))}
           </TeamSlots>
           
-          <SaveTeamButton 
-            $fullWidth 
-            disabled={currentTeam.filter(Boolean).length !== 3}
-            onClick={handleSaveTeam}
-          >
-            START BATTLE ({currentTeam.filter(Boolean).length}/3)
-          </SaveTeamButton>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <SaveTeamButton 
+              style={{ flex: 1 }}
+              disabled={currentTeam.filter(Boolean).length !== 3}
+              onClick={handleSaveTeam}
+            >
+              START BATTLE ({currentTeam.filter(Boolean).length}/3)
+            </SaveTeamButton>
+            <Button
+              disabled={currentTeam.filter(Boolean).length !== 3}
+              onClick={saveTeamPreset}
+              style={{ background: 'var(--brutal-orange)', fontSize: '14px', padding: '16px' }}
+            >
+              💾 SAVE
+            </Button>
+          </div>
+          
+          {teamPresets.length > 0 && (
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '900', marginBottom: '8px', color: 'var(--text-primary)' }}>SAVED TEAMS:</div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {teamPresets.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => loadTeamPreset(preset)}
+                    style={{
+                      background: 'var(--brutal-cyan)',
+                      border: '2px solid var(--border-primary)',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: '900',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-mono)'
+                    }}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </CurrentTeamSection>
 
         <MyBeastsSection>
@@ -315,10 +524,42 @@ export default function TeamPage() {
                 <p>No meme coins available at the moment. Check back later!</p>
               </div>
             ) : (
-              memeCoins.map((coin) => (
-                <div key={coin.asset_id} onClick={() => handleCoinSelect(coin.asset_id)}>
-                  <MemeCard asset={coin} />
-                </div>
+              memeCoins.map((coin, index) => (
+                <SelectableCoinCard 
+                  key={`${coin.id}-${index}`}
+                  $selected={selectedCoins.includes(coin.id)}
+                  onClick={() => handleCoinSelect(coin.id)}
+                >
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(coin.id, coin.ticker)
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        background: favoriteCoins.includes(coin.id) ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)',
+                        border: '2px solid ' + (favoriteCoins.includes(coin.id) ? '#ffd700' : '#666'),
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease',
+                        boxShadow: favoriteCoins.includes(coin.id) ? '0 0 10px rgba(255, 215, 0, 0.5)' : 'none'
+                      }}
+                    >
+                      {favoriteCoins.includes(coin.id) ? '⭐' : '☆'}
+                    </button>
+                    <MemeCard asset={coin} />
+                  </div>
+                </SelectableCoinCard>
               ))
             )}
           </BeastGrid>

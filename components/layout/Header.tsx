@@ -205,7 +205,7 @@ const NetworkDot = styled.div<{ $network: string }>`
 `
 
 export function Header() {
-  const { wallet } = useAlgorandWallet()
+  const { wallet, connectWallet } = useAlgorandWallet()
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
   const [wamBalance, setWamBalance] = useState('0')
@@ -277,24 +277,14 @@ export function Header() {
     
     <HeaderContainer>
       <LeftSection>
-        <BalanceContainer>
-          <TokenIcon>$WAM</TokenIcon>
-          <Balance>{wamBalance}</Balance>
-          <AddButton onClick={handleWamClick}>+</AddButton>
-        </BalanceContainer>
-        {wallet.isConnected && (
-          <NetworkIndicator onClick={handleNetworkSwitch}>
-            <NetworkDot $network="algorand" />
-            {getNetworkName()}
-          </NetworkIndicator>
-        )}
+        {/* Removed WAM balance display */}
       </LeftSection>
 
       <RightSection>
-        <ProfileButton onClick={handleProfileClick}>
+        <ProfileButton onClick={wallet.isConnected ? handleProfileClick : connectWallet}>
           {wallet.isConnected && wallet.address 
             ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
-            : "Connect Wallet"
+            : "🔗 Connect Wallet"
           }
         </ProfileButton>
       </RightSection>

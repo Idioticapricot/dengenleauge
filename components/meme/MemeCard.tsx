@@ -90,21 +90,14 @@ const StatValue = styled.div`
 
 interface MemeCardProps {
   asset: {
-    asset_id: number
+    id: number
     name: string
-    unit_name: string
-    total: number
-    decimals: number
-    creator: string
-    url?: string
-    metadata_hash?: string
-    default_frozen: boolean
-    manager?: string
-    reserve?: string
-    freeze?: string
-    clawback?: string
+    ticker: string
     price: number
     image: string
+    market_cap: number
+    total_supply: number
+    rank: number
   }
 }
 
@@ -127,18 +120,29 @@ export function MemeCard({ asset }: MemeCardProps) {
           style={{ width: 40, height: 40, borderRadius: '50%' }}
         />
       ) : (
+        asset.ticker === 'DOGE' ? '🐕' :
+        asset.ticker === 'SHIB' ? '🐕' :
+        asset.ticker === 'PEPE' ? '🐸' :
+        asset.ticker === 'FLOKI' ? '🐕' :
+        asset.ticker === 'BONK' ? '🐕' :
+        asset.ticker === 'WIF' ? '🐕' :
         '🪙'
       )}
         </TokenIcon>
         <TokenInfo>
           <TokenName>{asset.name || 'Unknown Token'}</TokenName>
+          <TokenSymbol>{asset.ticker || 'N/A'}</TokenSymbol>
         </TokenInfo>
       </CardHeader>
       
       <TokenStats>
         <StatItem>
-          <StatLabel>Total price</StatLabel>
-          <StatValue>{formatNumber(asset.price)}$</StatValue>
+          <StatLabel>Price</StatLabel>
+          <StatValue>${asset.price?.toFixed(8) || '0'}</StatValue>
+        </StatItem>
+        <StatItem>
+          <StatLabel>Rank</StatLabel>
+          <StatValue>#{asset.rank || 'N/A'}</StatValue>
         </StatItem>
       </TokenStats>
     </CardContainer>

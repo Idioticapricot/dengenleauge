@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: dengenleague-socket
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_BASE_URL
+        fromService:
+          type: web
+          name: dengenleague-app
+          property: host
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: CMC_API_KEY
+        sync: false

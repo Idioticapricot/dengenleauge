@@ -1,69 +1,72 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
 
-export async function POST(request: NextRequest) {
+const prisma = new PrismaClient()
+
+export async function POST(request: Request) {
   try {
-    const { walletAddress, username } = await request.json()
+    const { username } = await request.json()
     
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
+    if (!username) {
+      return NextResponse.json({ error: 'Username required' }, { status: 400 })
     }
-
-    // Check if user exists
+    
+    // Find or create user
     let user = await prisma.user.findUnique({
-      where: { walletAddress }
+      where: { username },
+      include: {
+        favorites: true,
+        presets: true
+      }
     })
-
+    
     if (!user) {
-      // Create new user
       user = await prisma.user.create({
-        data: {
-          walletAddress,
-          username: username || `User_${walletAddress.slice(-6)}`
-        }
-      })
-
-      // Create empty team for new user
-      await prisma.team.create({
-        data: {
-          userId: user.id
+        data: { username },
+        include: {
+          favorites: true,
+          presets: true
         }
       })
     }
-
-    return NextResponse.json(user)
+    
+    return NextResponse.json({ user })
+    
   } catch (error) {
-    console.error('Error creating/fetching user:', error)
-    return NextResponse.json({ error: 'Failed to process user' }, { status: 500 })
+    console.error('User API error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const walletAddress = searchParams.get('walletAddress')
+    const userId = searchParams.get('userId')
     
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
-
+    
     const user = await prisma.user.findUnique({
-      where: { walletAddress },
+      where: { id: userId },
       include: {
-        ranking: true,
-        _count: {
-          select: { beasts: true }
+        favorites: true,
+        presets: true,
+        player1Battles: {
+          orderBy: { createdAt: 'desc' },
+          take: 10
         }
       }
     })
-
+    
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
-
-    return NextResponse.json(user)
+    
+    return NextResponse.json({ user })
+    
   } catch (error) {
-    console.error('Error fetching user:', error)
-    return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 })
+    console.error('User GET error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

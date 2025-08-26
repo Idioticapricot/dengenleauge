@@ -41,10 +41,28 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
     accounts: [],
   });
 
-  // Check for existing connection on mount
+  // Check for existing connection on mount and restore from localStorage
   useEffect(() => {
     const checkConnection = async () => {
       try {
+        // First check localStorage for persisted connection
+        const savedAddress = localStorage.getItem('peraWallet_address')
+        const savedAccounts = localStorage.getItem('peraWallet_accounts')
+        
+        if (savedAddress && savedAccounts) {
+          const accounts = JSON.parse(savedAccounts)
+          setWallet({
+            isConnected: true,
+            address: savedAddress,
+            balance: 0,
+            connecting: false,
+            accounts,
+          })
+          await fetchBalance(savedAddress)
+          return
+        }
+        
+        // Fallback to checking peraWallet connection
         if (peraWallet.isConnected && peraWallet.connector?.accounts) {
           const accounts = peraWallet.connector.accounts;
           setWallet({
@@ -55,6 +73,9 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
             accounts,
           });
           if (accounts[0]) {
+            // Save to localStorage
+            localStorage.setItem('peraWallet_address', accounts[0])
+            localStorage.setItem('peraWallet_accounts', JSON.stringify(accounts))
             await fetchBalance(accounts[0]);
           }
         }
@@ -92,6 +113,9 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
       }));
       
       if (connectedAccounts[0]) {
+        // Save to localStorage for persistence
+        localStorage.setItem('peraWallet_address', connectedAccounts[0])
+        localStorage.setItem('peraWallet_accounts', JSON.stringify(connectedAccounts))
         await fetchBalance(connectedAccounts[0]);
       }
     } catch (error) {
@@ -103,6 +127,9 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
   const disconnectWallet = async () => {
     try {
       await peraWallet.disconnect();
+      // Clear localStorage
+      localStorage.removeItem('peraWallet_address')
+      localStorage.removeItem('peraWallet_accounts')
       setWallet({
         isConnected: false,
         address: null,
