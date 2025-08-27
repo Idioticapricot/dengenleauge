@@ -158,64 +158,6 @@ const BeastGrid = styled.div`
   gap: 16px;
 `
 
-const BeastCard = styled(Card)<{ $selected?: boolean }>`
-  padding: 16px;
-  text-align: center;
-  cursor: pointer;
-  background: ${props => props.$selected ? "var(--brutal-yellow)" : "var(--light-bg)"};
-  transition: all 0.1s ease;
-  
-  &:hover {
-    background: var(--brutal-cyan);
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-  }
-`
-
-const BeastIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 12px;
-`
-
-const BeastCardName = styled.h3`
-  font-size: 16px;
-  font-weight: 900;
-  color: var(--text-primary);
-  margin: 0 0 8px 0;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-`
-
-const BeastStats = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  margin-bottom: 12px;
-`
-
-const StatItem = styled.div`
-  background: var(--brutal-orange);
-  padding: 4px;
-  border: 2px solid var(--border-primary);
-  text-align: center;
-`
-
-const StatLabel = styled.div`
-  font-size: 8px;
-  font-weight: 900;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-`
-
-const StatValue = styled.div`
-  font-size: 12px;
-  font-weight: 900;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-`
-
 const SaveTeamButton = styled(Button)`
   background: var(--brutal-lime);
   font-size: 18px;
@@ -266,8 +208,6 @@ const SelectableCoinCard = styled.div<{ $selected: boolean }>`
   }
 `
 
-
-
 export default function TeamPage() {
   const [currentTeam, setCurrentTeam] = useState<any[]>([null, null, null])
   const [selectedCoins, setSelectedCoins] = useState<number[]>([])
@@ -276,12 +216,14 @@ export default function TeamPage() {
   const [favoriteCoins, setFavoriteCoins] = useState<number[]>([])
   const [teamPresets, setTeamPresets] = useState<any[]>([])
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const { activeAccount } = useWallet()
 
-  const fetchMemeCoins = async () => {
+  const fetchMemeCoins = async (search = '') => {
     setLoading(true)
     try {
-      const response = await fetch('/api/meme-coins?symbols=DOGE,SHIB,PEPE,FLOKI,BONK,WIF,BABYDOGE,ELON,KISHU,SAFEMOON')
+      const url = search ? `/api/meme-coins?search=${encodeURIComponent(search)}` : '/api/meme-coins'
+      const response = await fetch(url)
       const data = await response.json()
       setMemeCoins(data.coins || [])
     } catch (error) {
@@ -294,6 +236,14 @@ export default function TeamPage() {
   useEffect(() => {
     fetchMemeCoins()
   }, [])
+  
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchMemeCoins(searchTerm)
+    }, 500)
+    
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm])
   
   useEffect(() => {
     if (activeAccount?.address) {
@@ -327,35 +277,27 @@ export default function TeamPage() {
     if (!coin) return
     
     if (selectedCoins.includes(coinId)) {
-      // Deselect coin
-      const coinIndex = currentTeam.findIndex(slot => slot?.id === coinId)
-      if (coinIndex !== -1) {
-        const newTeam = [...currentTeam]
-        newTeam[coinIndex] = null
-        setCurrentTeam(newTeam)
-        setSelectedCoins(selectedCoins.filter(id => id !== coinId))
-      }
+      const newTeam = currentTeam.map(slot => slot?.id === coinId ? null : slot)
+      setCurrentTeam(newTeam)
+      setSelectedCoins(prev => prev.filter(id => id !== coinId))
     } else if (selectedCoins.length < 3) {
-      // Select coin
       const emptySlotIndex = currentTeam.findIndex(slot => slot === null)
       if (emptySlotIndex !== -1) {
         const newTeam = [...currentTeam]
         newTeam[emptySlotIndex] = coin
         setCurrentTeam(newTeam)
-        setSelectedCoins([...selectedCoins, coin.id])
+        setSelectedCoins(prev => [...prev, coinId])
       }
     }
   }
 
-
-
   const handleSlotClick = (index: number) => {
     if (currentTeam[index]) {
-      const assetId = currentTeam[index]!.asset_id
+      const coinId = currentTeam[index].id
       const newTeam = [...currentTeam]
       newTeam[index] = null
       setCurrentTeam(newTeam)
-      setSelectedCoins(selectedCoins.filter(id => id !== assetId))
+      setSelectedCoins(prev => prev.filter(id => id !== coinId))
     }
   }
 
@@ -446,7 +388,7 @@ export default function TeamPage() {
         <CurrentTeamSection>
           <SectionTitle>CURRENT TEAM</SectionTitle>
           <TeamSlots>
-            {currentTeam.map((beast, index) => (
+            {currentTeam.map((coin, index) => (
               <TeamSlot 
                 key={index} 
                 $filled={!!currentTeam[index]}
@@ -454,10 +396,20 @@ export default function TeamPage() {
               >
                 {currentTeam[index] ? (
                   <>
-                    <SlotIcon>🪙</SlotIcon>
+                    <SlotIcon>
+                      {coin.image ? (
+                        <img
+                          src={coin.image}
+                          alt={coin.name}
+                          style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        '🪙'
+                      )}
+                    </SlotIcon>
                     <div>
-                      <BeastName>{currentTeam[index].ticker}</BeastName>
-                      <BeastLevel>${currentTeam[index].price?.toFixed(6) || '0'}</BeastLevel>
+                      <BeastName>{coin.ticker}</BeastName>
+                      <BeastLevel>${coin.price?.toFixed(6) || '0'}</BeastLevel>
                     </div>
                   </>
                 ) : (
@@ -515,6 +467,26 @@ export default function TeamPage() {
 
         <MyBeastsSection>
           <SectionTitle>AVAILABLE MEME COINS</SectionTitle>
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              placeholder="Search coins..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '3px solid var(--border-primary)',
+                background: 'var(--light-bg)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: '700',
+                fontSize: '14px',
+                textTransform: 'uppercase',
+                boxShadow: '3px 3px 0px 0px var(--border-primary)'
+              }}
+            />
+          </div>
           <BeastGrid>
             {loading ? (
               <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>Loading meme coins...</div>
@@ -565,8 +537,6 @@ export default function TeamPage() {
           </BeastGrid>
         </MyBeastsSection>
       </TeamContainer>
-
-
     </AppLayout>
   )
 }

@@ -114,20 +114,19 @@ export function MemeCard({ asset }: MemeCardProps) {
       <CardHeader>
         <TokenIcon>
           {asset.image ? (
-        <img
-          src={asset.image}
-          alt={asset.name || 'Token'}
-          style={{ width: 40, height: 40, borderRadius: '50%' }}
-        />
-      ) : (
-        asset.ticker === 'DOGE' ? '🐕' :
-        asset.ticker === 'SHIB' ? '🐕' :
-        asset.ticker === 'PEPE' ? '🐸' :
-        asset.ticker === 'FLOKI' ? '🐕' :
-        asset.ticker === 'BONK' ? '🐕' :
-        asset.ticker === 'WIF' ? '🐕' :
-        '🪙'
-      )}
+            <img
+              src={asset.image}
+              alt={asset.name || 'Token'}
+              style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                target.parentElement!.innerHTML = '🪙'
+              }}
+            />
+          ) : (
+            '🪙'
+          )}
         </TokenIcon>
         <TokenInfo>
           <TokenName>{asset.name || 'Unknown Token'}</TokenName>

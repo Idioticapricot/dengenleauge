@@ -2,58 +2,75 @@ import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const symbols = searchParams.get('symbols')
+  const search = searchParams.get('search') || ''
   
   try {
-    const apiKey = process.env.CMC_API_KEY || 'ab2105f9-5414-4f94-82a9-356e7ced0cb2'
-    const symbolList = symbols || 'DOGE,SHIB,PEPE,FLOKI,BONK,WIF,BABYDOGE,ELON,KISHU,SAFEMOON'
-    
-    const url = new URL('https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest')
-    url.searchParams.append('symbol', symbolList)
-    url.searchParams.append('convert', 'USD')
-    
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        'X-CMC_PRO_API_KEY': apiKey,
-        'Accept': 'application/json'
-      }
+    const response = await fetch("https://api.vestigelabs.org/assets/list?network_id=0&exclude_labels=8,7&denominating_asset_id=31566704&limit=50&offset=0&order_by=rank&order_dir=asc", {
+      "headers": {
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.5",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "priority": "u=1, i",
+        "sec-ch-ua": '"Not;A=Brand";v="99", "Brave";v="139", "Chromium";v="139"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site",
+        "sec-gpc": "1",
+        "Referer": "https://vestige.fi/"
+      },
+      "method": "GET"
     })
     
     if (!response.ok) {
-      throw new Error(`CMC API error: ${response.status}`)
+      throw new Error(`Vestige API error: ${response.status}`)
     }
     
     const data = await response.json()
     
-    const coins: any[] = []
-    Object.keys(data.data).forEach(symbol => {
-      const coinData = data.data[symbol][0] // Take first coin for each symbol
-      coins.push({
-        id: coinData.id,
-        name: coinData.name,
-        ticker: coinData.symbol,
-        price: coinData.quote.USD.price,
-        market_cap: coinData.quote.USD.market_cap,
-        rank: coinData.cmc_rank,
-        percent_change_1h: coinData.quote.USD.percent_change_1h,
-        percent_change_24h: coinData.quote.USD.percent_change_24h,
-        last_updated: coinData.last_updated
-      })
-    })
+    // Skip first item and filter by search if provided
+    let filteredResults = data.results.slice(1)
+    
+    if (search) {
+      filteredResults = filteredResults.filter((coin: any) => 
+        coin.name.toLowerCase().includes(search.toLowerCase()) ||
+        coin.ticker.toLowerCase().includes(search.toLowerCase())
+      )
+    }
+    
+    const coins = filteredResults.map((coin: any) => ({
+      id: coin.id,
+      name: coin.name,
+      ticker: coin.ticker,
+      price: coin.price,
+      market_cap: coin.market_cap,
+      rank: coin.rank,
+      percent_change_1h: ((coin.price - coin.price1h) / coin.price1h * 100),
+      percent_change_24h: ((coin.price - coin.price1d) / coin.price1d * 100),
+      image: coin.image,
+      last_updated: new Date().toISOString()
+    }))
     
     return NextResponse.json({ coins, timestamp: new Date().toISOString() })
     
   } catch (error) {
-    console.error('CMC API Error:', error)
-    const mockCoins = [
-      { id: 74, name: 'Dogecoin', ticker: 'DOGE', price: 0.2113, market_cap: 31840669923, rank: 9, percent_change_1h: -0.79, percent_change_24h: -3.68 },
-      { id: 5994, name: 'Shiba Inu', ticker: 'SHIB', price: 0.00001219, market_cap: 7185614504, rank: 22, percent_change_1h: -0.83, percent_change_24h: -1.80 },
-      { id: 24478, name: 'Pepe', ticker: 'PEPE', price: 0.00000994, market_cap: 4180528695, rank: 30, percent_change_1h: -0.24, percent_change_24h: -3.17 },
-      { id: 28301, name: 'Floki Inu', ticker: 'FLOKI', price: 0.00015, market_cap: 1500000000, rank: 50, percent_change_1h: 0.5, percent_change_24h: -2.1 },
-      { id: 23095, name: 'Bonk', ticker: 'BONK', price: 0.000025, market_cap: 1800000000, rank: 45, percent_change_1h: -1.2, percent_change_24h: -4.5 },
-      { id: 26933, name: 'dogwifhat', ticker: 'WIF', price: 2.45, market_cap: 2450000000, rank: 35, percent_change_1h: 0.8, percent_change_24h: -1.9 }
+    console.error('Vestige API Error:', error)
+    let mockCoins = [
+      { id: 31566704, name: 'USDC', ticker: 'USDC', price: 1.0001, market_cap: 1000000000, rank: 2, percent_change_1h: 0.01, percent_change_24h: 0.02, image: 'https://asa-list.tinyman.org/assets/31566704/icon.png' },
+      { id: 386192725, name: 'goBTC', ticker: 'goBTC', price: 95000, market_cap: 500000000, rank: 3, percent_change_1h: 0.5, percent_change_24h: -2.1, image: 'https://asa-list.tinyman.org/assets/386192725/icon.png' },
+      { id: 386195940, name: 'goETH', ticker: 'goETH', price: 3500, market_cap: 300000000, rank: 4, percent_change_1h: -1.2, percent_change_24h: -4.5, image: 'https://asa-list.tinyman.org/assets/386195940/icon.png' },
+      { id: 27165954, name: 'PLANET', ticker: 'PLANETS', price: 0.000025, market_cap: 180000000, rank: 5, percent_change_1h: 0.8, percent_change_24h: -1.9, image: 'https://asa-list.tinyman.org/assets/27165954/icon.png' },
+      { id: 163650, name: 'Asia Reserve Currency Coin', ticker: 'ARCC', price: 0.45, market_cap: 150000000, rank: 6, percent_change_1h: 0.3, percent_change_24h: 1.2, image: 'https://asa-list.tinyman.org/assets/163650/icon.png' }
     ]
+    
+    if (search) {
+      mockCoins = mockCoins.filter(coin => 
+        coin.name.toLowerCase().includes(search.toLowerCase()) ||
+        coin.ticker.toLowerCase().includes(search.toLowerCase())
+      )
+    }
     return NextResponse.json({ coins: mockCoins, error: 'Using fallback data' })
   }
 }
