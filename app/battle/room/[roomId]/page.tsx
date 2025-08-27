@@ -110,8 +110,10 @@ export default function BattleRoomPage() {
   useEffect(() => {
     if (!roomId || typeof roomId !== 'string') return
 
-    // Join the battle room channel
-    joinBattleRoom(roomId)
+    // Redirect to new game route
+    console.log('🔄 Redirecting from old battle route to new game route:', roomId)
+    router.replace(`/game/${roomId}`)
+    return
 
     // Set up listeners for battle events
     const channel = supabase.channel(`battle-${roomId}`)
@@ -160,26 +162,33 @@ export default function BattleRoomPage() {
     }, 0)
   }
 
-  if (battleState === 'waiting') {
-    return (
-      <AppLayout>
-        <BattleContainer>
-          <BattleHeader>
-            <BattleTitle>⏳ WAITING FOR BATTLE...</BattleTitle>
-            <div style={{ 
-              width: '60px', 
-              height: '60px', 
-              border: '6px solid var(--border-primary)', 
-              borderTop: '6px solid var(--brutal-red)', 
-              borderRadius: '50%', 
-              animation: 'spin 1s linear infinite',
-              margin: '20px auto'
-            }}></div>
-          </BattleHeader>
-        </BattleContainer>
-      </AppLayout>
-    )
-  }
+  // Show redirect message instead of waiting
+  return (
+    <AppLayout>
+      <BattleContainer>
+        <BattleHeader>
+          <BattleTitle>🔄 REDIRECTING...</BattleTitle>
+          <div style={{
+            fontSize: '16px',
+            color: 'var(--text-primary)',
+            marginTop: '10px',
+            fontFamily: 'var(--font-mono)'
+          }}>
+            Taking you to the new battle experience...
+          </div>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            border: '6px solid var(--border-primary)',
+            borderTop: '6px solid var(--brutal-lime)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '20px auto'
+          }}></div>
+        </BattleHeader>
+      </BattleContainer>
+    </AppLayout>
+  )
 
   if (battleState === 'finished') {
     return (

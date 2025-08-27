@@ -101,6 +101,7 @@ export default function MatchmakingPage() {
   const [countdown, setCountdown] = useState(3)
   const [selectedBattleType, setSelectedBattleType] = useState<'pvp' | 'pve'>('pvp')
   const [connectionTested, setConnectionTested] = useState(false)
+  const [mockRoom, setMockRoom] = useState<any>(null)
 
   const handleJoinQueue = () => {
     if (!activeAccount?.address) {
@@ -142,13 +143,15 @@ export default function MatchmakingPage() {
   }
 
   useEffect(() => {
-    if (currentRoom && currentRoom.status === 'waiting') {
+    const roomToUse = currentRoom || mockRoom
+    if (roomToUse && roomToUse.status === 'waiting') {
       setMatchFound(true)
-      setOpponent(currentRoom.players.find((p: any) => p.id !== activeAccount?.address))
+      setOpponent(roomToUse.players.find((p: any) => p.id !== activeAccount?.address))
 
       setTimeout(() => {
+        console.log('🎯 Redirecting to:', selectedBattleType === 'pvp' ? `/game/${roomToUse.id}` : '/game/PVE')
         if (selectedBattleType === 'pvp') {
-          router.push(`/game/${currentRoom.id}`)
+          router.push(`/game/${roomToUse.id}`)
         } else {
           router.push('/game/PVE')
         }
@@ -160,7 +163,7 @@ export default function MatchmakingPage() {
 
       setTimeout(() => clearInterval(countdownInterval), 3000)
     }
-  }, [currentRoom, activeAccount?.address, router])
+  }, [currentRoom, mockRoom, activeAccount?.address, router])
 
   // Periodic queue size refresh
   useEffect(() => {
@@ -397,9 +400,22 @@ Wallet: ${activeAccount?.address ? 'Connected' : 'Not Connected'}`)
               </Button>
               <Button
                 onClick={() => {
-                  // Quick match button for testing
+                  // Quick match button for testing - creates instant match
                   const mockRoomId = `test_${Date.now()}`
-                  router.push(`/game/${mockRoomId}`)
+                  console.log('Creating quick test match:', mockRoomId)
+
+                  // Simulate match found event
+                  setMockRoom({
+                    id: mockRoomId,
+                    players: [
+                      { id: activeAccount?.address || 'player1', username: 'Player 1', team: [] },
+                      { id: 'mock-opponent', username: 'Mock Opponent', team: [] }
+                    ],
+                    status: 'waiting',
+                    battleType: 'pvp'
+                  })
+                  setMatchFound(true)
+                  setOpponent({ id: 'mock-opponent', username: 'Mock Opponent' })
                 }}
                 style={{ background: 'var(--brutal-yellow)', fontSize: '14px', opacity: 0.8 }}
               >

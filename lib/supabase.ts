@@ -165,6 +165,87 @@ export class SupabaseBattleServer {
       })
 
     console.log('Match created successfully:', roomId)
+
+    // Start battle after delay
+    setTimeout(() => {
+      this.startBattle(roomId)
+    }, 3000)
+  }
+
+  private async startBattle(roomId: string) {
+    console.log('Starting battle for room:', roomId)
+
+    // Update room status to active
+    try {
+      const { error } = await supabase
+        .from('battle_rooms')
+        .update({
+          status: 'active',
+          started_at: new Date().toISOString()
+        })
+        .eq('id', roomId)
+
+      if (error) {
+        console.error('Error updating battle room status:', error)
+      }
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError)
+    }
+
+    // Broadcast battle start to room
+    await supabase
+      .channel(`battle-${roomId}`)
+      .send({
+        type: 'broadcast',
+        event: 'battle-start',
+        payload: { roomId, timestamp: Date.now() }
+      })
+
+    console.log('Battle started for room:', roomId)
+
+    // Start price updates (simplified for now)
+    setTimeout(() => {
+      this.endBattle(roomId)
+    }, 60000) // End battle after 60 seconds
+  }
+
+  private async endBattle(roomId: string) {
+    console.log('Ending battle for room:', roomId)
+
+    // Update room status to finished
+    try {
+      const { error } = await supabase
+        .from('battle_rooms')
+        .update({
+          status: 'finished',
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', roomId)
+
+      if (error) {
+        console.error('Error updating battle room status:', error)
+      }
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError)
+    }
+
+    // Broadcast battle end to room
+    await supabase
+      .channel(`battle-${roomId}`)
+      .send({
+        type: 'broadcast',
+        event: 'battle-end',
+        payload: {
+          roomId,
+          winner: 'player1', // Simplified winner selection
+          results: {
+            player1Score: Math.floor(Math.random() * 100),
+            player2Score: Math.floor(Math.random() * 100)
+          }
+        }
+      })
+
+    console.log('Battle ended for room:', roomId)
   }
 
 }
