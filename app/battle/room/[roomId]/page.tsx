@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useSocket } from '../../../../hooks/useSocket'
+import { useSupabaseSocket } from '../../../../hooks/useSupabaseSocket'
 import { useParams, useRouter } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts'
 import { AppLayout } from '../../../../components/layout/AppLayout'
 import styled from 'styled-components'
 import { Button } from '../../../../components/styled/GlobalStyles'
+import { supabase } from '../../../../lib/supabase'
 
 const BattleContainer = styled.div`
   display: flex;
@@ -98,7 +99,7 @@ const GraphContainer = styled.div`
 
 export default function BattleRoomPage() {
   const { roomId } = useParams()
-  const { socket } = useSocket()
+  const { currentRoom, joinBattleRoom } = useSupabaseSocket()
   const router = useRouter()
   const [battleState, setBattleState] = useState('waiting')
   const [players, setPlayers] = useState<any[]>([])
@@ -107,31 +108,35 @@ export default function BattleRoomPage() {
   const [results, setResults] = useState<any>(null)
 
   useEffect(() => {
-    if (!socket) return
+    if (!roomId || typeof roomId !== 'string') return
 
-    socket.emit('join-room', roomId)
+    // Join the battle room channel
+    joinBattleRoom(roomId)
 
-    socket.on('battle-start', ({ room }) => {
-      setBattleState('active')
-      setPlayers(room.players)
-    })
+    // Set up listeners for battle events
+    const channel = supabase.channel(`battle-${roomId}`)
 
-    socket.on('price-update', (update) => {
-      setPriceData(prev => [...prev, update])
-      setTimeLeft(prev => Math.max(0, prev - 1))
-    })
-
-    socket.on('battle-end', (battleResults) => {
-      setBattleState('finished')
-      setResults(battleResults)
-    })
+    channel
+      .on('broadcast', { event: 'battle-start' }, ({ payload }) => {
+        setBattleState('active')
+        if (currentRoom) {
+          setPlayers(currentRoom.players)
+        }
+      })
+      .on('broadcast', { event: 'price-update' }, ({ payload }) => {
+        setPriceData(prev => [...prev, payload])
+        setTimeLeft(prev => Math.max(0, prev - 1))
+      })
+      .on('broadcast', { event: 'battle-end' }, ({ payload }) => {
+        setBattleState('finished')
+        setResults(payload)
+      })
+      .subscribe()
 
     return () => {
-      socket.off('battle-start')
-      socket.off('price-update')
-      socket.off('battle-end')
+      channel.unsubscribe()
     }
-  }, [socket, roomId])
+  }, [roomId, joinBattleRoom, currentRoom])
 
   const formatChartData = () => {
     return priceData.map((entry, index) => ({

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
-import { useAlgorandWallet } from "../wallet/AlgorandWalletProvider"
+import { useWallet } from "@txnlab/use-wallet-react"
 import { useRouter } from "next/navigation"
 import { algodClient } from "../../lib/algorand-config"
+import ConnectWallet from "../wallet/ConnectWallet"
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -205,11 +206,11 @@ const NetworkDot = styled.div<{ $network: string }>`
 `
 
 export function Header() {
-  const { wallet, connectWallet } = useAlgorandWallet()
+  const { activeAccount } = useWallet()
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
-  const [wamBalance, setWamBalance] = useState('0')
-  const TOKEN_ADDRESS = "0x286AcCEd7205655F3Aab711d805E64A728c96B06"
+  const [degenBalance, setDegenBalance] = useState('0')
+  const DEGEN_ASA_ID = 123456789 // Mock DEGEN ASA ID - replace with actual when available
 
   const handleWamClick = () => {
     setShowWamPopup(true)
@@ -229,26 +230,25 @@ export function Header() {
     console.log('Network switching not needed on Algorand')
   }
 
-  const fetchWamBalance = async () => {
-    if (!wallet.isConnected || !wallet.address) return
-    
+  const fetchDegenBalance = async () => {
+    if (!activeAccount?.address) return
+
     try {
-      // TODO: Replace with actual WAM ASA ID when deployed
-      const WAM_ASA_ID = 0 // Placeholder
-      const accountInfo = await algodClient.accountInformation(wallet.address).do()
-      
-      // Find WAM asset in account assets
-      const wamAsset = accountInfo.assets?.find((asset: any) => asset['asset-id'] === WAM_ASA_ID)
-      setWamBalance(wamAsset ? wamAsset.amount.toString() : '0')
+      // TODO: Replace with actual DEGEN ASA ID when deployed
+      const accountInfo = await algodClient.accountInformation(activeAccount.address).do()
+
+      // Find DEGEN asset in account assets
+      const degenAsset = accountInfo.assets?.find((asset: any) => asset['asset-id'] === DEGEN_ASA_ID)
+      setDegenBalance(degenAsset ? degenAsset.amount.toString() : '0')
     } catch (error) {
-      console.error('Error fetching WAM balance:', error)
-      setWamBalance('0')
+      console.error('Error fetching DEGEN balance:', error)
+      setDegenBalance('0')
     }
   }
 
   useEffect(() => {
-    fetchWamBalance()
-  }, [wallet.isConnected, wallet.address])
+    fetchDegenBalance()
+  }, [activeAccount?.address])
 
   const getNetworkName = () => {
     return "ALGO" // Algorand network
@@ -259,9 +259,9 @@ export function Header() {
       {showWamPopup && (
         <PopupOverlay onClick={() => setShowWamPopup(false)}>
           <PopupContent onClick={(e) => e.stopPropagation()}>
-            <PopupTitle>💰 BUY $WAM</PopupTitle>
+            <PopupTitle>💰 BUY $DEGEN</PopupTitle>
             <PopupText>
-              Get more $WAM tokens to create beasts and battle other trainers!
+              Get more $DEGEN tokens to create beasts and battle other trainers!
             </PopupText>
             <PopupButtons>
               <PopupButton onClick={() => setShowWamPopup(false)}>
@@ -277,16 +277,14 @@ export function Header() {
     
     <HeaderContainer>
       <LeftSection>
-        {/* Removed WAM balance display */}
+        <BalanceContainer onClick={handleWamClick}>
+          <TokenIcon>$D</TokenIcon>
+          <Balance>{degenBalance}</Balance>
+        </BalanceContainer>
       </LeftSection>
 
       <RightSection>
-        <ProfileButton onClick={wallet.isConnected ? handleProfileClick : connectWallet}>
-          {wallet.isConnected && wallet.address 
-            ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
-            : "🔗 Connect Wallet"
-          }
-        </ProfileButton>
+        <ConnectWallet />
       </RightSection>
     </HeaderContainer>
     </>

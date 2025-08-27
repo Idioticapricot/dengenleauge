@@ -5,7 +5,7 @@ import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { MemeCard } from "../../components/meme/MemeCard"
-import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
+import { useWallet } from "@txnlab/use-wallet-react"
 
 const TeamContainer = styled.div`
   display: flex;
@@ -276,7 +276,7 @@ export default function TeamPage() {
   const [favoriteCoins, setFavoriteCoins] = useState<number[]>([])
   const [teamPresets, setTeamPresets] = useState<any[]>([])
   const [currentUser, setCurrentUser] = useState<any>(null)
-  const { wallet } = useAlgorandWallet()
+  const { activeAccount } = useWallet()
 
   const fetchMemeCoins = async () => {
     setLoading(true)
@@ -296,19 +296,19 @@ export default function TeamPage() {
   }, [])
   
   useEffect(() => {
-    if (wallet?.address) {
+    if (activeAccount?.address) {
       initializeUser()
     }
-  }, [wallet?.address])
+  }, [activeAccount?.address])
   
   const initializeUser = async () => {
     try {
-      if (!wallet?.address) return
+      if (!activeAccount?.address) return
       
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: wallet.address })
+        body: JSON.stringify({ username: activeAccount.address })
       })
       
       const data = await response.json()
@@ -422,13 +422,13 @@ export default function TeamPage() {
     setSelectedCoins([preset.coin1Id, preset.coin2Id, preset.coin3Id])
   }
 
-  if (!wallet?.address) {
+  if (!activeAccount?.address) {
     return (
       <AppLayout>
         <TeamContainer>
           <TeamHeader>
             <TeamTitle>🔗 CONNECT WALLET</TeamTitle>
-            <TeamSubtitle>Connect your Pera wallet to build your team</TeamSubtitle>
+            <TeamSubtitle>Connect your wallet to build your team</TeamSubtitle>
           </TeamHeader>
         </TeamContainer>
       </AppLayout>

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useSocket } from '../../hooks/useSocket'
-import { useAlgorandWallet } from '../../components/wallet/AlgorandWalletProvider'
+import { useSupabaseSocket } from '../../hooks/useSupabaseSocket'
+import { useWallet } from '@txnlab/use-wallet-react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '../../components/layout/AppLayout'
 import styled from 'styled-components'
@@ -92,17 +92,18 @@ const CountdownText = styled.div`
 `
 
 export default function MatchmakingPage() {
-  const { socket, connected } = useSocket()
-  const { wallet } = useAlgorandWallet()
+  const { isConnected, currentRoom, joinQueue, leaveQueue } = useSupabaseSocket()
+  const { activeAccount } = useWallet()
   const router = useRouter()
   const [inQueue, setInQueue] = useState(false)
   const [matchFound, setMatchFound] = useState(false)
   const [opponent, setOpponent] = useState<any>(null)
   const [queueSize, setQueueSize] = useState(0)
   const [countdown, setCountdown] = useState(3)
+  const [selectedBattleType, setSelectedBattleType] = useState<'pvp' | 'pve'>('pvp')
 
-  const joinQueue = () => {
-    if (!socket || !wallet.address) return
+  const handleJoinQueue = () => {
+    if (!activeAccount?.address) return
 
     const savedTeam = localStorage.getItem('selectedTeam')
     if (!savedTeam) {
@@ -112,51 +113,40 @@ export default function MatchmakingPage() {
     }
 
     const playerData = {
-      id: wallet.address,
-      username: wallet.address.slice(0, 8) + '...',
-      walletAddress: wallet.address,
+      id: activeAccount.address,
+      username: activeAccount.address.slice(0, 8) + '...',
+      walletAddress: activeAccount.address,
       team: JSON.parse(savedTeam)
     }
 
-    socket.emit('join-queue', playerData)
+    joinQueue(playerData, selectedBattleType)
     setInQueue(true)
   }
 
-  const leaveQueue = () => {
-    if (!socket) return
-    socket.emit('leave-queue')
+  const handleLeaveQueue = () => {
+    if (!activeAccount?.address) return
+    leaveQueue(activeAccount.address)
     setInQueue(false)
   }
 
   useEffect(() => {
-    if (!socket) return
-
-    socket.on('queue-update', ({ queueSize }) => {
-      setQueueSize(queueSize)
-    })
-
-    socket.on('match-found', ({ roomId, players }) => {
+    if (currentRoom && currentRoom.status === 'waiting') {
       setMatchFound(true)
-      setOpponent(players.find((p: any) => p.id !== wallet.address))
-      
+      setOpponent(currentRoom.players.find((p: any) => p.id !== activeAccount?.address))
+
       setTimeout(() => {
-        router.push(`/battle/room/${roomId}`)
+        router.push(`/battle/room/${currentRoom.id}`)
       }, 3000)
-      
+
       const countdownInterval = setInterval(() => {
         setCountdown(prev => prev - 1)
       }, 1000)
-      
+
       setTimeout(() => clearInterval(countdownInterval), 3000)
-    })
-
-    return () => {
-      socket.off('queue-update')
-      socket.off('match-found')
     }
-  }, [socket, wallet.address, router])
+  }, [currentRoom, activeAccount?.address, router])
 
-  if (!wallet.address) {
+  if (!activeAccount?.address) {
     return (
       <AppLayout>
         <MatchmakingContainer>
@@ -184,8 +174,8 @@ export default function MatchmakingPage() {
         <StatusSection>
           <StatusItem>
             <span>Connection Status:</span>
-            <span style={{ color: connected ? 'var(--primary-green)' : 'var(--red-primary)' }}>
-              {connected ? '🟢 CONNECTED' : '🔴 DISCONNECTED'}
+            <span style={{ color: isConnected ? 'var(--primary-green)' : 'var(--red-primary)' }}>
+              {isConnected ? '🟢 CONNECTED' : '🔴 DISCONNECTED'}
             </span>
           </StatusItem>
           
@@ -196,13 +186,55 @@ export default function MatchmakingPage() {
         </StatusSection>
 
         {!inQueue && !matchFound && (
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>
+              <h3 style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', marginBottom: '16px' }}>
+                Choose Battle Type:
+              </h3>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '20px' }}>
+                <Button
+                  onClick={() => setSelectedBattleType('pvp')}
+                  style={{
+                    background: selectedBattleType === 'pvp' ? 'var(--brutal-lime)' : 'var(--light-bg)',
+                    color: selectedBattleType === 'pvp' ? 'var(--text-primary)' : 'var(--text-primary)',
+                    fontSize: '16px',
+                    padding: '12px 24px'
+                  }}
+                >
+                  ⚔️ PVP Battle
+                </Button>
+                <Button
+                  onClick={() => setSelectedBattleType('pve')}
+                  style={{
+                    background: selectedBattleType === 'pve' ? 'var(--brutal-lime)' : 'var(--light-bg)',
+                    color: selectedBattleType === 'pve' ? 'var(--text-primary)' : 'var(--text-primary)',
+                    fontSize: '16px',
+                    padding: '12px 24px'
+                  }}
+                >
+                  🤖 PVE Battle
+                </Button>
+              </div>
+              <div style={{
+                background: 'var(--brutal-cyan)',
+                border: '2px solid var(--border-primary)',
+                padding: '12px',
+                marginBottom: '20px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '14px'
+              }}>
+                {selectedBattleType === 'pvp'
+                  ? 'Battle against other players in real-time combat!'
+                  : 'Battle against AI opponents with dynamic strategies!'
+                }
+              </div>
+            </div>
             <Button
-              onClick={joinQueue}
-              disabled={!connected}
+              onClick={handleJoinQueue}
+              disabled={!isConnected}
               style={{ fontSize: '20px', padding: '16px 32px' }}
             >
-              🎯 FIND MATCH
+              🎯 FIND {selectedBattleType.toUpperCase()} MATCH
             </Button>
           </div>
         )}
@@ -222,7 +254,7 @@ export default function MatchmakingPage() {
               margin: '0 auto 20px'
             }}></div>
             <Button
-              onClick={leaveQueue}
+              onClick={handleLeaveQueue}
               style={{ background: 'var(--red-primary)', fontSize: '16px' }}
             >
               ❌ LEAVE QUEUE

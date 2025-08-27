@@ -29,6 +29,8 @@ model User {
   multiplayerPlayer2 MultiplayerBattle[] @relation("MultiplayerPlayer2")
   multiplayerWins    MultiplayerBattle[] @relation("MultiplayerWinner")
   matchmakingQueue   MatchmakingQueue[]
+  battleRoomPlayer1  BattleRoom[] @relation("BattleRoomPlayer1")
+  battleRoomPlayer2  BattleRoom[] @relation("BattleRoomPlayer2")
 }
 
 model MemeTeam {
@@ -116,12 +118,30 @@ model MultiplayerBattle {
 }
 
 model MatchmakingQueue {
-  id          String @id @default(cuid())
-  userId      String
-  teamData    String // JSON
-  queuedAt    DateTime @default(now())
-  
-  user User @relation(fields: [userId], references: [id])
-}
+   id          String @id @default(cuid())
+   userId      String
+   teamData    String // JSON
+   battleType  String @default("pvp") // pvp or pve
+   queuedAt    DateTime @default(now())
+
+   user User @relation(fields: [userId], references: [id])
+ }
+
+model BattleRoom {
+   id          String @id @default(cuid())
+   player1Id   String
+   player2Id   String?
+   player1Team String // JSON
+   player2Team String? // JSON for PVE battles
+   battleType  String @default("pvp") // pvp or pve
+   status      String @default("waiting") // waiting, active, finished
+   results     String? // JSON results
+   startedAt   DateTime?
+   endedAt     DateTime?
+   createdAt   DateTime @default(now())
+
+   player1 User @relation("BattleRoomPlayer1", fields: [player1Id], references: [id])
+   player2 User? @relation("BattleRoomPlayer2", fields: [player2Id], references: [id])
+ }
 
 

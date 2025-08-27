@@ -86,6 +86,8 @@ const navItems = [
   { href: "/battle-meme", icon: Swords, label: "AI Battle" },
   { href: "/matchmaking", icon: Zap, label: "PvP", isBattle: true },
   { href: "/stats", icon: BarChart3, label: "Stats" },
+  { href: "/profile", icon: BarChart3, label: "Profile" },
+
 ]
 
 export function BottomNavigation() {

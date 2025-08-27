@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { Inter, Space_Grotesk } from "next/font/google"
 import "./globals.css"
 import { StyledComponentsRegistry } from "./registry"
-import { AlgorandWalletProvider } from "../components/wallet/AlgorandWalletProvider"
+import { Providers } from "../components/wallet/Providers"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -63,8 +63,8 @@ html {
           }}
         />
         <StyledComponentsRegistry>
-          <AlgorandWalletProvider>{children}</AlgorandWalletProvider>
-        </StyledComponentsRegistry>
+           <Providers>{children}</Providers>
+         </StyledComponentsRegistry>
       </body>
     </html>
   )
