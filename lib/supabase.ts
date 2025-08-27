@@ -14,226 +14,159 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 // Battle room management with Supabase Realtime
 export class SupabaseBattleServer {
   private rooms: Map<string, any> = new Map()
+  private matchmakingQueue: Map<string, any> = new Map()
 
   constructor() {
     this.setupRealtimeSubscriptions()
   }
 
   private setupRealtimeSubscriptions() {
-    // Listen for battle events
+    // Listen for matchmaking events
     supabase
-      .channel('battle-rooms')
+      .channel('matchmaking-updates')
       .on('broadcast', { event: 'join-queue' }, ({ payload }) => {
         this.handleJoinQueue(payload)
       })
       .on('broadcast', { event: 'leave-queue' }, ({ payload }) => {
         this.handleLeaveQueue(payload)
       })
+      .on('broadcast', { event: 'ping' }, ({ payload }) => {
+        // Respond to ping to confirm connection is alive
+        console.log('🏓 Ping received:', payload.timestamp)
+      })
+      .subscribe()
+
+    // Listen for battle events
+    supabase
+      .channel('battle-rooms')
       .on('broadcast', { event: 'battle-action' }, ({ payload }) => {
-        this.handleBattleAction(payload)
+        console.log('Battle action received:', payload)
       })
       .subscribe()
   }
 
-  private async handleJoinQueue(playerData: any) {
-    // Add player to matchmaking queue
-    const { data, error } = await supabase
-      .from('matchmaking_queue')
-      .insert([{
-        user_id: playerData.id,
-        team_data: JSON.stringify(playerData.team),
-        battle_type: playerData.battleType || 'pvp',
-        created_at: new Date().toISOString()
-      }])
+  private async handleJoinQueue(payload: any) {
+    console.log('Player joined queue:', payload)
 
-    if (error) {
-      console.error('Error joining queue:', error)
-      return
-    }
+    // Add to matchmaking queue
+    this.matchmakingQueue.set(payload.id, {
+      ...payload,
+      joinedAt: Date.now()
+    })
+
+    // Update queue size for all clients
+    await this.broadcastQueueUpdate()
 
     // Try to find a match
-    await this.tryMatchmaking(playerData.battleType || 'pvp')
+    await this.tryMatchmaking()
   }
 
-  private async handleLeaveQueue(playerData: any) {
-    await supabase
-      .from('matchmaking_queue')
-      .delete()
-      .eq('user_id', playerData.id)
+  private async handleLeaveQueue(payload: any) {
+    console.log('Player left queue:', payload)
+
+    // Remove from matchmaking queue
+    this.matchmakingQueue.delete(payload.id)
+
+    // Update queue size for all clients
+    await this.broadcastQueueUpdate()
   }
 
-  private async handleBattleAction(actionData: any) {
-    // Broadcast battle action to room
+  private async broadcastQueueUpdate() {
+    const queueSize = this.matchmakingQueue.size
+
     await supabase
-      .channel(`battle-${actionData.roomId}`)
+      .channel('matchmaking-updates')
       .send({
         type: 'broadcast',
-        event: 'battle-action',
-        payload: actionData
+        event: 'queue-update',
+        payload: { queueSize }
       })
+
+    console.log('Broadcasted queue update:', queueSize)
   }
 
-  private async tryMatchmaking(battleType: string) {
-    // Get players in queue for this battle type
-    const { data: queuedPlayers, error } = await supabase
-      .from('matchmaking_queue')
-      .select('*')
-      .eq('battle_type', battleType)
-      .order('created_at', { ascending: true })
-
-    if (error || !queuedPlayers || queuedPlayers.length < 2) {
+  private async tryMatchmaking() {
+    if (this.matchmakingQueue.size < 2) {
+      console.log('Not enough players for matchmaking')
       return
     }
 
-    // Create battle room with first 2 players
-    const player1 = queuedPlayers[0]
-    const player2 = queuedPlayers[1]
+    // Get all players in queue
+    const players = Array.from(this.matchmakingQueue.values())
 
-    const roomId = `battle_${Date.now()}`
-    const roomData = {
-      id: roomId,
-      player1_id: player1.user_id,
-      player2_id: player2.user_id,
-      player1_team: player1.team_data,
-      player2_team: player2.team_data,
-      battle_type: battleType,
-      status: 'waiting',
-      created_at: new Date().toISOString()
+    // Find players with same battle type
+    const pvpPlayers = players.filter(p => p.battleType === 'pvp')
+
+    if (pvpPlayers.length >= 2) {
+      // Create match with first 2 PVP players
+      const player1 = pvpPlayers[0]
+      const player2 = pvpPlayers[1]
+
+      await this.createMatch(player1, player2)
     }
+  }
 
-    // Save battle room
-    const { error: roomError } = await supabase
-      .from('battle_rooms')
-      .insert([roomData])
-
-    if (roomError) {
-      console.error('Error creating battle room:', roomError)
-      return
-    }
+  private async createMatch(player1: any, player2: any) {
+    console.log('Creating match between:', player1.id, 'and', player2.id)
 
     // Remove players from queue
-    await supabase
-      .from('matchmaking_queue')
-      .delete()
-      .in('user_id', [player1.user_id, player2.user_id])
+    this.matchmakingQueue.delete(player1.id)
+    this.matchmakingQueue.delete(player2.id)
 
-    // Notify players of match
+    // Create room ID
+    const roomId = `battle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    // Create battle room in database
+    try {
+      const { error } = await supabase
+        .from('battle_rooms')
+        .insert([{
+          id: roomId,
+          player1_id: player1.id,
+          player2_id: player2.id,
+          player1_team: JSON.stringify(player1.team || []),
+          player2_team: JSON.stringify(player2.team || []),
+          battle_type: player1.battleType,
+          status: 'waiting',
+          created_at: new Date().toISOString()
+        }])
+
+      if (error) {
+        console.error('Error creating battle room:', error)
+        // Continue without database persistence for now
+      }
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError)
+      // Continue without database persistence for now
+    }
+
+    // Broadcast match found to both players
     await supabase
-      .channel('battle-rooms')
+      .channel('matchmaking-updates')
       .send({
         type: 'broadcast',
         event: 'match-found',
         payload: {
           roomId,
           players: [
-            { id: player1.user_id, team: JSON.parse(player1.team_data) },
-            { id: player2.user_id, team: JSON.parse(player2.team_data) }
-          ],
-          battleType
-        }
-      })
-
-    // Start battle after delay
-    setTimeout(() => {
-      this.startBattle(roomId)
-    }, 3000)
-  }
-
-  private async startBattle(roomId: string) {
-    // Update room status
-    await supabase
-      .from('battle_rooms')
-      .update({ status: 'active', started_at: new Date().toISOString() })
-      .eq('id', roomId)
-
-    // Notify room that battle started
-    await supabase
-      .channel(`battle-${roomId}`)
-      .send({
-        type: 'broadcast',
-        event: 'battle-start',
-        payload: { roomId }
-      })
-
-    // Start price updates
-    this.startPriceUpdates(roomId)
-  }
-
-  private async startPriceUpdates(roomId: string) {
-    const interval = setInterval(async () => {
-      try {
-        // Get latest price data
-        const response = await fetch('/api/battle-prices')
-        const priceData = await response.json()
-
-        // Send price update to room
-        await supabase
-          .channel(`battle-${roomId}`)
-          .send({
-            type: 'broadcast',
-            event: 'price-update',
-            payload: {
-              timestamp: Date.now(),
-              prices: priceData.prices
+            {
+              id: player1.id,
+              username: player1.username,
+              team: player1.team || []
+            },
+            {
+              id: player2.id,
+              username: player2.username,
+              team: player2.team || []
             }
-          })
-
-        // Check if battle should end (60 seconds)
-        const { data: room } = await supabase
-          .from('battle_rooms')
-          .select('started_at')
-          .eq('id', roomId)
-          .single()
-
-        if (room && room.started_at) {
-          const startTime = new Date(room.started_at).getTime()
-          if (Date.now() - startTime > 60000) {
-            clearInterval(interval)
-            await this.endBattle(roomId)
-          }
+          ],
+          battleType: player1.battleType
         }
-      } catch (error) {
-        console.error('Price update error:', error)
-      }
-    }, 1000)
+      })
+
+    console.log('Match created successfully:', roomId)
   }
 
-  private async endBattle(roomId: string) {
-    // Get battle results
-    const { data: room } = await supabase
-      .from('battle_rooms')
-      .select('*')
-      .eq('id', roomId)
-      .single()
-
-    if (!room) return
-
-    // Calculate results (simplified)
-    const results = {
-      player1Score: Math.floor(Math.random() * 100),
-      player2Score: Math.floor(Math.random() * 100),
-      winner: Math.random() > 0.5 ? room.player1_id : room.player2_id
-    }
-
-    // Update room status
-    await supabase
-      .from('battle_rooms')
-      .update({
-        status: 'finished',
-        ended_at: new Date().toISOString(),
-        results: JSON.stringify(results)
-      })
-      .eq('id', roomId)
-
-    // Notify room of battle end
-    await supabase
-      .channel(`battle-${roomId}`)
-      .send({
-        type: 'broadcast',
-        event: 'battle-end',
-        payload: results
-      })
-  }
 }
 
 // Initialize battle server

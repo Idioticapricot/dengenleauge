@@ -92,19 +92,29 @@ const CountdownText = styled.div`
 `
 
 export default function MatchmakingPage() {
-  const { isConnected, currentRoom, joinQueue, leaveQueue } = useSupabaseSocket()
+  const { isConnected, currentRoom, joinQueue, leaveQueue, queueSize, testConnection } = useSupabaseSocket()
   const { activeAccount } = useWallet()
   const router = useRouter()
   const [inQueue, setInQueue] = useState(false)
   const [matchFound, setMatchFound] = useState(false)
   const [opponent, setOpponent] = useState<any>(null)
-  const [queueSize, setQueueSize] = useState(0)
   const [countdown, setCountdown] = useState(3)
   const [selectedBattleType, setSelectedBattleType] = useState<'pvp' | 'pve'>('pvp')
+  const [connectionTested, setConnectionTested] = useState(false)
 
   const handleJoinQueue = () => {
-    if (!activeAccount?.address) return
+    if (!activeAccount?.address) {
+      alert('Please connect your wallet first!')
+      return
+    }
 
+    if (selectedBattleType === 'pve') {
+      // For PVE, redirect immediately
+      router.push('/game/PVE')
+      return
+    }
+
+    // For PVP, join the real matchmaking queue
     const savedTeam = localStorage.getItem('selectedTeam')
     if (!savedTeam) {
       alert('Please select a team first!')
@@ -119,6 +129,7 @@ export default function MatchmakingPage() {
       team: JSON.parse(savedTeam)
     }
 
+    console.log('Joining queue with data:', playerData)
     joinQueue(playerData, selectedBattleType)
     setInQueue(true)
   }
@@ -127,6 +138,7 @@ export default function MatchmakingPage() {
     if (!activeAccount?.address) return
     leaveQueue(activeAccount.address)
     setInQueue(false)
+    console.log('Left matchmaking queue')
   }
 
   useEffect(() => {
@@ -135,7 +147,11 @@ export default function MatchmakingPage() {
       setOpponent(currentRoom.players.find((p: any) => p.id !== activeAccount?.address))
 
       setTimeout(() => {
-        router.push(`/battle/room/${currentRoom.id}`)
+        if (selectedBattleType === 'pvp') {
+          router.push(`/game/${currentRoom.id}`)
+        } else {
+          router.push('/game/PVE')
+        }
       }, 3000)
 
       const countdownInterval = setInterval(() => {
@@ -145,6 +161,19 @@ export default function MatchmakingPage() {
       setTimeout(() => clearInterval(countdownInterval), 3000)
     }
   }, [currentRoom, activeAccount?.address, router])
+
+  // Periodic queue size refresh
+  useEffect(() => {
+    if (inQueue && !matchFound) {
+      const interval = setInterval(() => {
+        // The queue size is already updated via WebSocket events
+        // This interval is just a backup
+        console.log('Current queue size:', queueSize)
+      }, 5000)
+
+      return () => clearInterval(interval)
+    }
+  }, [inQueue, matchFound, queueSize])
 
   if (!activeAccount?.address) {
     return (
@@ -178,10 +207,17 @@ export default function MatchmakingPage() {
               {isConnected ? '🟢 CONNECTED' : '🔴 DISCONNECTED'}
             </span>
           </StatusItem>
-          
+
           <StatusItem>
             <span>Players in Queue:</span>
             <span style={{ color: 'var(--text-primary)' }}>{queueSize}</span>
+          </StatusItem>
+
+          <StatusItem>
+            <span>Queue Status:</span>
+            <span style={{ color: inQueue ? 'var(--brutal-yellow)' : 'var(--text-primary)' }}>
+              {inQueue ? '🔍 IN QUEUE' : '⏸️ NOT IN QUEUE'}
+            </span>
           </StatusItem>
         </StatusSection>
 
@@ -229,13 +265,87 @@ export default function MatchmakingPage() {
                 }
               </div>
             </div>
-            <Button
-              onClick={handleJoinQueue}
-              disabled={!isConnected}
-              style={{ fontSize: '20px', padding: '16px 32px' }}
-            >
-              🎯 FIND {selectedBattleType.toUpperCase()} MATCH
-            </Button>
+
+            {selectedBattleType === 'pvp' && (
+              <div style={{
+                background: 'var(--brutal-cyan)',
+                border: '2px solid var(--border-primary)',
+                padding: '12px',
+                marginBottom: '20px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '14px'
+              }}>
+                <div style={{ marginBottom: '8px' }}>
+                  Connection Status: {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+                </div>
+                <div style={{ marginBottom: '8px' }}>
+                  Players in Queue: {queueSize}
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>
+                  Wallet: {activeAccount?.address ? `${activeAccount.address.slice(0, 10)}...` : 'Not Connected'}
+                </div>
+                {connectionTested && (
+                  <div style={{ fontSize: '12px', marginTop: '8px', color: isConnected ? 'var(--primary-green)' : 'var(--red-primary)' }}>
+                    Connection Test: {isConnected ? '✅ Passed' : '❌ Failed'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+              <Button
+                onClick={handleJoinQueue}
+                style={{ fontSize: '20px', padding: '16px 32px' }}
+              >
+                🎯 FIND {selectedBattleType.toUpperCase()} MATCH
+              </Button>
+
+              {selectedBattleType === 'pvp' && (
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                  <Button
+                    onClick={async () => {
+                      // Test connection
+                      const connected = await testConnection()
+                      setConnectionTested(true)
+                      alert(connected ? '✅ Connection successful!' : '❌ Connection failed!')
+                    }}
+                    style={{
+                      fontSize: '12px',
+                      padding: '8px 16px',
+                      background: 'var(--brutal-yellow)',
+                      opacity: 0.8
+                    }}
+                  >
+                    🔧 Test Connection
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Debug button to show current status
+                      console.log('🔍 Debug Info:')
+                      console.log('- Queue size:', queueSize)
+                      console.log('- Is connected:', isConnected)
+                      console.log('- In queue:', inQueue)
+                      console.log('- Connection tested:', connectionTested)
+                      console.log('- Active account:', activeAccount?.address)
+
+                      alert(`Debug Info:
+Queue Size: ${queueSize}
+Connected: ${isConnected ? 'Yes' : 'No'}
+In Queue: ${inQueue ? 'Yes' : 'No'}
+Wallet: ${activeAccount?.address ? 'Connected' : 'Not Connected'}`)
+                    }}
+                    style={{
+                      fontSize: '12px',
+                      padding: '8px 16px',
+                      background: 'var(--brutal-cyan)',
+                      opacity: 0.8
+                    }}
+                  >
+                    📊 Debug Info
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -244,21 +354,58 @@ export default function MatchmakingPage() {
             <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', marginBottom: '20px' }}>
               🔍 SEARCHING FOR OPPONENT...
             </div>
-            <div style={{ 
-              width: '60px', 
-              height: '60px', 
-              border: '6px solid var(--border-primary)', 
-              borderTop: '6px solid var(--brutal-red)', 
-              borderRadius: '50%', 
+            <div style={{
+              background: 'var(--brutal-cyan)',
+              border: '2px solid var(--border-primary)',
+              padding: '12px',
+              marginBottom: '20px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '14px'
+            }}>
+              Players in queue: {queueSize} | Position: ~{Math.max(1, Math.ceil(queueSize / 2))}
+              <br />
+              Connection: {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+            </div>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '6px solid var(--border-primary)',
+              borderTop: '6px solid var(--brutal-red)',
+              borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 20px'
             }}></div>
-            <Button
-              onClick={handleLeaveQueue}
-              style={{ background: 'var(--red-primary)', fontSize: '16px' }}
-            >
-              ❌ LEAVE QUEUE
-            </Button>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                {queueSize < 2 ? 'Waiting for more players...' : 'Matchmaking in progress...'}
+              </div>
+              {queueSize === 0 && (
+                <div style={{ fontSize: '12px', color: 'var(--brutal-yellow)', marginTop: '10px' }}>
+                  💡 Tip: Open another browser tab to test matchmaking!
+                </div>
+              )}
+              <div style={{ fontSize: '11px', color: 'var(--text-primary)', opacity: 0.7, marginTop: '8px' }}>
+                🔗 WebSocket matchmaking active • Database persistence optional
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <Button
+                onClick={handleLeaveQueue}
+                style={{ background: 'var(--red-primary)', fontSize: '16px' }}
+              >
+                ❌ LEAVE QUEUE
+              </Button>
+              <Button
+                onClick={() => {
+                  // Quick match button for testing
+                  const mockRoomId = `test_${Date.now()}`
+                  router.push(`/game/${mockRoomId}`)
+                }}
+                style={{ background: 'var(--brutal-yellow)', fontSize: '14px', opacity: 0.8 }}
+              >
+                ⚡ Quick Test Match
+              </Button>
+            </div>
           </SearchingSection>
         )}
 
