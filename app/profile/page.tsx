@@ -305,6 +305,68 @@ export default function ProfilePage() {
           </BattleHistoryList>
         </BattleHistorySection>
 
+        <TokenSection>
+          <SectionTitle>💱 Swap to $DEGEN</SectionTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ 
+              background: 'var(--light-bg)', 
+              border: '3px solid var(--border-primary)', 
+              padding: '20px', 
+              textAlign: 'center',
+              boxShadow: '4px 4px 0px 0px var(--border-primary)'
+            }}>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginBottom: '12px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                🪙 ALGO → $DEGEN
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <input 
+                  type="number" 
+                  placeholder="0.0" 
+                  style={{
+                    padding: '12px',
+                    border: '3px solid var(--border-primary)',
+                    background: 'var(--light-bg)',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: '700',
+                    fontSize: '16px',
+                    width: '120px',
+                    textAlign: 'center'
+                  }}
+                />
+                <span style={{ fontSize: '24px' }}>→</span>
+                <div style={{
+                  padding: '12px',
+                  border: '3px solid var(--border-primary)',
+                  background: 'var(--brutal-yellow)',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: '900',
+                  fontSize: '16px',
+                  width: '120px',
+                  textAlign: 'center'
+                }}>
+                  0.0 DEGEN
+                </div>
+              </div>
+              <Button style={{ background: 'var(--brutal-orange)', fontSize: '14px', padding: '12px 24px' }}>
+                💱 SWAP NOW
+              </Button>
+            </div>
+            <div style={{ 
+              background: 'var(--brutal-cyan)', 
+              border: '3px solid var(--border-primary)', 
+              padding: '16px', 
+              textAlign: 'center',
+              boxShadow: '3px 3px 0px 0px var(--border-primary)'
+            }}>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                📈 Current Rate: 1 ALGO = 1,000 DEGEN
+              </div>
+            </div>
+          </div>
+        </TokenSection>
+
         <div style={{ textAlign: 'center' }}>
           <Button onClick={() => router.push('/game')}>
             ⚔️ Find Battle

@@ -7,6 +7,7 @@ import { useWallet } from "@txnlab/use-wallet-react"
 import { useRouter } from "next/navigation"
 import { algodClient } from "../../lib/algorand-config"
 import ConnectWallet from "../wallet/ConnectWallet"
+import { DegenSwap } from "../swap/DegenSwap"
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -209,11 +210,12 @@ export function Header() {
   const { activeAccount } = useWallet()
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
+  const [showDegenSwap, setShowDegenSwap] = useState(false)
   const [degenBalance, setDegenBalance] = useState('0')
   const DEGEN_ASA_ID = 123456789 // Mock DEGEN ASA ID - replace with actual when available
 
   const handleWamClick = () => {
-    setShowWamPopup(true)
+    setShowDegenSwap(true)
   }
 
   const handleGoToDeposit = () => {
@@ -280,6 +282,7 @@ export function Header() {
         <BalanceContainer onClick={handleWamClick}>
           <TokenIcon>$D</TokenIcon>
           <Balance>{degenBalance}</Balance>
+          <AddButton onClick={(e) => { e.stopPropagation(); setShowDegenSwap(true); }}>+</AddButton>
         </BalanceContainer>
       </LeftSection>
 
@@ -287,6 +290,11 @@ export function Header() {
         <ConnectWallet />
       </RightSection>
     </HeaderContainer>
+    
+    <DegenSwap 
+      isOpen={showDegenSwap} 
+      onClose={() => setShowDegenSwap(false)} 
+    />
     </>
   )
 }
