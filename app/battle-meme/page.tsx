@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
-import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
+import { useWallet } from "@txnlab/use-wallet-react"
 import styled from "styled-components"
 import { Button } from "../../components/styled/GlobalStyles"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -132,7 +132,7 @@ export default function BattleMemePage() {
   const [winStreak, setWinStreak] = useState(0)
   const [totalBattles, setTotalBattles] = useState(0)
   const [totalWins, setTotalWins] = useState(0)
-  const { wallet } = useAlgorandWallet()
+  const { activeAccount } = useWallet()
 
   useEffect(() => {
     const savedTeam = localStorage.getItem('selectedTeam')
@@ -270,7 +270,7 @@ export default function BattleMemePage() {
   }
 
   const startBattle = async () => {
-    if (playerTeam.length !== 3 || !wallet?.address) return
+    if (playerTeam.length !== 3 || !activeAccount?.address) return
     
     try {
       // Initialize battle without saving to DB first
@@ -335,11 +335,11 @@ export default function BattleMemePage() {
     
     // Save battle to database
     try {
-      if (wallet?.address) {
+      if (activeAccount?.address) {
         const userResponse = await fetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: wallet.address })
+          body: JSON.stringify({ username: activeAccount.address })
         })
         
         const userData = await userResponse.json()
@@ -363,14 +363,14 @@ export default function BattleMemePage() {
     }
   }
 
-  if (!wallet?.address) {
+  if (!activeAccount?.address) {
     return (
       <AppLayout>
         <BattleContainer>
           <BattleHeader>
             <BattleTitle>🔗 CONNECT WALLET</BattleTitle>
             <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: '10px 0 0 0' }}>
-              Connect your Pera wallet to start battling!
+              Connect your wallet to start battling!
             </p>
           </BattleHeader>
         </BattleContainer>

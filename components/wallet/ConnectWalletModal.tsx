@@ -1,8 +1,8 @@
 "use client"
 
 import { type Wallet, useWallet } from "@txnlab/use-wallet-react"
-import { toast } from "react-toastify"
 import styled from "styled-components"
+import { brutalToast } from "../ui/BrutalToast"
 
 interface ConnectWalletModalProps {
   wallets: Wallet[]
@@ -133,15 +133,15 @@ const ConnectWalletModal = ({
     try {
       if (wallet.isConnected) {
         await wallet.setActive()
-        toast.success("Wallet set as active")
+        brutalToast.success("Wallet set as active")
       } else {
         await wallet.connect()
-        toast.success("Wallet connected successfully")
+        brutalToast.success("Wallet connected successfully")
       }
       onClose()
     } catch (error) {
       console.error(error)
-      toast.error("Failed to connect wallet")
+      brutalToast.error("Failed to connect wallet")
     }
   }
 
@@ -152,11 +152,11 @@ const ConnectWalletModal = ({
           await wallet.disconnect()
         }
       }
-      toast.success("Disconnected from all wallets")
+      brutalToast.success("Disconnected from all wallets")
       onClose()
     } catch (error) {
       console.error(error)
-      toast.error("Failed to disconnect wallets")
+      brutalToast.error("Failed to disconnect wallets")
     }
   }
 
