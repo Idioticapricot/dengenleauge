@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { AppLayout } from "../../components/layout/AppLayout"
-import { useAlgorandWallet } from "../../components/wallet/AlgorandWalletProvider"
+import { useWallet } from "@txnlab/use-wallet-react"
 import styled from "styled-components"
 
 const StatsContainer = styled.div`
@@ -89,19 +89,19 @@ export default function StatsPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'ai' | 'pvp'>('ai')
-  const { wallet } = useAlgorandWallet()
+  const { activeAccount } = useWallet()
 
   useEffect(() => {
-    if (wallet?.address) {
+    if (activeAccount?.address) {
       loadUserStats()
     } else {
       setLoading(false)
     }
-  }, [wallet?.address])
+  }, [activeAccount?.address])
 
   const loadUserStats = async () => {
     try {
-      if (!wallet?.address) {
+      if (!activeAccount?.address) {
         setLoading(false)
         return
       }
@@ -109,7 +109,7 @@ export default function StatsPage() {
       const userResponse = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: wallet.address })
+        body: JSON.stringify({ username: activeAccount.address })
       })
 
       const userData = await userResponse.json()
@@ -143,7 +143,7 @@ export default function StatsPage() {
     )
   }
 
-  if (!wallet?.address) {
+  if (!activeAccount?.address) {
     return (
       <AppLayout>
         <StatsContainer>

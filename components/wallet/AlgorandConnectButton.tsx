@@ -1,7 +1,7 @@
 "use client"
 
 import styled from "styled-components"
-import { useAlgorandWallet } from "./AlgorandWalletProvider"
+import { useWallet } from "@txnlab/use-wallet-react"
 
 const ConnectButton = styled.button<{ $variant?: "primary" | "secondary" }>`
   display: flex;
@@ -47,14 +47,28 @@ interface AlgorandConnectButtonProps {
 
 export function AlgorandConnectButton({ 
   variant = "primary", 
-  children = "Connect Pera Wallet",
+  children = "Connect Wallet",
   className 
 }: AlgorandConnectButtonProps) {
-  const { wallet, connectWallet, disconnectWallet } = useAlgorandWallet()
+  const { activeAccount, wallets } = useWallet()
 
-  if (wallet.isConnected && wallet.address) {
+  const handleConnect = async () => {
+    const availableWallet = wallets.find(w => !w.isConnected)
+    if (availableWallet) {
+      await availableWallet.connect()
+    }
+  }
+
+  const handleDisconnect = async () => {
+    const connectedWallet = wallets.find(w => w.isConnected)
+    if (connectedWallet) {
+      await connectedWallet.disconnect()
+    }
+  }
+
+  if (activeAccount?.address) {
     return (
-      <ConnectButton $variant={variant} className={className} onClick={disconnectWallet}>
+      <ConnectButton $variant={variant} className={className} onClick={handleDisconnect}>
         <WalletIcon>🔗</WalletIcon>
         Disconnect
       </ConnectButton>
@@ -64,12 +78,11 @@ export function AlgorandConnectButton({
   return (
     <ConnectButton 
       $variant={variant} 
-      onClick={connectWallet} 
-      disabled={wallet.connecting}
+      onClick={handleConnect}
       className={className}
     >
       <WalletIcon>🔗</WalletIcon>
-      {wallet.connecting ? "Connecting..." : children}
+      {children}
     </ConnectButton>
   )
 }

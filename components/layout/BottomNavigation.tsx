@@ -83,11 +83,10 @@ const NavLabel = styled.span`
 
 const navItems = [
   { href: "/team", icon: Users, label: "Team" },
-  { href: "/battle-meme", icon: Swords, label: "AI Battle" },
-  { href: "/matchmaking", icon: Zap, label: "PvP", isBattle: true },
-  { href: "/stats", icon: BarChart3, label: "Stats" },
-  { href: "/profile", icon: BarChart3, label: "Profile" },
-
+  { href: "/battle", icon: Swords, label: "AI Battle" },
+  { href: "/game", icon: Zap, label: "PvP", isBattle: true },
+  { href: "/tournament", icon: Trophy, label: "Tournament" },
+  { href: "/profile", icon: User, label: "Profile" },
 ]
 
 export function BottomNavigation() {

@@ -362,7 +362,7 @@ export default function TeamPage() {
   const handleSaveTeam = () => {
     if (currentTeam.filter(Boolean).length !== 3) return
     localStorage.setItem('selectedTeam', JSON.stringify(currentTeam.filter(Boolean)))
-    window.location.href = '/battle-meme'
+    window.location.href = '/battle'
   }
   
   const toggleFavorite = async (coinId: number, coinName: string) => {

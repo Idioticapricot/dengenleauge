@@ -306,7 +306,7 @@ export default function ProfilePage() {
         </BattleHistorySection>
 
         <div style={{ textAlign: 'center' }}>
-          <Button onClick={() => router.push('/matchmaking')}>
+          <Button onClick={() => router.push('/game')}>
             ⚔️ Find Battle
           </Button>
         </div>
