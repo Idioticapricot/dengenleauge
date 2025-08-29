@@ -181,8 +181,8 @@ export default function ProfilePage() {
   const { data: userData, isLoading: userLoading, error: userError } = useUser(activeAccount?.address)
   const { data: balanceData, isLoading: balanceLoading } = useTokenBalances(activeAccount?.address)
   
-  const userStats = userData?.user
-  const battleHistory = userData?.user?.battleHistory || []
+  const userStats = userData?.data || userData?.user
+  const battleHistory = userStats?.battleHistory || []
   const tokenBalances = balanceData?.balances || {}
   const loading = userLoading || balanceLoading
 

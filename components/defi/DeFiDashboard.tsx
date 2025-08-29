@@ -71,8 +71,8 @@ export function DeFiDashboard({ userAddress }: DeFiDashboardProps) {
       const poolData = await poolResponse.json()
       const farmData = await farmResponse.json()
       
-      setPoolData(poolData.data)
-      setFarmData(farmData.data)
+      setPoolData(poolData.success ? poolData.data : poolData)
+      setFarmData(farmData.success ? farmData.data : farmData)
     } catch (error) {
       console.error('Failed to fetch DeFi data:', error)
     } finally {

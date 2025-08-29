@@ -17,7 +17,7 @@ export function useMemeCoins(search?: string) {
 
 // User Data API
 export function useUser(address?: string) {
-  return useQuery({
+  return useQuery<ApiResponse<User>>({
     queryKey: ['user', address],
     queryFn: async () => {
       if (!address) return null
@@ -26,7 +26,7 @@ export function useUser(address?: string) {
       return response.json()
     },
     enabled: !!address,
-    staleTime: 30 * 1000, // 30 seconds for user data
+    staleTime: 30 * 1000,
   })
 }
 

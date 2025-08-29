@@ -214,7 +214,7 @@ export default function BattleMemePage() {
       })
       
       const data = await response.json()
-      const prices = data.prices || {}
+      const prices = data.data?.prices || data.prices || {}
       
       let updatedPlayerTeam: any[] = []
       let updatedOpponentTeam: any[] = []
@@ -339,16 +339,17 @@ export default function BattleMemePage() {
         const userResponse = await fetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: activeAccount.address })
+          body: JSON.stringify({ username: activeAccount.address, walletAddress: activeAccount.address })
         })
         
         const userData = await userResponse.json()
-        if (userData.user) {
+        const user = userData.data || userData.user
+        if (user) {
           await fetch('/api/meme-battles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userId: userData.user.id,
+              userId: user.id,
               teamData: { playerTeam, opponentTeam },
               opponentStrategy,
               playerScore: playerFinalScore,

@@ -258,14 +258,15 @@ export default function TeamPage() {
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: activeAccount.address })
+        body: JSON.stringify({ username: activeAccount.address, walletAddress: activeAccount.address })
       })
       
       const data = await response.json()
-      if (data.user) {
-        setCurrentUser(data.user)
-        setFavoriteCoins(data.user.favorites.map((f: any) => f.coinId))
-        setTeamPresets(data.user.presets)
+      const user = data.data || data.user
+      if (user) {
+        setCurrentUser(user)
+        setFavoriteCoins(user.favorites?.map((f: any) => f.coinId) || [])
+        setTeamPresets(user.presets || [])
       }
     } catch (error) {
       console.error('Failed to initialize user:', error)
