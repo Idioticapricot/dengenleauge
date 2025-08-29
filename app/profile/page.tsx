@@ -202,7 +202,7 @@ export default function ProfilePage() {
     return (
       <AppLayout>
         <ProfileContainer>
-          <LoadingText>⏳ Loading profile...</LoadingText>
+          <LoadingSpinner text="Loading profile..." size="large" />
         </ProfileContainer>
       </AppLayout>
     )
