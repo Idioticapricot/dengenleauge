@@ -7,6 +7,7 @@ import { Providers } from "../components/wallet/Providers"
 import { ErrorBoundary } from "../components/ErrorBoundary"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '../lib/react-query'
+import { registerServiceWorker } from '../lib/sw-register'
 
 const inter = Inter({
   subsets: ["latin"],
