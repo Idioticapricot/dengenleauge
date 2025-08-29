@@ -46,31 +46,15 @@ const AddressDisplay = styled.div`
 export function ConnectWallet() {
   const { wallets, activeAccount } = useWallet()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [degenBalance, setDegenBalance] = useState('0')
-
-  const DEGEN_ASA_ID = 123456789 // Mock DEGEN ASA ID - replace with actual when available
 
   useEffect(() => {
-    if (activeAccount?.address) {
-      fetchDegenBalance(activeAccount.address)
-    }
-  }, [activeAccount])
-
-  const fetchDegenBalance = async (address: string) => {
-    try {
-      const accountInfo = await algodClient.accountInformation(address).do()
-
-      // Find DEGEN asset in account assets
-      const degenAsset = accountInfo.assets?.find((asset: any) => asset['asset-id'] === DEGEN_ASA_ID)
-      setDegenBalance(degenAsset ? degenAsset.amount.toString() : '0')
-    } catch (error) {
-      console.error('Error fetching DEGEN balance:', error)
-      setDegenBalance('0')
-    }
-  }
+    console.log('Wallets loaded:', wallets?.length || 0)
+    console.log('Active account:', activeAccount?.address)
+  }, [wallets, activeAccount])
 
   const handleConnectClick = () => {
-    console.log('Connect button clicked, opening modal')
+    console.log('Connect button clicked, wallets available:', wallets?.length || 0)
+    console.log('Wallets:', wallets)
     setIsModalOpen(true)
   }
 
@@ -86,10 +70,10 @@ export function ConnectWallet() {
     return (
       <>
         <ConnectButton onClick={handleConnectClick}>
-          🔗 Connect Wallet
+          🔗 Connect Wallet ({wallets?.length || 0})
         </ConnectButton>
         <ConnectWalletModal
-          wallets={wallets}
+          wallets={wallets || []}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
@@ -103,7 +87,7 @@ export function ConnectWallet() {
         {formatAddress(activeAccount.address)}
       </AddressDisplay>
       <ConnectWalletModal
-        wallets={wallets}
+        wallets={wallets || []}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />

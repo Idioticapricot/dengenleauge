@@ -212,7 +212,7 @@ export function Header() {
   const [showWamPopup, setShowWamPopup] = useState(false)
   const [showDegenSwap, setShowDegenSwap] = useState(false)
   const [degenBalance, setDegenBalance] = useState('0')
-  const DEGEN_ASA_ID = 123456789 // Mock DEGEN ASA ID - replace with actual when available
+  const DEGEN_ASA_ID = parseInt(process.env.DEGEN_ASSET_ID || '745007115')
 
   const handleWamClick = () => {
     setShowDegenSwap(true)
@@ -236,12 +236,14 @@ export function Header() {
     if (!activeAccount?.address) return
 
     try {
-      // TODO: Replace with actual DEGEN ASA ID when deployed
-      const accountInfo = await algodClient.accountInformation(activeAccount.address).do()
-
-      // Find DEGEN asset in account assets
-      const degenAsset = accountInfo.assets?.find((asset: any) => asset['asset-id'] === DEGEN_ASA_ID)
-      setDegenBalance(degenAsset ? degenAsset.amount.toString() : '0')
+      const response = await fetch(`/api/user-balance?address=${activeAccount.address}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setDegenBalance(data.data.degenBalance.toFixed(2))
+      } else {
+        setDegenBalance('0')
+      }
     } catch (error) {
       console.error('Error fetching DEGEN balance:', error)
       setDegenBalance('0')
@@ -287,6 +289,12 @@ export function Header() {
       </LeftSection>
 
       <RightSection>
+        <ProfileButton onClick={() => router.push('/buy-tokens')}>
+          🪙 BUY DEGEN
+        </ProfileButton>
+        <ProfileButton onClick={handleProfileClick}>
+          👤 PROFILE
+        </ProfileButton>
         <ConnectWallet />
       </RightSection>
     </HeaderContainer>
