@@ -207,10 +207,10 @@ export default function BattleMemePage() {
       const allCoins = [...playerTeam, ...opponentTeam]
       const symbols = [...new Set(allCoins.map(coin => coin.ticker))]
       
-      const response = await fetch('/api/battle-prices', {
+      const response = await fetch('/api/battle/enhanced', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbols })
+        body: JSON.stringify({ symbols, battleId: `battle_${Date.now()}` })
       })
       
       const data = await response.json()

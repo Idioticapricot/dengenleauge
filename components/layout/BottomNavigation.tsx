@@ -3,7 +3,7 @@
 import styled from "styled-components"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Users, Calendar, Trophy, User, Swords, BarChart3, Zap } from "lucide-react"
+import { Users, Calendar, Trophy, User, Swords, BarChart3, Zap, DollarSign } from "lucide-react"
 
 const NavContainer = styled.nav`
   position: fixed;
@@ -83,9 +83,9 @@ const NavLabel = styled.span`
 
 const navItems = [
   { href: "/team", icon: Users, label: "Team" },
-  { href: "/battle", icon: Swords, label: "AI Battle" },
+  { href: "/battle", icon: Swords, label: "Battle" },
   { href: "/game", icon: Zap, label: "PvP", isBattle: true },
-  { href: "/tournament", icon: Trophy, label: "Tournament" },
+  { href: "/defi", icon: DollarSign, label: "DeFi" },
   { href: "/profile", icon: User, label: "Profile" },
 ]
 

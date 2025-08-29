@@ -336,6 +336,8 @@ export default function ProfilePage() {
           </div>
         </TokenSection>
 
+        <DeFiDashboard userAddress={activeAccount?.address} />
+
         <div style={{ textAlign: 'center' }}>
           <Button onClick={() => router.push('/game')}>
             ⚔️ Find Battle
