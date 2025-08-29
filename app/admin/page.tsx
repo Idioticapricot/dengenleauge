@@ -55,11 +55,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
 
   const deployToken = async () => {
-    if (!mnemonic) {
-      alert('Please enter creator mnemonic')
-      return
-    }
-
     setLoading(true)
     try {
       const response = await fetch('/api/token/deploy', {
@@ -89,9 +84,15 @@ export default function AdminPage() {
             value={mnemonic}
             onChange={(e) => setMnemonic(e.target.value)}
           />
+          <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+            Admin Address: CKOLCDFKV7XTCLLB5XSCEBB2UYAXI6TXXFJYI2TNBR4NTY3RAMLAGSFKSM
+          </div>
           <Button onClick={deployToken} disabled={loading}>
             {loading ? 'Deploying...' : 'Deploy DEGEN ASA'}
           </Button>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+            💡 Leave mnemonic empty to use configured admin account
+          </div>
           
           {deployResult && (
             <ResultBox>
