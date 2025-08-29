@@ -8,6 +8,7 @@ import { Button } from "../../components/styled/GlobalStyles"
 import { useRouter } from "next/navigation"
 import { useUser, useTokenBalances } from "../../hooks/api"
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner"
+import { DeFiDashboard } from "../../components/defi/DeFiDashboard"
 
 const ProfileContainer = styled.div`
   display: flex;
