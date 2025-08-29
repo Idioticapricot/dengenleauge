@@ -5,6 +5,8 @@ import "./globals.css"
 import { StyledComponentsRegistry } from "./registry"
 import { Providers } from "../components/wallet/Providers"
 import { ErrorBoundary } from "../components/ErrorBoundary"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '../lib/react-query'
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,9 +66,11 @@ html {
           }}
         />
         <StyledComponentsRegistry>
-          <ErrorBoundary>
-            <Providers>{children}</Providers>
-          </ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <ErrorBoundary>
+              <Providers>{children}</Providers>
+            </ErrorBoundary>
+          </QueryClientProvider>
         </StyledComponentsRegistry>
       </body>
     </html>

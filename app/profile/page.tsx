@@ -6,6 +6,8 @@ import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Button } from "../../components/styled/GlobalStyles"
 import { useRouter } from "next/navigation"
+import { useUser, useTokenBalances } from "../../hooks/api"
+import { LoadingSpinner } from "../../components/ui/LoadingSpinner"
 
 const ProfileContainer = styled.div`
   display: flex;
@@ -174,46 +176,14 @@ const LoadingText = styled.div`
 export default function ProfilePage() {
   const { activeAccount } = useWallet()
   const router = useRouter()
-  const [userStats, setUserStats] = useState<any>(null)
-  const [battleHistory, setBattleHistory] = useState<any[]>([])
-  const [tokenBalances, setTokenBalances] = useState<any>({})
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!activeAccount?.address) {
-      return
-    }
-
-    fetchUserData()
-  }, [activeAccount?.address])
-
-  const fetchUserData = async () => {
-    if (!activeAccount?.address) return
-
-    try {
-      setLoading(true)
-
-      // Fetch user stats
-      const statsResponse = await fetch(`/api/users?address=${activeAccount.address}`)
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setUserStats(statsData.user)
-        setBattleHistory(statsData.user.battleHistory || [])
-      }
-
-      // Fetch real token balances
-      const balanceResponse = await fetch(`/api/token-balances?address=${activeAccount.address}`)
-      if (balanceResponse.ok) {
-        const balanceData = await balanceResponse.json()
-        setTokenBalances(balanceData.balances)
-      }
-
-    } catch (error) {
-      console.error('Error fetching user data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  
+  const { data: userData, isLoading: userLoading, error: userError } = useUser(activeAccount?.address)
+  const { data: balanceData, isLoading: balanceLoading } = useTokenBalances(activeAccount?.address)
+  
+  const userStats = userData?.user
+  const battleHistory = userData?.user?.battleHistory || []
+  const tokenBalances = balanceData?.balances || {}
+  const loading = userLoading || balanceLoading
 
   if (!activeAccount?.address) {
     return (
