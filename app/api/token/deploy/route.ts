@@ -1,87 +1,94 @@
 import { NextResponse } from 'next/server'
-import algosdk from 'algosdk'
+import * as algosdk from 'algosdk'
 
-const ALGOD_TOKEN = '';
-const ALGOD_SERVER = 'https://testnet-api.algonode.cloud';
-const ALGOD_PORT = '';
-const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
+/**
+ * ==================================================================
+ * FINAL, BULLETPROOF TOKEN DEPLOYMENT SCRIPT
+ * ------------------------------------------------------------------
+ * This version bypasses the high-level transaction builders and
+ * constructs the transaction manually to avoid deep SDK bugs.
+ * ==================================================================
+ */
 
+// --- 1. ALGORAND CLIENT CONFIGURATION ---
+const algodClient = new algosdk.Algodv2('', 'https://testnet-api.algonode.cloud', '');
+
+// --- 2. TOKEN DEFINITION (ASA) ---
 const DEGEN_TOKEN_CONFIG = {
-  total: 1000000000,
+  assetName: 'DengenLeague Bulletproof',
+  unitName: 'DGN-B',
+  total: 1_000_000_000,
   decimals: 6,
   defaultFrozen: false,
-  unitName: 'DEGEN',
-  assetName: 'DengenLeague Token',
-  url: 'https://dengenleague.com/token',
-}
+  url: 'https://dengenleague.com',
+};
 
 export async function POST(request: Request) {
+  console.log('--- Bulletproof Deployment API Triggered ---');
   try {
-    const { creatorMnemonic } = await request.json()
-    const mnemonicToUse = creatorMnemonic?.trim() || process.env.CREATOR_MNEMONIC
+    // --- 3. GET AND SANITIZE MNEMONIC ---
+    const { creatorMnemonic } = await request.json();
+    if (!creatorMnemonic || typeof creatorMnemonic !== 'string') {
+      return NextResponse.json({ success: false, error: 'creatorMnemonic (string) is required.' }, { status: 400 });
+    }
+    const sanitizedMnemonic = creatorMnemonic.trim().split(/\s+/).join(' ');
 
-    if (!mnemonicToUse) {
-      return NextResponse.json(
-        { success: false, error: 'Creator mnemonic not found in request or environment' },
-        { status: 400 }
-      )
+    // --- 4. DERIVE ACCOUNT AND CHECK BALANCE ---
+    const creatorAccount = algosdk.mnemonicToSecretKey(sanitizedMnemonic);
+    const accountInfo = await algodClient.accountInformation(creatorAccount.addr).do();
+    const balance = BigInt(accountInfo.amount);
+
+    console.log('--- Account Details ---');
+    console.log(`Address: ${creatorAccount.addr}`);
+    console.log(`Balance: ${Number(balance) / 1e6} ALGO`);
+    console.log('---------------------');
+
+    if (balance < 200000n) {
+      return NextResponse.json({ success: false, error: `Insufficient balance. At least 0.2 ALGO is required.` }, { status: 400 });
     }
 
-    const creatorAccount = algosdk.mnemonicToSecretKey(mnemonicToUse)
-    const creatorAddress = creatorAccount.addr
-
-    const accountInfo = await algodClient.accountInformation(creatorAddress).do()
-
-    // FIX: Convert BigInt to Number for comparison and calculations.
-    const balanceAlgo = Number(accountInfo.amount) / 1e6
-
-    if (Number(accountInfo.amount) < 100000) {
-      return NextResponse.json(
-        { success: false, error: `Insufficient balance. Account has ${balanceAlgo} ALGO, need at least 0.1 ALGO` },
-        { status: 400 }
-      )
-    }
-
+    // --- 5. MANUALLY CONSTRUCT THE TRANSACTION ---
     const suggestedParams = await algodClient.getTransactionParams().do();
-    suggestedParams.fee = 1000;
-    suggestedParams.flatFee = true;
-    
-    const txn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
-      from: creatorAddress,
-      total: DEGEN_TOKEN_CONFIG.total,
-      decimals: DEGEN_TOKEN_CONFIG.decimals,
-      defaultFrozen: DEGEN_TOKEN_CONFIG.defaultFrozen,
-      unitName: DEGEN_TOKEN_CONFIG.unitName,
-      assetName: DEGEN_TOKEN_CONFIG.assetName,
-      assetURL: DEGEN_TOKEN_CONFIG.url,
-      manager: creatorAddress,
-      reserve: creatorAddress,
-      freeze: creatorAddress,
-      clawback: creatorAddress,
-      suggestedParams,
+
+    // FINAL FIX: Manually build the transaction object to bypass the buggy high-level functions.
+    const txn = new algosdk.Transaction({
+        from: creatorAccount.addr.toString(),
+        ...suggestedParams,
+        type: 'acfg', // Asset Configuration Transaction
+        assetTotal: DEGEN_TOKEN_CONFIG.total,
+        assetDecimals: DEGEN_TOKEN_CONFIG.decimals,
+        assetDefaultFrozen: DEGEN_TOKEN_CONFIG.defaultFrozen,
+        assetUnitName: DEGEN_TOKEN_CONFIG.unitName,
+        assetName: DEGEN_TOKEN_CONFIG.assetName,
+        assetURL: DEGEN_TOKEN_CONFIG.url,
+        // Omit manager, reserve, freeze, and clawback for an immutable token
     });
+    console.log('Transaction manually constructed.');
 
-    const signedTxn = txn.signTxn(creatorAccount.sk)
-    const { txId } = await algodClient.sendRawTransaction(signedTxn).do()
+    // --- 6. SIGN AND SEND ---
+    const signedTxn = txn.signTxn(creatorAccount.sk);
+    const { txId } = await algodClient.sendRawTransaction(signedTxn).do();
+    console.log(`Transaction sent. TxID: ${txId}`);
 
-    const result = await algosdk.waitForConfirmation(algodClient, txId, 4)
-    const assetId = result['asset-index']
+    // --- 7. WAIT FOR CONFIRMATION ---
+    const result = await algosdk.waitForConfirmation(algodClient, txId, 4);
+    const assetId = result['asset-index'];
 
+    if (!assetId) {
+        throw new Error("Deployment succeeded, but no Asset ID was returned.");
+    }
+
+    // --- 8. SUCCESS ---
+    console.log(`✅ Successfully deployed token! Asset ID: ${assetId}`);
     return NextResponse.json({
       success: true,
-      data: {
-        assetId,
-        txId,
-        config: DEGEN_TOKEN_CONFIG,
-        creatorAddress: creatorAddress,
-        explorerUrl: `https://testnet.algoexplorer.io/asset/${assetId}`
-      }
-    })
-  } catch (error) {
-    console.error('Token deployment error:', error)
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to deploy token' },
-      { status: 500 }
-    )
+      assetId: assetId,
+      explorerUrl: `https://testnet.algoexplorer.io/asset/${assetId}`
+    });
+
+  } catch (error: any) {
+    console.error('--- 🚨 DEPLOYMENT FAILED 🚨 ---');
+    console.error(`Error: ${error.message}`);
+    return NextResponse.json({ success: false, error: error.message || 'An unknown error occurred.' }, { status: 500 });
   }
 }

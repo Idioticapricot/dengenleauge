@@ -50,6 +50,7 @@ const ResultBox = styled.div`
 `
 
 export default function AdminPage() {
+  const [address, setAddress] = useState('')
   const [mnemonic, setMnemonic] = useState('')
   const [deployResult, setDeployResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -77,21 +78,18 @@ export default function AdminPage() {
     <AppLayout>
       <AdminContainer>
         <AdminCard>
-          <CardTitle>🪙 Deploy DEGEN Token</CardTitle>
+          <CardTitle>🪙 Deploy DEGEN MVP Token</CardTitle>
           <Input
             type="password"
             placeholder="Enter creator account mnemonic (25 words)"
             value={mnemonic}
             onChange={(e) => setMnemonic(e.target.value)}
           />
-          <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-            Admin Address: CKOLCDFKV7XTCLLB5XSCEBB2UYAXI6TXXFJYI2TNBR4NTY3RAMLAGSFKSM
-          </div>
           <Button onClick={deployToken} disabled={loading}>
             {loading ? 'Deploying...' : 'Deploy DEGEN ASA'}
           </Button>
           <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-            💡 Leave mnemonic empty to use configured admin account
+            💡 Only mnemonic required - address will be derived automatically
           </div>
           
           {deployResult && (
