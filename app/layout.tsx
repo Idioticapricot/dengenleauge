@@ -37,6 +37,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Register service worker
+  if (typeof window !== 'undefined') {
+    registerServiceWorker()
+  }
+  
   return (
     <html lang="en" className="dark">
       <head>
