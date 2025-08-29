@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import type { User, ApiResponse } from '../../../types/api'
 
 const prisma = new PrismaClient()
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse<ApiResponse<User>>> {
   try {
-    const { username, walletAddress } = await request.json()
+    const { username, walletAddress }: { username?: string; walletAddress?: string } = await request.json()
     
     if (!username && !walletAddress) {
-      return NextResponse.json({ error: 'Username or wallet address required' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Username or wallet address required' }, { status: 400 })
     }
     
     // Find or create user by wallet address first, then username
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
       })
     }
     
-    return NextResponse.json({ user })
+    return NextResponse.json({ success: true, data: user })
     
   } catch (error) {
     console.error('User API error:', error)

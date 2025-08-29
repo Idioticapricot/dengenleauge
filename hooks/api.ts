@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { User, MemeCoin, TokenBalanceResponse, BattlePriceResponse, ApiResponse } from '../types/api'
 
 // Meme Coins API
 export function useMemeCoins(search?: string) {
-  return useQuery({
+  return useQuery<{ coins: MemeCoin[] }>({
     queryKey: ['memeCoins', search],
     queryFn: async () => {
       const url = search ? `/api/meme-coins?search=${encodeURIComponent(search)}` : '/api/meme-coins'
