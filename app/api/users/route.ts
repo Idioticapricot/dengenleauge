@@ -42,28 +42,64 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    const address = searchParams.get('address')
     
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+    if (!userId && !address) {
+      return NextResponse.json({ error: 'User ID or wallet address required' }, { status: 400 })
     }
     
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const whereClause = userId ? { id: userId } : { walletAddress: address }
+    
+    let user = await prisma.user.findUnique({
+      where: whereClause,
       include: {
         favorites: true,
         presets: true,
-        player1Battles: {
+        multiplayerPlayer1: {
           orderBy: { createdAt: 'desc' },
-          take: 10
+          take: 10,
+          include: {
+            player2: true,
+            winner: true
+          }
+        },
+        multiplayerPlayer2: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          include: {
+            player1: true,
+            winner: true
+          }
         }
       }
     })
+    
+    // Create user if doesn't exist and we have wallet address
+    if (!user && address) {
+      user = await prisma.user.create({
+        data: { 
+          username: `Player_${address.slice(-6)}`,
+          walletAddress: address 
+        },
+        include: {
+          favorites: true,
+          presets: true,
+          multiplayerPlayer1: true,
+          multiplayerPlayer2: true
+        }
+      })
+    }
     
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
     
-    return NextResponse.json({ user })
+    // Combine battle history
+    const allBattles = [...(user.multiplayerPlayer1 || []), ...(user.multiplayerPlayer2 || [])]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 10)
+    
+    return NextResponse.json({ user: { ...user, battleHistory: allBattles } })
     
   } catch (error) {
     console.error('User GET error:', error)

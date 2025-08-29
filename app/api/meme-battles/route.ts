@@ -46,24 +46,24 @@ export async function POST(request: NextRequest) {
     const playerTeam = await prisma.memeTeam.create({
       data: {
         userId,
-        coin1Id: teamData.playerTeam[0].id,
-        coin2Id: teamData.playerTeam[1].id,
-        coin3Id: teamData.playerTeam[2].id,
-        coin1Name: teamData.playerTeam[0].ticker,
-        coin2Name: teamData.playerTeam[1].ticker,
-        coin3Name: teamData.playerTeam[2].ticker
+        coin1Id: parseInt(teamData.playerTeam[0].id) || 1,
+        coin2Id: parseInt(teamData.playerTeam[1].id) || 2,
+        coin3Id: parseInt(teamData.playerTeam[2].id) || 3,
+        coin1Name: teamData.playerTeam[0].ticker || teamData.playerTeam[0].name,
+        coin2Name: teamData.playerTeam[1].ticker || teamData.playerTeam[1].name,
+        coin3Name: teamData.playerTeam[2].ticker || teamData.playerTeam[2].name
       }
     })
     
     const aiTeam = await prisma.memeTeam.create({
       data: {
         userId: aiUser.id,
-        coin1Id: teamData.opponentTeam[0].id,
-        coin2Id: teamData.opponentTeam[1].id,
-        coin3Id: teamData.opponentTeam[2].id,
-        coin1Name: teamData.opponentTeam[0].ticker,
-        coin2Name: teamData.opponentTeam[1].ticker,
-        coin3Name: teamData.opponentTeam[2].ticker
+        coin1Id: parseInt(teamData.opponentTeam[0].id) || 4,
+        coin2Id: parseInt(teamData.opponentTeam[1].id) || 5,
+        coin3Id: parseInt(teamData.opponentTeam[2].id) || 6,
+        coin1Name: teamData.opponentTeam[0].ticker || teamData.opponentTeam[0].name,
+        coin2Name: teamData.opponentTeam[1].ticker || teamData.opponentTeam[1].name,
+        coin3Name: teamData.opponentTeam[2].ticker || teamData.opponentTeam[2].name
       }
     })
     

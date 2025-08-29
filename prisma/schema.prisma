@@ -11,6 +11,7 @@ datasource db {
 model User {
   id           String @id @default(cuid())
   username     String @unique
+  walletAddress String? @unique
   wins         Int    @default(0)
   losses       Int    @default(0)
   totalBattles Int    @default(0)

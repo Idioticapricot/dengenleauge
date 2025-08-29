@@ -181,7 +181,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!activeAccount?.address) {
-      router.push('/')
       return
     }
 
@@ -199,21 +198,15 @@ export default function ProfilePage() {
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
         setUserStats(statsData.user)
+        setBattleHistory(statsData.user.battleHistory || [])
       }
 
-      // Fetch battle history
-      const battleResponse = await fetch(`/api/multiplayer-battles?userId=${activeAccount.address}`)
-      if (battleResponse.ok) {
-        const battleData = await battleResponse.json()
-        setBattleHistory(battleData.battles || [])
+      // Fetch real token balances
+      const balanceResponse = await fetch(`/api/token-balances?address=${activeAccount.address}`)
+      if (balanceResponse.ok) {
+        const balanceData = await balanceResponse.json()
+        setTokenBalances(balanceData.balances)
       }
-
-      // Mock token balances for now
-      setTokenBalances({
-        DEGEN: "1,250.50",
-        WAM: "500.00",
-        ALGO: "25.75"
-      })
 
     } catch (error) {
       console.error('Error fetching user data:', error)
@@ -227,6 +220,9 @@ export default function ProfilePage() {
       <AppLayout>
         <ProfileContainer>
           <LoadingText>🔗 Please connect your wallet to view profile</LoadingText>
+          <div style={{ textAlign: 'center' }}>
+            <Button onClick={() => router.push('/')}>Go Home</Button>
+          </div>
         </ProfileContainer>
       </AppLayout>
     )
@@ -287,10 +283,12 @@ export default function ProfilePage() {
           <SectionTitle>⚔️ Recent Battles</SectionTitle>
           <BattleHistoryList>
             {battleHistory.length > 0 ? (
-              battleHistory.slice(0, 10).map((battle) => (
+              battleHistory.slice(0, 10).map((battle: any) => (
                 <BattleItem key={battle.id}>
                   <BattleInfo>
-                    vs {battle.player1Id === activeAccount?.address ? battle.player2?.username : battle.player1?.username}
+                    vs {battle.player1Id === activeAccount?.address ? 
+                        (battle.player2?.username || 'Anonymous') : 
+                        (battle.player1?.username || 'Anonymous')}
                   </BattleInfo>
                   <BattleResult $won={battle.winnerId === activeAccount?.address}>
                     {battle.winnerId === activeAccount?.address ? 'WIN' : 'LOSS'}
