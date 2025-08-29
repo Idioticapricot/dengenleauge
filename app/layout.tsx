@@ -3,11 +3,7 @@ import type { Metadata } from "next"
 import { Inter, Space_Grotesk } from "next/font/google"
 import "./globals.css"
 import { StyledComponentsRegistry } from "./registry"
-import { Providers } from "../components/wallet/Providers"
-import { ErrorBoundary } from "../components/ErrorBoundary"
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { queryClient } from '../lib/react-query'
-import { registerServiceWorker } from '../lib/sw-register'
+import { ClientProviders } from "../components/ClientProviders"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,11 +33,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  // Register service worker
-  if (typeof window !== 'undefined') {
-    registerServiceWorker()
-  }
-  
   return (
     <html lang="en" className="dark">
       <head>
@@ -72,11 +63,7 @@ html {
           }}
         />
         <StyledComponentsRegistry>
-          <QueryClientProvider client={queryClient}>
-            <ErrorBoundary>
-              <Providers>{children}</Providers>
-            </ErrorBoundary>
-          </QueryClientProvider>
+          <ClientProviders>{children}</ClientProviders>
         </StyledComponentsRegistry>
       </body>
     </html>

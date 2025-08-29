@@ -16,7 +16,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <>
       <GlobalStyle />
       <StadiumBackground />
-      <Container className="min-h-screen bg-white dark:bg-black">
+      <Container className="min-h-screen">
         <Header />
         <MainContent className="font-mono">{children}</MainContent>
         <BottomNavigation />
