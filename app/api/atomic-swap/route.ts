@@ -34,20 +34,25 @@ export async function POST(request: Request) {
     // 1. Buyer sends ALGO to creator
     // 2. Creator sends DEGEN to buyer
     
-    const algoTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      from: buyerAddress,
-      to: SWAP_CONFIG.creatorAddress,
-      amount: algoMicroAmount,
-      suggestedParams: params
-    })
+    const algoTxn = algosdk.makePaymentTxnWithSuggestedParams(
+      buyerAddress,
+      creatorAccount.addr,
+      algoMicroAmount,
+      undefined,
+      undefined,
+      params
+    )
 
-    const degenTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: creatorAccount.addr,
-      to: buyerAddress,
-      amount: degenAmount,
-      assetIndex: SWAP_CONFIG.assetId,
-      suggestedParams: params
-    })
+    const degenTxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
+      creatorAccount.addr,
+      buyerAddress,
+      undefined,
+      undefined,
+      degenAmount,
+      undefined,
+      SWAP_CONFIG.assetId,
+      params
+    )
 
     // Group transactions atomically
     const txnGroup = [algoTxn, degenTxn]

@@ -290,7 +290,7 @@ export function Header() {
 
       <RightSection>
         <ProfileButton onClick={() => router.push('/buy-tokens')}>
-          🪙 BUY DEGEN
+          ⚡ SWAP DEGEN
         </ProfileButton>
         <ProfileButton onClick={handleProfileClick}>
           👤 PROFILE

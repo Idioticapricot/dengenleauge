@@ -1,7 +1,7 @@
 'use client'
 
 import { AppLayout } from '../../components/layout/AppLayout'
-import TokenSale from '../../components/token/TokenSale'
+import AtomicSwap from '../../components/token/AtomicSwap'
 import styled from 'styled-components'
 
 const BuyTokensContainer = styled.div`
@@ -136,34 +136,34 @@ export default function BuyTokensPage() {
       <BuyTokensContainer>
         
         <PageHeader>
-          <PageTitle>🪙 BUY DEGEN TOKENS</PageTitle>
+          <PageTitle>⚡ INSTANT DEGEN SWAP</PageTitle>
           <PageDescription>
-            Purchase DEGEN tokens to participate in battles, staking, and DeFi features
+            Instantly swap ALGO for DEGEN tokens using atomic transactions - safe & instant!
           </PageDescription>
         </PageHeader>
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <TokenSale />
+          <AtomicSwap />
         </div>
 
         <InfoGrid>
           <InfoCard>
-            <InfoTitle>🎯 Use Cases</InfoTitle>
+            <InfoTitle>⚡ Atomic Swap Benefits</InfoTitle>
             <InfoList>
-              <InfoItem>• Battle stakes and rewards</InfoItem>
-              <InfoItem>• DeFi staking and farming</InfoItem>
-              <InfoItem>• Tournament entry fees</InfoItem>
-              <InfoItem>• Premium features access</InfoItem>
-              <InfoItem>• Governance voting power</InfoItem>
+              <InfoItem>• Instant token delivery</InfoItem>
+              <InfoItem>• 100% safe & trustless</InfoItem>
+              <InfoItem>• No manual processing</InfoItem>
+              <InfoItem>• Guaranteed execution</InfoItem>
+              <InfoItem>• One-click experience</InfoItem>
             </InfoList>
           </InfoCard>
 
           <InfoCard>
-            <InfoTitle>📊 Token Details</InfoTitle>
+            <InfoTitle>📊 Swap Details</InfoTitle>
             <InfoList>
-              <InfoItem>• Symbol: DEGEN</InfoItem>
-              <InfoItem>• Decimals: 6</InfoItem>
-              <InfoItem>• Total Supply: 1B tokens</InfoItem>
+              <InfoItem>• Rate: 1 ALGO = 10,000 DEGEN</InfoItem>
+              <InfoItem>• Min: 0.1 ALGO per swap</InfoItem>
+              <InfoItem>• Max: 100 ALGO per swap</InfoItem>
               <InfoItem>• Network: Algorand Testnet</InfoItem>
               <InfoItem>• Asset ID: 745007115</InfoItem>
             </InfoList>
@@ -171,27 +171,27 @@ export default function BuyTokensPage() {
         </InfoGrid>
 
         <HowItWorksSection>
-          <SectionTitle>🔄 How Token Purchase Works</SectionTitle>
+          <SectionTitle>⚡ How Atomic Swap Works</SectionTitle>
           <StepsGrid>
             <StepCard>
               <StepNumber>1️⃣</StepNumber>
-              <StepTitle>Send ALGO</StepTitle>
+              <StepTitle>Enter Amount</StepTitle>
               <StepDescription>
-                Send ALGO from your wallet to our treasury
+                Enter how much ALGO you want to swap
               </StepDescription>
             </StepCard>
             <StepCard>
               <StepNumber>2️⃣</StepNumber>
-              <StepTitle>Automatic Processing</StepTitle>
+              <StepTitle>Sign Transaction</StepTitle>
               <StepDescription>
-                Our system processes your payment instantly
+                Sign the atomic swap transaction in your wallet
               </StepDescription>
             </StepCard>
             <StepCard>
               <StepNumber>3️⃣</StepNumber>
-              <StepTitle>Receive DEGEN</StepTitle>
+              <StepTitle>Instant Delivery</StepTitle>
               <StepDescription>
-                DEGEN tokens are sent to your wallet
+                Receive DEGEN tokens instantly and safely
               </StepDescription>
             </StepCard>
           </StepsGrid>
