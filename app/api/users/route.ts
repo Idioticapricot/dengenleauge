@@ -5,28 +5,36 @@ const prisma = new PrismaClient()
 
 export async function POST(request: Request) {
   try {
-    const { username } = await request.json()
+    const { username, walletAddress } = await request.json()
     
-    if (!username) {
-      return NextResponse.json({ error: 'Username required' }, { status: 400 })
+    if (!username && !walletAddress) {
+      return NextResponse.json({ error: 'Username or wallet address required' }, { status: 400 })
     }
     
-    // Find or create user
-    let user = await prisma.user.findUnique({
-      where: { username },
-      include: {
-        favorites: true,
-        presets: true
-      }
-    })
+    // Find or create user by wallet address first, then username
+    let user = null
+    
+    if (walletAddress) {
+      user = await prisma.user.findUnique({
+        where: { walletAddress },
+        include: { favorites: true, presets: true }
+      })
+    }
+    
+    if (!user && username) {
+      user = await prisma.user.findUnique({
+        where: { username },
+        include: { favorites: true, presets: true }
+      })
+    }
     
     if (!user) {
       user = await prisma.user.create({
-        data: { username },
-        include: {
-          favorites: true,
-          presets: true
-        }
+        data: { 
+          username: username || `Player_${walletAddress?.slice(-6)}`,
+          walletAddress 
+        },
+        include: { favorites: true, presets: true }
       })
     }
     

@@ -93,14 +93,18 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
     try {
       let connectedAccounts;
       
-      try {
-        connectedAccounts = await peraWallet.connect();
-      } catch (error: any) {
-        if (error.message?.includes('Session currently connected')) {
-          // Already connected, get existing accounts
-          connectedAccounts = peraWallet.connector?.accounts || [];
-        } else {
-          throw error;
+      // Check if already connected first
+      if (peraWallet.isConnected && peraWallet.connector?.accounts?.length > 0) {
+        connectedAccounts = peraWallet.connector.accounts;
+      } else {
+        try {
+          connectedAccounts = await peraWallet.connect();
+        } catch (error: any) {
+          if (error.message?.includes('Session currently connected')) {
+            connectedAccounts = peraWallet.connector?.accounts || [];
+          } else {
+            throw error;
+          }
         }
       }
       
