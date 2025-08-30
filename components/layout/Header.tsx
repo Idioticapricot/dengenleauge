@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { algodClient } from "../../lib/algorand-config"
 import ConnectWallet from "../wallet/ConnectWallet"
 import { DegenSwap } from "../swap/DegenSwap"
+import Image from "next/image"
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -372,6 +373,36 @@ const NetworkDot = styled.div<{ $network: string }>`
   }
 `
 
+const LogoContainer = styled.div`
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+
+  img {
+    width: 40px;
+    height: 40px;
+  }
+
+  @media (max-width: 768px) {
+    margin-right: 8px;
+
+    img {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    margin-right: 6px;
+
+    img {
+      width: 28px;
+      height: 28px;
+    }
+  }
+`
+
 export function Header() {
   const { activeAccount } = useWallet()
   const router = useRouter()
@@ -448,6 +479,9 @@ export function Header() {
     
     <HeaderContainer>
       <LeftSection>
+        <LogoContainer onClick={() => router.push('/')}>
+          <Image src="/wolf-removebg-preview.png" alt="Beastiar Logo" width={40} height={40} />
+        </LogoContainer>
         <BalanceContainer onClick={handleWamClick}>
           <TokenIcon>$D</TokenIcon>
           <Balance>{degenBalance}</Balance>
