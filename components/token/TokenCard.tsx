@@ -13,9 +13,15 @@ const TokenCardContainer = styled.div<{ $selected?: boolean }>`
   font-family: var(--font-mono);
 
   &:hover {
-    transform: translate(2px, 2px);
+    transform: translate(2px, 2px) scale(1.02);
     box-shadow: 2px 2px 0px 0px var(--border-primary);
     background: var(--brutal-cyan);
+    border-color: var(--brutal-lime);
+  }
+
+  &:active {
+    transform: translate(1px, 1px) scale(1.01);
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
   }
 
   @media (max-width: 768px) {
@@ -54,6 +60,13 @@ const TokenLogo = styled.div`
   margin: 0 auto 12px;
   font-weight: 900;
   box-shadow: 2px 2px 0px 0px var(--border-primary);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1) rotate(5deg);
+    background: var(--brutal-lime);
+    box-shadow: 3px 3px 0px 0px var(--border-primary);
+  }
 
   @media (max-width: 768px) {
     width: 40px;
@@ -129,6 +142,14 @@ const TokenChange = styled.p<{ $positive: boolean }>`
   display: inline-block;
   width: 100%;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    background: ${(props) => (props.$positive ? "var(--brutal-cyan)" : "var(--brutal-pink)")};
+  }
 
   @media (max-width: 768px) {
     font-size: 11px;
@@ -156,6 +177,14 @@ const TokenPoints = styled.p`
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 2px 4px 0px 0px var(--border-primary);
+    background: var(--brutal-pink);
+  }
 
   @media (max-width: 768px) {
     font-size: 13px;
