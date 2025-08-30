@@ -6,6 +6,9 @@ import styled from "styled-components"
 import { Card, Button } from "../../components/styled/GlobalStyles"
 import { MemeCard } from "../../components/meme/MemeCard"
 import { useWallet } from "@txnlab/use-wallet-react"
+import { CoinGridSkeleton } from "../../components/ui/skeleton"
+import { useSimpleApi } from "../../hooks/useApi"
+import { ErrorBoundary } from "../../components/ErrorBoundary"
 
 const TeamContainer = styled.div`
   display: flex;
@@ -218,18 +221,21 @@ export default function TeamPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const { activeAccount } = useWallet()
+  const { loading: apiLoading, error: apiError, call: apiCall } = useSimpleApi()
 
   const fetchMemeCoins = async (search = '') => {
-    setLoading(true)
-    try {
-      const url = search ? `/api/meme-coins?search=${encodeURIComponent(search)}` : '/api/meme-coins'
+    const url = search ? `/api/meme-coins?search=${encodeURIComponent(search)}` : '/api/meme-coins'
+    const result = await apiCall(async () => {
       const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error('Failed to fetch meme coins')
+      }
       const data = await response.json()
-      setMemeCoins(data.coins || [])
-    } catch (error) {
-      console.error('Failed to fetch meme coins:', error)
-    } finally {
-      setLoading(false)
+      return data.coins || []
+    })
+
+    if (result && Array.isArray(result)) {
+      setMemeCoins(result)
     }
   }
 
@@ -491,8 +497,16 @@ export default function TeamPage() {
             />
           </div>
           <BeastGrid>
-            {loading ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>Loading meme coins...</div>
+            {apiLoading ? (
+              <CoinGridSkeleton />
+            ) : apiError ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                <h3>⚠️ Failed to Load Coins</h3>
+                <p>{apiError}</p>
+                <Button onClick={() => fetchMemeCoins(searchTerm)} style={{ marginTop: '10px' }}>
+                  🔄 RETRY
+                </Button>
+              </div>
             ) : memeCoins.length === 0 ? (
               <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-primary)' }}>
                 <h3>🪙 No Meme Coins Found</h3>

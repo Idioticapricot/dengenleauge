@@ -52,27 +52,41 @@ const RetryButton = styled.button`
 interface ErrorBoundaryState {
   hasError: boolean
   error?: Error
+  retryCount: number
 }
 
 export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
+  { children: React.ReactNode; fallback?: React.ReactNode },
   ErrorBoundaryState
 > {
-  constructor(props: { children: React.ReactNode }) {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false, retryCount: 0 }
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error }
+    return { hasError: true, error, retryCount: 0 }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo)
   }
 
+  handleRetry = () => {
+    this.setState(prevState => ({
+      hasError: false,
+      error: undefined,
+      retryCount: prevState.retryCount + 1
+    }))
+  }
+
   render() {
     if (this.state.hasError) {
+      // If custom fallback is provided, use it
+      if (this.props.fallback) {
+        return this.props.fallback
+      }
+
       return (
         <ErrorContainer>
           <ErrorTitle>
@@ -80,12 +94,18 @@ export class ErrorBoundary extends React.Component<
             Something Went Wrong
           </ErrorTitle>
           <ErrorMessage>
-            The application encountered an unexpected error. Please try refreshing the page.
+            The application encountered an unexpected error. You can try again or refresh the page.
           </ErrorMessage>
-          <RetryButton onClick={() => window.location.reload()}>
-            <FontAwesomeIcon icon={faRotate} style={{ marginRight: '8px' }} />
-            Reload Page
-          </RetryButton>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <RetryButton onClick={this.handleRetry}>
+              <FontAwesomeIcon icon={faRotate} style={{ marginRight: '8px' }} />
+              Try Again ({this.state.retryCount}/3)
+            </RetryButton>
+            <RetryButton onClick={() => window.location.reload()}>
+              <FontAwesomeIcon icon={faRotate} style={{ marginRight: '8px' }} />
+              Reload Page
+            </RetryButton>
+          </div>
         </ErrorContainer>
       )
     }

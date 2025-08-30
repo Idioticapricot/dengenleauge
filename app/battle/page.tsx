@@ -6,6 +6,9 @@ import { useWallet } from "@txnlab/use-wallet-react"
 import styled from "styled-components"
 import { Button, ResponsiveGrid, ResponsiveFlex, MobileHidden, DesktopHidden } from "../../components/styled/GlobalStyles"
 import { EnhancedBattleChart } from "../../components/ui/EnhancedBattleChart"
+import { BattleHeaderSkeleton, TeamSectionSkeleton, BattleChartSkeleton } from "../../components/ui/skeleton"
+import { useSimpleApi } from "../../hooks/useApi"
+import { ErrorBoundary } from "../../components/ErrorBoundary"
 
 const BattleContainer = styled.div`
   display: flex;
@@ -337,6 +340,14 @@ const WinnerText = styled.h2`
 `
 
 export default function BattleMemePage() {
+  return (
+    <ErrorBoundary>
+      <BattleMemePageContent />
+    </ErrorBoundary>
+  )
+}
+
+function BattleMemePageContent() {
   const [timeLeft, setTimeLeft] = useState(60) // 1 minute battle
   const [battleActive, setBattleActive] = useState(false)
   const [playerTeam, setPlayerTeam] = useState<any[]>([])
@@ -352,6 +363,7 @@ export default function BattleMemePage() {
   const [totalWins, setTotalWins] = useState(0)
   const [teamLoaded, setTeamLoaded] = useState(false)
   const { activeAccount } = useWallet()
+  const { loading: apiLoading, error: apiError, call: apiCall } = useSimpleApi()
 
   useEffect(() => {
     const savedTeam = localStorage.getItem('selectedTeam')
@@ -387,16 +399,22 @@ export default function BattleMemePage() {
   }, [battleActive, timeLeft])
 
   const generateOpponentTeam = async () => {
-    try {
+    const coins = await apiCall(async () => {
       const response = await fetch('/api/meme-coins')
+      if (!response.ok) {
+        throw new Error('Failed to fetch meme coins')
+      }
       const data = await response.json()
-      const coins = data.coins || []
-      
+      return data.coins || []
+    })
+
+    if (coins && Array.isArray(coins)) {
+
       // Smart opponent selection based on market cap and recent performance
       const strategies = ['conservative', 'aggressive', 'balanced']
       const strategy = strategies[Math.floor(Math.random() * strategies.length)]
       setOpponentStrategy(strategy)
-      
+
       let selectedCoins: any[] = []
       if (strategy === 'conservative') {
         // Pick top market cap coins
@@ -411,74 +429,76 @@ export default function BattleMemePage() {
         const smallCoin = coins.find((c: any) => c.rank > 50)
         selectedCoins = [topCoin, midCoin, smallCoin].filter(Boolean)
       }
-      
+
       const randomTeam = selectedCoins.map((coin: any) => ({
         ...coin,
         initialPrice: coin.price,
         currentPrice: coin.price
       }))
-      
+
       setOpponentTeam(randomTeam)
-    } catch (error) {
-      console.error('Failed to generate opponent team:', error)
     }
   }
 
   const updatePrices = async () => {
-    try {
-      const allCoins = [...playerTeam, ...opponentTeam]
-      const symbols = [...new Set(allCoins.map(coin => coin.ticker))]
-      
+    const allCoins = [...playerTeam, ...opponentTeam]
+    const symbols = [...new Set(allCoins.map(coin => coin.ticker))]
+
+    const prices = await apiCall(async () => {
       const response = await fetch('/api/battle/enhanced', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbols, battleId: `battle_${Date.now()}` })
       })
-      
+
+      if (!response.ok) {
+        throw new Error('Failed to update prices')
+      }
+
       const data = await response.json()
-      const prices = data.data?.prices || data.prices || {}
-      
+      return data.data?.prices || data.prices || {}
+    })
+
+    if (prices && typeof prices === 'object') {
+      const priceMap = prices as Record<string, number>
       let updatedPlayerTeam: any[] = []
       let updatedOpponentTeam: any[] = []
-      
+
       setPlayerTeam(prev => {
         updatedPlayerTeam = prev.map(coin => ({
           ...coin,
-          currentPrice: prices[coin.ticker] || coin.currentPrice
+          currentPrice: priceMap[coin.ticker] || coin.currentPrice
         }))
         return updatedPlayerTeam
       })
-      
+
       setOpponentTeam(prev => {
         updatedOpponentTeam = prev.map(coin => ({
           ...coin,
-          currentPrice: prices[coin.ticker] || coin.currentPrice
+          currentPrice: priceMap[coin.ticker] || coin.currentPrice
         }))
         return updatedOpponentTeam
       })
-      
+
       setTimeout(() => {
         if (updatedPlayerTeam.length > 0 && updatedOpponentTeam.length > 0) {
           const playerCurrentScore = calculateTeamScore(updatedPlayerTeam)
           const opponentCurrentScore = calculateTeamScore(updatedOpponentTeam)
-          
+
           setPlayerScore(playerCurrentScore)
           setOpponentScore(opponentCurrentScore)
-          
+
           setPriceHistory(prev => [...prev, {
             time: 60 - timeLeft,
             you: Number(playerCurrentScore.toFixed(4)),
             opponent: Number(opponentCurrentScore.toFixed(4))
           }])
-          
+
           // Dynamic battle intensity based on score difference
           const scoreDiff = Math.abs(playerCurrentScore - opponentCurrentScore)
           setBattleIntensity(scoreDiff > 2 ? 3 : scoreDiff > 1 ? 2 : 1)
         }
       }, 100)
-      
-    } catch (error) {
-      console.error('Price update failed:', error)
     }
   }
 
@@ -587,6 +607,27 @@ export default function BattleMemePage() {
   }
 
   if (!activeAccount?.address) {
+    // Show error state if there's an API error
+    if (apiError) {
+      return (
+        <AppLayout>
+          <BattleContainer>
+            <BattleHeader>
+              <BattleTitle>⚠️ CONNECTION ERROR</BattleTitle>
+              <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: '10px 0 0 0' }}>
+                {apiError}
+              </p>
+              <div style={{ marginTop: '20px' }}>
+                <Button onClick={() => window.location.reload()}>
+                  🔄 RETRY CONNECTION
+                </Button>
+              </div>
+            </BattleHeader>
+          </BattleContainer>
+        </AppLayout>
+      )
+    }
+  
     return (
       <AppLayout>
         <BattleContainer>
@@ -605,12 +646,12 @@ export default function BattleMemePage() {
     return (
       <AppLayout>
         <BattleContainer>
-          <BattleHeader>
-            <BattleTitle>⏳ LOADING TEAM...</BattleTitle>
-            <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: '10px 0 0 0' }}>
-              Preparing your battle team...
-            </p>
-          </BattleHeader>
+          <BattleHeaderSkeleton />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+            <TeamSectionSkeleton />
+            <TeamSectionSkeleton />
+          </div>
+          <BattleChartSkeleton />
         </BattleContainer>
       </AppLayout>
     )
