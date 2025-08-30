@@ -215,7 +215,7 @@ export default function AtomicSwap() {
 
   const calculateDegenAmount = () => {
     if (!algoAmount) return 0
-    return parseFloat(algoAmount) * 10000
+    return parseFloat(algoAmount) * 1000 // Updated to match new rate: 1 ALGO = 1,000 DEGEN
   }
 
   return (
@@ -223,7 +223,7 @@ export default function AtomicSwap() {
       <CardTitle>⚡ ATOMIC SWAP</CardTitle>
       
       <RateDisplay>
-        <RateText>1 ALGO = 10,000 DEGEN</RateText>
+        <RateText>1 ALGO = 1,000 DEGEN</RateText>
       </RateDisplay>
 
       <InfoBox>

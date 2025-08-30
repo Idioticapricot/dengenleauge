@@ -406,7 +406,8 @@ export function Header() {
       const data = await response.json()
 
       if (data.success) {
-        setDegenBalance(data.data.degenBalance.toFixed(2))
+        const balance = Number(data.data.degenBalance || 0)
+        setDegenBalance(balance.toFixed(2))
       } else {
         setDegenBalance('0')
       }
