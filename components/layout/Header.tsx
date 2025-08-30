@@ -461,6 +461,7 @@ export function Header() {
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
   const [degenBalance, setDegenBalance] = useState('0')
+  const [isDark, setIsDark] = useState(false)
   const DEGEN_ASA_ID = parseInt(process.env.DEGEN_ASSET_ID || '745007115')
 
   const handleWamClick = () => {
@@ -479,6 +480,10 @@ export function Header() {
   const handleNetworkSwitch = () => {
     // Algorand doesn't need network switching like EVM chains
     console.log('Network switching not needed on Algorand')
+  }
+
+  const toggleTheme = () => {
+    setIsDark(!isDark)
   }
 
   const fetchDegenBalance = async () => {
@@ -503,6 +508,14 @@ export function Header() {
   useEffect(() => {
     fetchDegenBalance()
   }, [activeAccount?.address])
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDark])
 
   const getNetworkName = () => {
     return "ALGO" // Algorand network
@@ -540,6 +553,9 @@ export function Header() {
       </LeftSection>
 
       <RightSection>
+        <ProfileButton onClick={toggleTheme}>
+          {isDark ? '☀️ LIGHT' : '🌙 DARK'}
+        </ProfileButton>
         <BalanceContainer onClick={handleWamClick}>
           <TokenIcon>$D</TokenIcon>
           <Balance>{degenBalance}</Balance>
