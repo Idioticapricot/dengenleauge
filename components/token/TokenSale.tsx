@@ -136,7 +136,7 @@ interface TokenSaleInfo {
 }
 
 export default function TokenSale() {
-  const { activeAddress, signTransactions, sendTransactions } = useWallet()
+  const { activeAddress, signTransactions } = useWallet()
   const [saleInfo, setSaleInfo] = useState<TokenSaleInfo | null>(null)
   const [algoAmount, setAlgoAmount] = useState('')
   const [loading, setLoading] = useState(false)

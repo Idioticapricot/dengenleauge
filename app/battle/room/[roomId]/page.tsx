@@ -114,6 +114,11 @@ export default function BattleRoomPage() {
     joinBattleRoom(roomId)
 
     // Set up listeners for battle events
+    if (!supabase) {
+      console.warn('Supabase not available. Real-time features disabled.')
+      return
+    }
+
     const channel = supabase.channel(`battle-${roomId}`)
 
     channel

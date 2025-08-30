@@ -22,6 +22,11 @@ export function useSupabaseSocket() {
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
+    if (!supabase) {
+      console.warn('Supabase not available. Real-time features disabled.')
+      return
+    }
+
     // Subscribe to battle rooms channel
     const channel = supabase.channel('battle-rooms')
     channelRef.current = channel
@@ -57,6 +62,8 @@ export function useSupabaseSocket() {
   }
 
   const joinBattleRoom = (roomId: string) => {
+    if (!supabase) return
+
     if (channelRef.current) {
       channelRef.current.unsubscribe()
     }
@@ -83,6 +90,8 @@ export function useSupabaseSocket() {
   }
 
   const joinQueue = (player: Player, battleType: 'pvp' | 'pve' = 'pvp') => {
+    if (!supabase) return
+
     const channel = supabase.channel('battle-rooms')
     channel.send({
       type: 'broadcast',
@@ -95,6 +104,8 @@ export function useSupabaseSocket() {
   }
 
   const leaveQueue = (playerId: string) => {
+    if (!supabase) return
+
     const channel = supabase.channel('battle-rooms')
     channel.send({
       type: 'broadcast',
@@ -104,6 +115,8 @@ export function useSupabaseSocket() {
   }
 
   const sendBattleAction = (roomId: string, action: any) => {
+    if (!supabase) return
+
     const channel = supabase.channel(`battle-${roomId}`)
     channel.send({
       type: 'broadcast',

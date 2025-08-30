@@ -156,6 +156,10 @@ export default function AtomicSwap() {
       const signedTxns = await signTransactions([unsignedTxn])
 
       // Step 3: Submit atomic transaction group
+      if (!signedTxns[0]) {
+        throw new Error('Failed to sign transaction')
+      }
+
       const submitResponse = await fetch('/api/atomic-swap', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

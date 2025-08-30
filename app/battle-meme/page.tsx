@@ -175,18 +175,18 @@ export default function BattleMemePage() {
       const strategy = strategies[Math.floor(Math.random() * strategies.length)]
       setOpponentStrategy(strategy)
       
-      let selectedCoins = []
+      let selectedCoins: any[] = []
       if (strategy === 'conservative') {
         // Pick top market cap coins
-        selectedCoins = coins.filter(c => c.rank <= 30).slice(0, 3)
+        selectedCoins = coins.filter((c: any) => c.rank <= 30).slice(0, 3)
       } else if (strategy === 'aggressive') {
         // Pick smaller cap, more volatile coins
-        selectedCoins = coins.filter(c => c.rank > 30).slice(0, 3)
+        selectedCoins = coins.filter((c: any) => c.rank > 30).slice(0, 3)
       } else {
         // Balanced mix
-        const topCoin = coins.find(c => c.rank <= 20)
-        const midCoin = coins.find(c => c.rank > 20 && c.rank <= 50)
-        const smallCoin = coins.find(c => c.rank > 50)
+        const topCoin = coins.find((c: any) => c.rank <= 20)
+        const midCoin = coins.find((c: any) => c.rank > 20 && c.rank <= 50)
+        const smallCoin = coins.find((c: any) => c.rank > 50)
         selectedCoins = [topCoin, midCoin, smallCoin].filter(Boolean)
       }
       

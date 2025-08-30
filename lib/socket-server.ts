@@ -22,12 +22,12 @@ export class BattleServer {
   
   constructor(server: any) {
     this.io = new Server(server, {
-      cors: { 
+      cors: {
         origin: [
           'http://localhost:3000',
           'https://your-app.vercel.app',
           process.env.NEXT_PUBLIC_BASE_URL
-        ].filter(Boolean),
+        ].filter((origin): origin is string => Boolean(origin)),
         methods: ['GET', 'POST']
       }
     })

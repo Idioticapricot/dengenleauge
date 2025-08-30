@@ -17,7 +17,14 @@ export async function GET(request: Request) {
     }))
     
     // Mock user stakes if address provided
-    let userStakes = []
+    let userStakes: Array<{
+      id: string;
+      poolId: string;
+      amount: number;
+      stakedAt: string;
+      unlockAt: string;
+      currentRewards: number;
+    }> = []
     if (userAddress) {
       userStakes = [
         {

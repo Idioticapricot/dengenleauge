@@ -94,7 +94,7 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
       let connectedAccounts;
       
       // Check if already connected first
-      if (peraWallet.isConnected && peraWallet.connector?.accounts?.length > 0) {
+      if (peraWallet.isConnected && peraWallet.connector?.accounts && peraWallet.connector.accounts.length > 0) {
         connectedAccounts = peraWallet.connector.accounts;
       } else {
         try {
@@ -159,9 +159,9 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
   // Listen for account changes
   useEffect(() => {
     peraWallet.connector?.on("disconnect", disconnectWallet);
-    
+
     return () => {
-      peraWallet.connector?.off("disconnect", disconnectWallet);
+      peraWallet.connector?.off("disconnect");
     };
   }, []);
 

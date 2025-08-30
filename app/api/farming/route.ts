@@ -18,7 +18,13 @@ export async function GET(request: Request) {
     }))
     
     // Mock user positions
-    let userPositions = []
+    let userPositions: Array<{
+      id: string;
+      farmId: string;
+      stakedAmount: number;
+      pendingRewards: number;
+      value: number;
+    }> = []
     if (userAddress) {
       userPositions = [
         {

@@ -4,10 +4,10 @@ const nextConfig = {
     styledComponents: true,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    // Enable ESLint during builds for better code quality
   },
   typescript: {
-    ignoreBuildErrors: true,
+    // Enable TypeScript error checking during builds
   },
   images: {
     domains: ['blob.v0.dev'],

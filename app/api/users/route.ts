@@ -31,15 +31,30 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<U
     
     if (!user) {
       user = await prisma.user.create({
-        data: { 
+        data: {
           username: username || `Player_${walletAddress?.slice(-6)}`,
-          walletAddress 
+          walletAddress
         },
         include: { favorites: true, presets: true }
       })
     }
-    
-    return NextResponse.json({ success: true, data: user })
+
+    // Transform null values to undefined and Date to string to match API types
+    const transformedUser = {
+      ...user,
+      walletAddress: user.walletAddress || undefined,
+      createdAt: user.createdAt.toISOString(),
+      favorites: user.favorites?.map(fav => ({
+        ...fav,
+        addedAt: fav.addedAt.toISOString()
+      })),
+      presets: user.presets?.map(preset => ({
+        ...preset,
+        createdAt: preset.createdAt.toISOString()
+      }))
+    }
+
+    return NextResponse.json({ success: true, data: transformedUser })
     
   } catch (error) {
     console.error('User API error:', error)
@@ -66,15 +81,30 @@ export async function GET(request: Request) {
     
     if (!user) {
       user = await prisma.user.create({
-        data: { 
+        data: {
           username: `Player_${address.slice(-6)}`,
-          walletAddress: address 
+          walletAddress: address
         },
         include: { favorites: true, presets: true }
       })
     }
-    
-    return NextResponse.json({ success: true, data: user })
+
+    // Transform null values to undefined and Date to string to match API types
+    const transformedUser = {
+      ...user,
+      walletAddress: user.walletAddress || undefined,
+      createdAt: user.createdAt.toISOString(),
+      favorites: user.favorites?.map(fav => ({
+        ...fav,
+        addedAt: fav.addedAt.toISOString()
+      })),
+      presets: user.presets?.map(preset => ({
+        ...preset,
+        createdAt: preset.createdAt.toISOString()
+      }))
+    }
+
+    return NextResponse.json({ success: true, data: transformedUser })
     
   } catch (error) {
     console.error('User GET API error:', error)

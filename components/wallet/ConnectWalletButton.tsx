@@ -1,7 +1,7 @@
 "use client"
 
 import styled from "styled-components"
-import { useWallet } from "./WalletProvider"
+import { useAlgorandWallet } from "./AlgorandWalletProvider"
 
 const ConnectButton = styled.button<{ $variant?: "primary" | "secondary" }>`
   display: flex;
@@ -50,7 +50,7 @@ export function ConnectWalletButton({
   children = "Connect Wallet",
   className 
 }: ConnectWalletButtonProps) {
-  const { wallet, connectWallet, disconnectWallet } = useWallet()
+  const { wallet, connectWallet, disconnectWallet } = useAlgorandWallet()
 
   if (wallet.isConnected) {
     return (
