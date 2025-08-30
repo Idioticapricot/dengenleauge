@@ -13,7 +13,18 @@ import { ErrorBoundary } from "../../components/ErrorBoundary"
 const TeamContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--mobile-gap);
+  padding-bottom: 120px; /* Account for bottom navigation */
+
+  @media (max-width: 768px) {
+    gap: var(--mobile-gap);
+    padding-bottom: 100px;
+  }
+
+  @media (max-width: 480px) {
+    gap: var(--mobile-gap);
+    padding-bottom: 80px;
+  }
 `
 
 const TeamHeader = styled.div`
@@ -91,8 +102,18 @@ const SectionTitle = styled.h2`
 const TeamSlots = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: var(--mobile-gap);
+  margin-bottom: var(--mobile-margin);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: var(--mobile-gap);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: var(--mobile-gap);
+  }
 `
 
 const TeamSlot = styled.div<{ $filled?: boolean }>`
@@ -158,7 +179,17 @@ const MyBeastsSection = styled.div`
 const BeastGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+  gap: var(--mobile-gap);
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--mobile-gap);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: var(--mobile-gap);
+  }
 `
 
 const SaveTeamButton = styled(Button)`
@@ -212,6 +243,14 @@ const SelectableCoinCard = styled.div<{ $selected: boolean }>`
 `
 
 export default function TeamPage() {
+  return (
+    <ErrorBoundary>
+      <TeamPageContent />
+    </ErrorBoundary>
+  )
+}
+
+function TeamPageContent() {
   const [currentTeam, setCurrentTeam] = useState<any[]>([null, null, null])
   const [selectedCoins, setSelectedCoins] = useState<number[]>([])
   const [memeCoins, setMemeCoins] = useState<any[]>([])

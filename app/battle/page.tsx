@@ -9,38 +9,62 @@ import { EnhancedBattleChart } from "../../components/ui/EnhancedBattleChart"
 import { BattleHeaderSkeleton, TeamSectionSkeleton, BattleChartSkeleton } from "../../components/ui/skeleton"
 import { useSimpleApi } from "../../hooks/useApi"
 import { ErrorBoundary } from "../../components/ErrorBoundary"
+import { useSwipe } from "../../hooks/useSwipe"
 
 const BattleContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  
+  gap: var(--mobile-gap);
+  min-height: 100vh;
+  padding-bottom: 120px; /* Account for bottom navigation */
+
   @media (max-width: 768px) {
-    gap: 16px;
+    gap: var(--mobile-gap);
+    padding-bottom: 100px;
   }
-  
+
   @media (max-width: 480px) {
-    gap: 12px;
+    gap: var(--mobile-gap);
+    padding-bottom: 80px;
   }
 `
 
 const BattleHeader = styled.div`
   text-align: center;
   background: var(--brutal-red);
-  padding: 20px;
-  border: 4px solid var(--border-primary);
-  box-shadow: 4px 4px 0px 0px var(--border-primary);
-  
-  @media (max-width: 768px) {
-    padding: 16px;
-    border-width: 3px;
-    box-shadow: 3px 3px 0px 0px var(--border-primary);
+  padding: var(--mobile-padding);
+  border: var(--border-width) solid var(--border-primary);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.1) 10px,
+      rgba(255, 255, 255, 0.1) 20px
+    );
+    pointer-events: none;
   }
-  
+
+  @media (max-width: 768px) {
+    padding: var(--mobile-padding);
+    border-width: var(--border-width);
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary);
+  }
+
   @media (max-width: 480px) {
-    padding: 12px;
-    border-width: 2px;
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    padding: var(--mobile-padding);
+    border-width: var(--border-width);
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary);
   }
 `
 
@@ -196,27 +220,58 @@ const ShareResultsButton = styled(Button)`
 `
 
 const Timer = styled.div`
-  font-size: 48px;
+  font-size: clamp(28px, 8vw, 48px);
   font-weight: 900;
   color: var(--text-primary);
   font-family: var(--font-mono);
   background: var(--brutal-yellow);
-  padding: 16px;
-  border: 4px solid var(--border-primary);
-  margin: 20px 0;
-  
-  @media (max-width: 768px) {
-    font-size: 36px;
-    padding: 12px;
-    border-width: 3px;
-    margin: 16px 0;
+  padding: var(--mobile-padding);
+  border: var(--border-width) solid var(--border-primary);
+  margin: var(--mobile-margin) 0;
+  box-shadow: var(--shadow-brutal);
+  position: relative;
+  overflow: hidden;
+  min-height: var(--min-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 20px,
+      rgba(0, 0, 0, 0.1) 20px,
+      rgba(0, 0, 0, 0.1) 40px
+    );
+    animation: slide 2s linear infinite;
   }
-  
+
+  @keyframes slide {
+    0% { transform: translateX(-40px); }
+    100% { transform: translateX(40px); }
+  }
+
+  @media (max-width: 768px) {
+    font-size: clamp(24px, 6vw, 36px);
+    padding: var(--mobile-padding);
+    border-width: var(--border-width);
+    margin: var(--mobile-margin) 0;
+    box-shadow: var(--shadow-brutal-sm);
+  }
+
   @media (max-width: 480px) {
-    font-size: 28px;
-    padding: 8px;
-    border-width: 2px;
-    margin: 12px 0;
+    font-size: clamp(20px, 5vw, 28px);
+    padding: var(--mobile-padding);
+    border-width: var(--border-width);
+    margin: var(--mobile-margin) 0;
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary);
   }
 `
 
@@ -362,8 +417,59 @@ function BattleMemePageContent() {
   const [totalBattles, setTotalBattles] = useState(0)
   const [totalWins, setTotalWins] = useState(0)
   const [teamLoaded, setTeamLoaded] = useState(false)
+  const [currentView, setCurrentView] = useState<'teams' | 'chart' | 'history'>('teams')
+  const [battleHistory, setBattleHistory] = useState<any[]>([])
+  const [userStats, setUserStats] = useState<any>(null)
   const { activeAccount } = useWallet()
   const { loading: apiLoading, error: apiError, call: apiCall } = useSimpleApi()
+
+  // Swipe gesture handlers
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => {
+      if (currentView === 'teams') {
+        setCurrentView('chart')
+      }
+    },
+    onSwipeRight: () => {
+      if (currentView === 'chart') {
+        setCurrentView('teams')
+      }
+    },
+    onSwipeUp: () => {
+      // Maybe show more details or stats
+    },
+    onSwipeDown: () => {
+      // Maybe hide/show header
+    }
+  })
+
+  const fetchUserStats = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users?address=${userId}`)
+      const data = await response.json()
+      if (data.success && data.data) {
+        const user = data.data
+        setUserStats(user)
+        setWinStreak(user.winStreak || 0)
+        setTotalBattles(user.totalBattles || 0)
+        setTotalWins(user.wins || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch user stats:', error)
+    }
+  }
+
+  const fetchBattleHistory = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/meme-battles?userId=${userId}&limit=20`)
+      const data = await response.json()
+      if (data.success && data.data) {
+        setBattleHistory(data.data.battles || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch battle history:', error)
+    }
+  }
 
   useEffect(() => {
     const savedTeam = localStorage.getItem('selectedTeam')
@@ -373,17 +479,16 @@ function BattleMemePageContent() {
       generateOpponentTeam()
     }
 
-    // Load battle stats
-    const streak = localStorage.getItem('winStreak')
-    const battles = localStorage.getItem('totalBattles')
-    const wins = localStorage.getItem('totalWins')
-    if (streak) setWinStreak(parseInt(streak))
-    if (battles) setTotalBattles(parseInt(battles))
-    if (wins) setTotalWins(parseInt(wins))
-
     // Mark team as loaded
     setTeamLoaded(true)
   }, [])
+
+  useEffect(() => {
+    if (activeAccount?.address) {
+      fetchUserStats(activeAccount.address)
+      fetchBattleHistory(activeAccount.address)
+    }
+  }, [activeAccount?.address])
 
   useEffect(() => {
     if (battleActive && timeLeft > 0) {
@@ -674,7 +779,7 @@ function BattleMemePageContent() {
 
   return (
     <AppLayout>
-      <BattleContainer>
+      <BattleContainer ref={swipeRef}>
         <BattleHeader>
           <BattleTitle>⚔️ MEME COIN BATTLE</BattleTitle>
           <BattleStats>
@@ -712,54 +817,87 @@ function BattleMemePageContent() {
           )}
         </BattleHeader>
 
-                 <ResponsiveGrid $columns={2}>
-          <TeamSection>
-            <TeamTitle>👤 YOUR TEAM (LOADED)</TeamTitle>
-            {playerTeam.map((coin, index) => (
-              <CoinItem key={index}>
-                <CoinName>{coin.name || coin.ticker}</CoinName>
-                {battleActive && (
-                  <PriceChange $positive={(coin.currentPrice - coin.initialPrice) >= 0}>
-                    {((coin.currentPrice - coin.initialPrice) / coin.initialPrice * 100).toFixed(4)}%
-                  </PriceChange>
-                )}
-              </CoinItem>
-            ))}
-            {winner && (
-              <ScoreDisplay>
-                Score: {playerScore.toFixed(4)}%
-              </ScoreDisplay>
-            )}
-          </TeamSection>
+        {/* Mobile View Toggle */}
+        <MobileHidden>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '20px' }}>
+            <Button
+              $variant={currentView === 'teams' ? 'primary' : 'outline'}
+              onClick={() => setCurrentView('teams')}
+              $size="sm"
+            >
+              👥 TEAMS
+            </Button>
+            <Button
+              $variant={currentView === 'chart' ? 'primary' : 'outline'}
+              onClick={() => setCurrentView('chart')}
+              $size="sm"
+            >
+              📊 CHART
+            </Button>
+          </div>
+        </MobileHidden>
 
-          <TeamSection>
-            <TeamTitle>
-              🤖 OPPONENT ({opponentStrategy.toUpperCase()})
-              {battleActive && (
-                <StrategyIndicator $intensity={battleIntensity}>
-                  <IntensityText $intensity={battleIntensity}>
-                    {battleIntensity === 3 ? '🔥 INTENSE' : battleIntensity === 2 ? '⚡ HEATED' : '📊 STEADY'}
-                  </IntensityText>
-                </StrategyIndicator>
+        {currentView === 'teams' && (
+          <ResponsiveGrid $columns={2}>
+            <TeamSection>
+              <TeamTitle>👤 YOUR TEAM (LOADED)</TeamTitle>
+              {playerTeam.map((coin, index) => (
+                <CoinItem key={index}>
+                  <CoinName>{coin.name || coin.ticker}</CoinName>
+                  {battleActive && (
+                    <PriceChange $positive={(coin.currentPrice - coin.initialPrice) >= 0}>
+                      {((coin.currentPrice - coin.initialPrice) / coin.initialPrice * 100).toFixed(4)}%
+                    </PriceChange>
+                  )}
+                </CoinItem>
+              ))}
+              {winner && (
+                <ScoreDisplay>
+                  Score: {playerScore.toFixed(4)}%
+                </ScoreDisplay>
               )}
-            </TeamTitle>
-            {opponentTeam.map((coin, index) => (
-              <CoinItem key={index}>
-                <CoinName>{coin.name || coin.ticker}</CoinName>
+            </TeamSection>
+
+            <TeamSection>
+              <TeamTitle>
+                🤖 OPPONENT ({opponentStrategy.toUpperCase()})
                 {battleActive && (
-                  <PriceChange $positive={(coin.currentPrice - coin.initialPrice) >= 0}>
-                    {((coin.currentPrice - coin.initialPrice) / coin.initialPrice * 100).toFixed(4)}%
-                  </PriceChange>
+                  <StrategyIndicator $intensity={battleIntensity}>
+                    <IntensityText $intensity={battleIntensity}>
+                      {battleIntensity === 3 ? '🔥 INTENSE' : battleIntensity === 2 ? '⚡ HEATED' : '📊 STEADY'}
+                    </IntensityText>
+                  </StrategyIndicator>
                 )}
-              </CoinItem>
-            ))}
-            {winner && (
-              <ScoreDisplay>
-                Score: {opponentScore.toFixed(4)}%
-              </ScoreDisplay>
-            )}
-          </TeamSection>
-                 </ResponsiveGrid>
+              </TeamTitle>
+              {opponentTeam.map((coin, index) => (
+                <CoinItem key={index}>
+                  <CoinName>{coin.name || coin.ticker}</CoinName>
+                  {battleActive && (
+                    <PriceChange $positive={(coin.currentPrice - coin.initialPrice) >= 0}>
+                      {((coin.currentPrice - coin.initialPrice) / coin.initialPrice * 100).toFixed(4)}%
+                    </PriceChange>
+                  )}
+                </CoinItem>
+              ))}
+              {winner && (
+                <ScoreDisplay>
+                  Score: {opponentScore.toFixed(4)}%
+                </ScoreDisplay>
+              )}
+            </TeamSection>
+          </ResponsiveGrid>
+        )}
+
+        {currentView === 'chart' && (
+          <EnhancedBattleChart
+            data={priceHistory}
+            battleIntensity={battleIntensity}
+            opponentStrategy={opponentStrategy}
+            playerScore={playerScore}
+            opponentScore={opponentScore}
+            isActive={battleActive}
+          />
+        )}
 
         {winner && (
           <>
@@ -771,7 +909,7 @@ function BattleMemePageContent() {
                 Final Score: {playerScore.toFixed(4)}% vs {opponentScore.toFixed(4)}%
               </FinalScore>
             </WinnerSection>
-            <ShareResultsButton 
+            <ShareResultsButton
               onClick={() => navigator.share ? navigator.share({title: 'Meme Coin Battle Result', text: `I ${winner === 'player' ? 'won' : 'lost'} with ${playerScore.toFixed(4)}% vs ${opponentScore.toFixed(4)}%!`}) : null}
             >
               📤 SHARE RESULTS
@@ -779,14 +917,19 @@ function BattleMemePageContent() {
           </>
         )}
 
-                 <EnhancedBattleChart
-           data={priceHistory}
-           battleIntensity={battleIntensity}
-           opponentStrategy={opponentStrategy}
-           playerScore={playerScore}
-           opponentScore={opponentScore}
-           isActive={battleActive}
-         />
+        {/* Show chart on desktop or when selected */}
+        <DesktopHidden>
+          {currentView === 'chart' && (
+            <EnhancedBattleChart
+              data={priceHistory}
+              battleIntensity={battleIntensity}
+              opponentStrategy={opponentStrategy}
+              playerScore={playerScore}
+              opponentScore={opponentScore}
+              isActive={battleActive}
+            />
+          )}
+        </DesktopHidden>
       </BattleContainer>
     </AppLayout>
   )

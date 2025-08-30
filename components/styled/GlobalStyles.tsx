@@ -20,8 +20,17 @@ export const GlobalStyle = createGlobalStyle`
     --shadow-brutal: 6px 6px 0px 0px var(--border-primary);
     --shadow-brutal-sm: 3px 3px 0px 0px var(--border-primary);
     --shadow-brutal-lg: 8px 8px 0px 0px var(--border-primary);
+
+    /* Mobile-first touch targets */
+    --min-touch-target: 44px;
+    --min-tap-target: 44px;
+
+    /* Mobile spacing */
+    --mobile-padding: 16px;
+    --mobile-margin: 16px;
+    --mobile-gap: 12px;
   }
-  
+
   .dark {
     --dark-bg: #ffffff;
     --light-bg: #000000;
@@ -30,30 +39,206 @@ export const GlobalStyle = createGlobalStyle`
     --border-primary: #ffffff;
   }
 
-  /* Responsive breakpoints */
+  /* Base mobile styles */
+  * {
+    -webkit-tap-highlight-color: rgba(255, 229, 0, 0.3);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Enable text selection for content */
+  p, span, div, h1, h2, h3, h4, h5, h6 {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  /* Touch-friendly interactions */
+  button, a, input, textarea, select {
+    min-height: var(--min-touch-target);
+    min-width: var(--min-touch-target);
+  }
+
+  /* Responsive breakpoints - Mobile First */
+  @media (min-width: 481px) {
+    :root {
+      --mobile-padding: 20px;
+      --mobile-margin: 20px;
+      --mobile-gap: 16px;
+    }
+  }
+
+  @media (min-width: 769px) {
+    :root {
+      --mobile-padding: 24px;
+      --mobile-margin: 24px;
+      --mobile-gap: 20px;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    :root {
+      --mobile-padding: 32px;
+      --mobile-margin: 32px;
+      --mobile-gap: 24px;
+    }
+  }
+
+  /* Tablet styles */
+  @media (max-width: 1024px) and (min-width: 769px) {
+    :root {
+      --border-width: 3px;
+      --shadow-offset: 3px;
+    }
+  }
+
+  /* Mobile styles */
   @media (max-width: 768px) {
     :root {
       --border-width: 2px;
       --shadow-offset: 2px;
     }
+
+    /* Reduce motion for mobile performance */
+    *, *::before, *::after {
+      animation-duration: 0.2s !important;
+      animation-delay: 0s !important;
+      transition-duration: 0.2s !important;
+    }
   }
 
+  /* Small mobile styles */
   @media (max-width: 480px) {
     :root {
       --border-width: 1px;
       --shadow-offset: 1px;
+      --mobile-padding: 12px;
+      --mobile-margin: 12px;
+      --mobile-gap: 8px;
     }
   }
 
   /* Improved scrollbar for mobile */
   @media (max-width: 768px) {
     ::-webkit-scrollbar {
-      width: 4px;
+      width: 6px;
+      height: 6px;
     }
-    
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
     ::-webkit-scrollbar-thumb {
       background: var(--brutal-yellow);
-      border-radius: 2px;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--brutal-lime);
+    }
+  }
+
+  /* Mobile viewport optimizations */
+  @media (max-width: 768px) {
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: none;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    /* Prevent zoom on input focus */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select {
+      font-size: 16px;
+    }
+
+    /* Mobile typography */
+    h1 {
+      font-size: 1.75rem;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      line-height: 1.3;
+      margin-bottom: 0.875rem;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      line-height: 1.4;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    /* Better mobile spacing */
+    .mobile-spacing {
+      margin-bottom: var(--mobile-margin);
+    }
+
+    .mobile-padding {
+      padding: var(--mobile-padding);
+    }
+
+    /* Mobile text sizing */
+    .text-xs-mobile { font-size: 0.75rem; }
+    .text-sm-mobile { font-size: 0.875rem; }
+    .text-base-mobile { font-size: 1rem; }
+    .text-lg-mobile { font-size: 1.125rem; }
+    .text-xl-mobile { font-size: 1.25rem; }
+    .text-2xl-mobile { font-size: 1.5rem; }
+    .text-3xl-mobile { font-size: 1.875rem; }
+    .text-4xl-mobile { font-size: 2.25rem; }
+  }
+
+  /* Small mobile specific styles */
+  @media (max-width: 480px) {
+    body {
+      font-size: 14px;
+    }
+
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1.125rem; }
+    p { font-size: 0.875rem; }
+
+    /* Compact spacing for very small screens */
+    .mobile-spacing {
+      margin-bottom: calc(var(--mobile-margin) * 0.75);
+    }
+
+    .mobile-padding {
+      padding: calc(var(--mobile-padding) * 0.75);
+    }
+  }
+
+  /* Focus styles for accessibility */
+  @media (max-width: 768px) {
+    *:focus-visible {
+      outline: 3px solid var(--brutal-yellow);
+      outline-offset: 2px;
     }
   }
 `
