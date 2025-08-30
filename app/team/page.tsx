@@ -305,6 +305,8 @@ export default function TeamPage() {
   const handleSaveTeam = () => {
     if (currentTeam.filter(Boolean).length !== 3) return
     localStorage.setItem('selectedTeam', JSON.stringify(currentTeam.filter(Boolean)))
+    // Show success message before redirecting
+    alert('✅ Team saved successfully! Redirecting to battle...')
     window.location.href = '/battle'
   }
   
@@ -424,12 +426,12 @@ export default function TeamPage() {
           </TeamSlots>
           
           <div style={{ display: 'flex', gap: '12px' }}>
-            <SaveTeamButton 
+            <SaveTeamButton
               style={{ flex: 1 }}
               disabled={currentTeam.filter(Boolean).length !== 3}
               onClick={handleSaveTeam}
             >
-              START BATTLE ({currentTeam.filter(Boolean).length}/3)
+              💾 SAVE & START BATTLE ({currentTeam.filter(Boolean).length}/3)
             </SaveTeamButton>
             <Button
               disabled={currentTeam.filter(Boolean).length !== 3}

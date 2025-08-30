@@ -350,6 +350,7 @@ export default function BattleMemePage() {
   const [winStreak, setWinStreak] = useState(0)
   const [totalBattles, setTotalBattles] = useState(0)
   const [totalWins, setTotalWins] = useState(0)
+  const [teamLoaded, setTeamLoaded] = useState(false)
   const { activeAccount } = useWallet()
 
   useEffect(() => {
@@ -359,7 +360,7 @@ export default function BattleMemePage() {
       setPlayerTeam(team)
       generateOpponentTeam()
     }
-    
+
     // Load battle stats
     const streak = localStorage.getItem('winStreak')
     const battles = localStorage.getItem('totalBattles')
@@ -367,6 +368,9 @@ export default function BattleMemePage() {
     if (streak) setWinStreak(parseInt(streak))
     if (battles) setTotalBattles(parseInt(battles))
     if (wins) setTotalWins(parseInt(wins))
+
+    // Mark team as loaded
+    setTeamLoaded(true)
   }, [])
 
   useEffect(() => {
@@ -597,6 +601,21 @@ export default function BattleMemePage() {
     )
   }
 
+  if (!teamLoaded) {
+    return (
+      <AppLayout>
+        <BattleContainer>
+          <BattleHeader>
+            <BattleTitle>⏳ LOADING TEAM...</BattleTitle>
+            <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: '10px 0 0 0' }}>
+              Preparing your battle team...
+            </p>
+          </BattleHeader>
+        </BattleContainer>
+      </AppLayout>
+    )
+  }
+
   if (playerTeam.length !== 3) {
     return (
       <AppLayout>
@@ -625,15 +644,36 @@ export default function BattleMemePage() {
           {battleActive ? (
             <Timer>{Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</Timer>
           ) : (
-            <StartBattleButton onClick={startBattle}>
-              START BATTLE
-            </StartBattleButton>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: '900',
+                color: 'var(--text-primary)',
+                marginBottom: '12px',
+                fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase'
+              }}>
+                🎯 TEAM READY - {playerTeam.length}/3 COINS LOADED
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: 'var(--text-primary)',
+                marginBottom: '12px',
+                fontFamily: 'var(--font-mono)',
+                opacity: 0.8
+              }}>
+                {playerTeam.map(coin => coin.ticker || coin.name).join(', ')}
+              </div>
+              <StartBattleButton onClick={startBattle}>
+                ⚔️ ENTER BATTLE
+              </StartBattleButton>
+            </div>
           )}
         </BattleHeader>
 
                  <ResponsiveGrid $columns={2}>
           <TeamSection>
-            <TeamTitle>👤 YOUR TEAM</TeamTitle>
+            <TeamTitle>👤 YOUR TEAM (LOADED)</TeamTitle>
             {playerTeam.map((coin, index) => (
               <CoinItem key={index}>
                 <CoinName>{coin.name || coin.ticker}</CoinName>
