@@ -151,14 +151,28 @@ export function StatsCard({
   variant = 'default',
   onClick
 }: StatsCardProps) {
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if ((event.key === 'Enter' || event.key === ' ') && onClick) {
+      event.preventDefault()
+      onClick()
+    }
+  }
+
   return (
-    <StatsCardContainer $variant={variant} onClick={onClick}>
+    <StatsCardContainer
+      $variant={variant}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={onClick ? "button" : "article"}
+      tabIndex={onClick ? 0 : -1}
+      aria-label={`${title}: ${value}${description ? ` - ${description}` : ''}`}
+    >
       <StatsHeader>
-        {icon && <StatsIcon>{icon}</StatsIcon>}
+        {icon && <StatsIcon aria-label={`${title} icon`}>{icon}</StatsIcon>}
         <StatsTitle>{title}</StatsTitle>
       </StatsHeader>
-      <StatsValue>{value}</StatsValue>
-      {description && <StatsDescription>{description}</StatsDescription>}
+      <StatsValue aria-label={`Value: ${value}`}>{value}</StatsValue>
+      {description && <StatsDescription aria-label={`Description: ${description}`}>{description}</StatsDescription>}
     </StatsCardContainer>
   )
 }
