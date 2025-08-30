@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import styled from 'styled-components'
 import { Button } from '../styled/GlobalStyles'
+import { LoadingSpinner } from '../ui/LoadingSpinner'
 
 const SwapCard = styled.div`
   background: var(--brutal-yellow);
@@ -238,12 +239,26 @@ export default function SimpleSwap() {
         <strong>⚠️ Send ALGO first, then click button!</strong>
       </Instructions>
 
-      <Button 
+      <Button
         onClick={handleSwap}
         disabled={!activeAddress || !algoAmount || loading}
-        style={{ width: '100%', fontSize: '16px' }}
+        style={{
+          width: '100%',
+          fontSize: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px'
+        }}
       >
-        {loading ? '🔄 PROCESSING...' : '🚀 REQUEST DEGEN TOKENS'}
+        {loading ? (
+          <>
+            <LoadingSpinner size="small" />
+            Processing...
+          </>
+        ) : (
+          '🚀 REQUEST DEGEN TOKENS'
+        )}
       </Button>
 
       {!activeAddress && (
