@@ -160,6 +160,23 @@ export default function AtomicSwap() {
   const handleAtomicSwap = async () => {
     if (!activeAddress || !algoAmount) return
 
+    // Debug: Check wallet state
+    console.log('=== WALLET DEBUG INFO ===')
+    console.log('Wallet state:', {
+      activeAddress,
+      signTransactions: typeof signTransactions,
+      algoAmount,
+      walletConnected: !!activeAddress
+    })
+
+    // Validation: Check wallet connection
+    if (!activeAddress) {
+      throw new Error('Wallet not connected - please connect your wallet first')
+    }
+    if (!signTransactions) {
+      throw new Error('Wallet signTransactions function not available')
+    }
+
     setLoading(true)
     setResult(null)
 
@@ -175,14 +192,21 @@ export default function AtomicSwap() {
       })
 
       const data = await response.json()
-      
+
+      console.log('API Response:', data)
+      console.log('API Response data structure:', {
+        hasData: !!data.data,
+        hasTransactions: !!(data.data && data.data.transactions),
+        hasSignedCreator: !!(data.data && data.data.signedCreatorTransaction),
+        signedCreatorLength: data.data && data.data.signedCreatorTransaction ? data.data.signedCreatorTransaction.length : 0
+      })
+
       if (!data.success) {
         throw new Error(data.error)
       }
 
-      // Step 2: Handle complete transaction group for wallet
-      let signedUserTransaction: number[] = []
-      let signedCreatorTransaction: number[] = []
+      // Step 2: Handle transaction signing and submission
+      let submitResponse: Response
 
       if (data.data.transactions) {
         // New format: Complete transaction group (3 transactions: opt-in, payment, transfer)
@@ -190,19 +214,107 @@ export default function AtomicSwap() {
           return new Uint8Array(txnData.txn)
         })
 
-        // Step 3: Pass complete transaction group to wallet
-        const signedTxns = await signTransactions(txnGroup)
+        console.log('Transaction group to sign:', txnGroup.length, 'transactions')
+        console.log('Transaction details:', txnGroup.map((txn: Uint8Array, i: number) => ({
+          index: i,
+          length: txn.length,
+          type: 'Uint8Array'
+        })))
 
-        // Step 4: Extract signed transactions
-        console.log('Signed transactions received:', signedTxns)
-        console.log('Number of signed transactions:', signedTxns ? signedTxns.length : 0)
+        // Step 3: Pass complete transaction group to wallet
+        console.log('=== SIGNING DEBUG ===')
+        console.log('Calling signTransactions with:', txnGroup)
+        console.log('Wallet activeAddress:', activeAddress)
+        console.log('Wallet signTransactions function:', typeof signTransactions)
+        console.log('Transaction group valid:', txnGroup.every((txn: Uint8Array) => txn instanceof Uint8Array && txn.length > 0))
 
         // Handle the case where wallet might return different number of transactions
         let signedUserTransactions: number[][] = []
         let signedCreatorTransaction: number[] = []
+        let signedTxns: any = null
 
-        if (signedTxns && signedTxns.length > 0) {
-          // If we have multiple transactions, separate user and creator transactions
+        // First try: Group signing
+        try {
+          signedTxns = await signTransactions(txnGroup)
+          console.log('signTransactions returned:', signedTxns)
+          console.log('Signed transactions type:', typeof signedTxns)
+          console.log('Signed transactions received:', signedTxns)
+          console.log('Number of signed transactions:', signedTxns ? signedTxns.length : 0)
+
+          if (signedTxns) {
+            signedTxns.forEach((txn: any, i: number) => {
+              console.log(`Signed transaction ${i}:`, {
+                type: typeof txn,
+                length: txn ? txn.length : 'null/undefined',
+                isUint8Array: txn instanceof Uint8Array
+              })
+            })
+          } else {
+            console.log('signTransactions returned null/undefined')
+          }
+        } catch (signError: any) {
+          console.error('Error during signTransactions:', signError)
+          console.error('Error details:', {
+            message: signError.message,
+            stack: signError.stack,
+            name: signError.name
+          })
+          throw new Error(`Wallet signing failed: ${signError.message}`)
+        }
+
+        // Handle wallet signing failures with fallback
+        if (!signedTxns || !Array.isArray(signedTxns) || signedTxns.length === 0) {
+          console.log('Wallet signing failed or returned empty results, using fallback method')
+
+          // Fallback: Use single transaction method (just payment, creator handles the rest)
+          console.log('Using fallback: single transaction method')
+          const unsignedTxn = txnGroup[1] // Use the payment transaction (index 1)
+          console.log('Fallback transaction to sign:', unsignedTxn)
+
+          try {
+            const fallbackSignedTxns = await signTransactions([unsignedTxn])
+            console.log('Fallback signing result:', fallbackSignedTxns)
+
+            if (fallbackSignedTxns && fallbackSignedTxns[0]) {
+              signedUserTransactions = [Array.from(fallbackSignedTxns[0])]
+
+              // Extract signed creator transaction from API response
+              if (data.data && data.data.signedCreatorTransaction) {
+                signedCreatorTransaction = data.data.signedCreatorTransaction
+                console.log('Fallback successful: single transaction signed')
+                console.log('Creator transaction from API:', signedCreatorTransaction)
+                console.log('Creator transaction type:', typeof signedCreatorTransaction)
+                console.log('Creator transaction length:', signedCreatorTransaction.length)
+              } else if (data.data && data.data.transactions && data.data.transactions[2]) {
+                // Fallback: extract from transactions array (index 2 is creator transaction)
+                signedCreatorTransaction = data.data.transactions[2].txn
+                console.log('Fallback: extracted creator transaction from transactions array')
+                console.log('Creator transaction from transactions:', signedCreatorTransaction)
+              } else {
+                console.error('No creator transaction found in API response')
+                console.error('API response structure:', Object.keys(data.data || {}))
+                throw new Error('Creator transaction not available in API response.')
+              }
+
+              console.log('Sending to backend:', {
+                signedUserTransactions: signedUserTransactions.length,
+                signedCreatorTransaction: signedCreatorTransaction ? signedCreatorTransaction.length : 0
+              })
+
+              if (!signedCreatorTransaction || signedCreatorTransaction.length === 0) {
+                console.error('Creator transaction is empty!')
+                throw new Error('Creator transaction not available. Please try again.')
+              }
+            } else {
+              console.error('Fallback signing returned empty result')
+              throw new Error('Wallet signing failed. Please try refreshing the page or using a different wallet.')
+            }
+          } catch (fallbackError: any) {
+            console.error('Fallback signing failed:', fallbackError)
+            throw new Error(`Wallet signing failed: ${fallbackError.message}`)
+          }
+        } else {
+          // Normal processing for successful group signing
           if (signedTxns.length === 3 && signedTxns[0] && signedTxns[1] && signedTxns[2]) {
             // Full atomic group: opt-in, payment, creator
             signedUserTransactions = [
@@ -219,18 +331,15 @@ export default function AtomicSwap() {
             signedUserTransactions = []
             signedCreatorTransaction = Array.from(signedTxns[0])
           }
-        } else {
-          // Fallback to original format
-          signedCreatorTransaction = data.data.signedCreatorTransaction
         }
 
-        console.log('Processed transactions:', {
+        console.log('Final processed transactions:', {
           signedUserTransactions,
           signedCreatorTransaction
         })
 
-        // Step 5: Send signed transactions to PUT endpoint
-        const submitResponse = await fetch('/api/atomic-swap', {
+        // Step 4: Send signed transactions to PUT endpoint
+        submitResponse = await fetch('/api/atomic-swap', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -240,22 +349,32 @@ export default function AtomicSwap() {
         })
       } else {
         // Fallback to old format for backward compatibility
+        console.log('Using fallback transaction format')
         const unsignedTransactionBytes = new Uint8Array(data.data.unsignedTransaction)
         const unsignedTxn = algosdk.decodeUnsignedTransaction(unsignedTransactionBytes)
-        const signedTxns = await signTransactions([unsignedTxn])
-        signedUserTransaction = signedTxns && signedTxns[0] ? Array.from(signedTxns[0]) : []
-        signedCreatorTransaction = data.data.signedCreatorTransaction
-      }
+        console.log('Decoded unsigned transaction:', unsignedTxn)
 
-      // Step 5: Send both to PUT endpoint to finalize swap
-      const submitResponse = await fetch('/api/atomic-swap', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signedUserTransaction,
+        const signedTxns = await signTransactions([unsignedTxn])
+        console.log('Signed transactions result:', signedTxns)
+
+        const signedUserTransactions = signedTxns && signedTxns[0] ? [Array.from(signedTxns[0])] : []
+        const signedCreatorTransaction = data.data.signedCreatorTransaction
+
+        console.log('Fallback transaction data:', {
+          signedUserTransactions,
           signedCreatorTransaction
         })
-      })
+
+        // Step 4: Send signed transactions to PUT endpoint
+        submitResponse = await fetch('/api/atomic-swap', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            signedUserTransaction: signedUserTransactions,
+            signedCreatorTransaction
+          })
+        })
+      }
 
       const submitResult = await submitResponse.json()
       

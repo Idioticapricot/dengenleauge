@@ -148,13 +148,21 @@ export async function PUT(request: Request) {
       let userTxn: Uint8Array | null = null;
       const creatorTxn = new Uint8Array(signedCreatorTransaction);
 
+      console.log('Processing signed transactions:')
+      console.log('- signedUserTransaction length:', signedUserTransaction ? signedUserTransaction.length : 0)
+      console.log('- signedCreatorTransaction length:', signedCreatorTransaction ? signedCreatorTransaction.length : 0)
+
       if (signedUserTransaction && signedUserTransaction.length > 0) {
         if (signedUserTransaction.length >= 1) {
           userTxn = new Uint8Array(signedUserTransaction[0]);
+          console.log('User transaction loaded, length:', userTxn.length)
         }
         if (signedUserTransaction.length >= 2) {
           optInTxn = new Uint8Array(signedUserTransaction[1]);
+          console.log('Opt-in transaction loaded, length:', optInTxn.length)
         }
+      } else {
+        console.log('No user transactions provided - using fallback mode')
       }
 
       console.log('Transaction sizes:', {
@@ -169,11 +177,30 @@ export async function PUT(request: Request) {
         if (optInTxn) {
           const decodedOptInTxn = algosdk.decodeSignedTransaction(optInTxn);
           console.log('Opt-in transaction type:', decodedOptInTxn.txn.type);
+        } else {
+          console.log('No opt-in transaction (not needed or using fallback)')
         }
+
         if (userTxn) {
           const decodedUserTxn = algosdk.decodeSignedTransaction(userTxn);
           console.log('User transaction type:', decodedUserTxn.txn.type);
+        } else {
+          console.log('No user transaction provided - checking if this is expected...')
+
+          // Check if this is a fallback scenario where only creator transaction is provided
+          if (signedUserTransaction && signedUserTransaction.length === 0) {
+            console.log('This appears to be a fallback scenario - proceeding without user transaction')
+            // In fallback mode, we only need the creator transaction
+            // The user transaction might be handled differently
+          } else {
+            console.log('Unexpected: No user transaction in non-fallback scenario')
+            return NextResponse.json({
+              success: false,
+              error: 'User transaction is required but was not provided'
+            }, { status: 400 });
+          }
         }
+
         const decodedCreatorTxn = algosdk.decodeSignedTransaction(creatorTxn);
         console.log('Creator transaction type:', decodedCreatorTxn.txn.type);
       } catch (decodeError: any) {
@@ -191,6 +218,14 @@ export async function PUT(request: Request) {
       transactionsToSubmit.push(creatorTxn);
 
       console.log(`Submitting ${transactionsToSubmit.length} transactions to network...`);
+
+      // Only submit if we have at least the creator transaction
+      if (transactionsToSubmit.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'No valid transactions to submit'
+        }, { status: 400 });
+      }
       let txId: string;
       try {
         const sendResponse = await algodClient.sendRawTransaction(transactionsToSubmit).do();
