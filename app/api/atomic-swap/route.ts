@@ -44,18 +44,17 @@ export async function POST(request: Request) {
     const algoMicroAmount = Math.floor(algoAmount * 1e6);
     const params = await algodClient.getTransactionParams().do();
 
-    // ✅ CORRECT METHOD: Use the modern, robust "...FromObject" functions.
-    // This is the standard and avoids the errors you were seeing.
+    // ✅ ALGOSDK v3.x COMPATIBLE: Use the modern "...FromObject" functions.
     const algoTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      from: buyerAddress,
-      to: creatorAddressString,
+      sender: buyerAddress,
+      receiver: creatorAddressString,
       amount: algoMicroAmount,
       suggestedParams: params,
     });
 
     const degenTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: creatorAddressString,
-      to: buyerAddress,
+      sender: creatorAddressString,
+      receiver: buyerAddress,
       amount: degenAmount,
       assetIndex: SWAP_CONFIG.assetId,
       suggestedParams: params,
@@ -96,7 +95,8 @@ export async function PUT(request: Request) {
       const userTxn = new Uint8Array(signedUserTransaction);
       const creatorTxn = new Uint8Array(signedCreatorTransaction);
 
-      const { txId } = await algodClient.sendRawTransaction([userTxn, creatorTxn]).do();
+      const sendResponse = await algodClient.sendRawTransaction([userTxn, creatorTxn]).do();
+      const txId = sendResponse.txid;
       await algosdk.waitForConfirmation(algodClient, txId, 4);
 
       return NextResponse.json({

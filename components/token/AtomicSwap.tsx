@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
+import algosdk from 'algosdk'
 import styled from 'styled-components'
 import { Button } from '../styled/GlobalStyles'
 
@@ -127,67 +128,48 @@ export default function AtomicSwap() {
   const [result, setResult] = useState<any>(null)
 
   const handleAtomicSwap = async () => {
-    // Enhanced validation
-    if (!activeAddress) {
-      setResult({ error: 'Please connect your wallet first' })
-      return
-    }
-
-    if (!algoAmount || parseFloat(algoAmount) <= 0) {
-      setResult({ error: 'Please enter a valid ALGO amount' })
-      return
-    }
-
-    const amount = parseFloat(algoAmount)
-    if (amount < 0.1 || amount > 100) {
-      setResult({ error: 'Amount must be between 0.1 and 100 ALGO' })
-      return
-    }
+    if (!activeAddress || !algoAmount) return
 
     setLoading(true)
     setResult(null)
 
     try {
-      // Step 1: Create atomic transaction group
+      // Step 1: Call POST endpoint to create atomic swap
       const response = await fetch('/api/atomic-swap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           buyerAddress: activeAddress,
-          algoAmount: amount
+          algoAmount: parseFloat(algoAmount)
         })
       })
 
       const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`)
-      }
-
+      
       if (!data.success) {
-        throw new Error(data.error || 'Failed to create swap transaction')
+        throw new Error(data.error)
       }
 
-      // Step 2: Sign transaction (wallet handles decoding)
-      const unsignedTxnArray = data.data.unsignedTransaction
-      const unsignedTxn = new Uint8Array(unsignedTxnArray)
+      // Step 2: Take unsignedTransaction bytes from response
+      const unsignedTransactionBytes = new Uint8Array(data.data.unsignedTransaction)
 
-      // Pass as array of transactions
+      // Step 3: Decode the transaction bytes back to transaction object for wallet
+      const unsignedTxn = algosdk.decodeUnsignedTransaction(unsignedTransactionBytes)
+
+      // Step 4: Pass transaction object to user's wallet via signTransactions
       const signedTxns = await signTransactions([unsignedTxn])
 
-      // Step 3: Submit atomic transaction group
-      if (!signedTxns[0]) {
-        throw new Error('Failed to sign transaction')
-      }
+      // Step 5: Take signed transaction from user and signedCreatorTransaction from response
+      const signedUserTransaction = signedTxns && signedTxns[0] ? Array.from(signedTxns[0]) : []
+      const signedCreatorTransaction = data.data.signedCreatorTransaction
 
+      // Step 5: Send both to PUT endpoint to finalize swap
       const submitResponse = await fetch('/api/atomic-swap', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          signedUserTransaction: Array.from(signedTxns[0]),
-          signedCreatorTransaction: data.data.signedCreatorTransaction,
-          buyerAddress: activeAddress,
-          degenAmount: data.data.degenAmount
+          signedUserTransaction,
+          signedCreatorTransaction
         })
       })
 
@@ -198,7 +180,7 @@ export default function AtomicSwap() {
           success: true,
           txId: submitResult.data.txId,
           explorerUrl: submitResult.data.explorerUrl,
-          degenAmount: data.data.degenAmount
+          degenAmount: parseFloat(algoAmount) * 10000
         })
         setAlgoAmount('')
       } else {
@@ -215,7 +197,7 @@ export default function AtomicSwap() {
 
   const calculateDegenAmount = () => {
     if (!algoAmount) return 0
-    return parseFloat(algoAmount) * 1000 // Updated to match new rate: 1 ALGO = 1,000 DEGEN
+    return parseFloat(algoAmount) * 10000
   }
 
   return (
@@ -223,7 +205,7 @@ export default function AtomicSwap() {
       <CardTitle>⚡ ATOMIC SWAP</CardTitle>
       
       <RateDisplay>
-        <RateText>1 ALGO = 1,000 DEGEN</RateText>
+        <RateText>1 ALGO = 10,000 DEGEN</RateText>
       </RateDisplay>
 
       <InfoBox>
