@@ -417,15 +417,15 @@ const NetworkDot = styled.div<{ $network: string }>`
   border-radius: 50%;
   background: ${(props) => {
     switch (props.$network) {
-      case "avalanche":
-        return "#E84142"
-      case "avalancheFuji":
-        return "#F7931A"
+      case "algorand":
+        return "#007BFF"
+      case "algorandTestnet":
+        return "#17A2B8"
       default:
         return "#6B7280"
     }
   }};
-  
+
   @media (max-width: 768px) {
     width: 6px;
     height: 6px;

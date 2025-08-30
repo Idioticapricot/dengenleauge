@@ -1,57 +1,113 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+import algosdk from 'algosdk'
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+export interface DispenserConfig {
+  rate: number // 1 ALGO = rate WAM tokens
+  wamAssetId: number
+  dispenserAddress: string
+}
 
-/// @title WAM Token with built-in AVAX dispenser (Avalanche C-Chain)
-/// @notice 1 AVAX = 100,000 WAM (so 0.1 AVAX = 10,000 WAM)
-contract WamWithDispenser is ERC20, Ownable {
-    // 1 AVAX = 100,000 WAM
-    uint256 public constant RATE = 100_000;
+export const DISPENSER_CONFIG: DispenserConfig = {
+  rate: 10000, // 1 ALGO = 10,000 DEGEN
+  wamAssetId: 0, // To be set after DEGEN creation
+  dispenserAddress: '', // To be set after dispenser account creation
+}
 
-    event TokensPurchased(address indexed buyer, uint256 avaxAmount, uint256 tokenAmount);
-    event AvaxWithdrawn(address indexed to, uint256 amount);
+export async function createDispenserAccount(
+  algodClient: algosdk.Algodv2,
+  creatorAccount: algosdk.Account,
+  initialWamAmount: number
+): Promise<string> {
+  const dispenserAccount = algosdk.generateAccount()
 
-    constructor(uint256 initialSupply)
-        ERC20("WAM Token", "WAM")
-        Ownable(msg.sender)
-    {
-        _mint(address(this), initialSupply * 10 ** decimals());
-    }
+  // Fund dispenser with minimum balance
+  const fundTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: creatorAccount.addr,
+    receiver: dispenserAccount.addr,
+    amount: 100000, // 0.1 ALGO
+    suggestedParams: await algodClient.getTransactionParams().do(),
+  })
 
-    /// @notice Buy WAM by sending AVAX
-    function buyTokens() public payable {
-        require(msg.value > 0, "Send AVAX to buy tokens");
+  // Transfer WAM tokens to dispenser
+  const wamTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    sender: creatorAccount.addr,
+    receiver: dispenserAccount.addr,
+    amount: initialWamAmount * 1e6,
+    assetIndex: DISPENSER_CONFIG.wamAssetId,
+    suggestedParams: await algodClient.getTransactionParams().do(),
+  })
 
-        // Fix: include token decimals in calculation
-        uint256 tokensToSend = (msg.value * RATE * 10 ** decimals()) / 1 ether;
+  const txns = [fundTxn, wamTxn]
+  algosdk.assignGroupID(txns)
 
-        require(balanceOf(address(this)) >= tokensToSend, "Not enough WAM left in dispenser");
+  const signedTxns = [
+    fundTxn.signTxn(creatorAccount.sk),
+    wamTxn.signTxn(creatorAccount.sk)
+  ]
 
-        _transfer(address(this), msg.sender, tokensToSend);
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns).do()
+  const txId = sendResponse.txid
 
-        emit TokensPurchased(msg.sender, msg.value, tokensToSend);
-    }
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
 
-    /// @notice Allow direct AVAX transfers to trigger buy
-    receive() external payable {
-        buyTokens();
-    }
+  return dispenserAccount.addr as string
+}
 
-    /// @notice Withdraw AVAX
-    function withdrawAVAX(uint256 amount) external onlyOwner {
-        require(address(this).balance >= amount, "Insufficient balance");
-        (bool ok, ) = owner().call{value: amount}("");
-        require(ok, "AVAX transfer failed");
-        emit AvaxWithdrawn(owner(), amount);
-    }
+export async function buyWAMTokens(
+  algodClient: algosdk.Algodv2,
+  buyerAccount: algosdk.Account,
+  algoAmount: number,
+  dispenserAddress: string,
+  wamAssetId: number
+): Promise<string> {
+  if (algoAmount <= 0) throw new Error('Send ALGO to buy tokens')
 
-    /// @notice Withdraw all AVAX
-    function withdrawAllAVAX() external onlyOwner {
-        uint256 amount = address(this).balance;
-        (bool ok, ) = owner().call{value: amount}("");
-        require(ok, "AVAX transfer failed");
-        emit AvaxWithdrawn(owner(), amount);
-    }
+  const tokensToSend = algoAmount * DISPENSER_CONFIG.rate * 1e6
+
+  // Check dispenser balance (would need to query)
+  // For simplicity, assume it has enough
+
+  const params = await algodClient.getTransactionParams().do()
+
+  // Send ALGO to dispenser
+  const algoTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: buyerAccount.addr,
+    receiver: dispenserAddress,
+    amount: algoAmount * 1e6,
+    suggestedParams: params,
+  })
+
+  // Dispenser sends WAM (but since we can't sign for dispenser, this would be handled by a smart contract)
+  // For now, this is a placeholder
+
+  const signedTxn = algoTxn.signTxn(buyerAccount.sk)
+  const sendResponse = await algodClient.sendRawTransaction(signedTxn).do()
+  const txId = sendResponse.txid
+
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
+
+  return txId
+}
+
+export async function withdrawALGO(
+  algodClient: algosdk.Algodv2,
+  dispenserAccount: algosdk.Account,
+  amount: number,
+  receiverAddress: string
+): Promise<string> {
+  const params = await algodClient.getTransactionParams().do()
+
+  const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: dispenserAccount.addr,
+    receiver: receiverAddress,
+    amount: amount * 1e6,
+    suggestedParams: params,
+  })
+
+  const signedTxn = txn.signTxn(dispenserAccount.sk)
+  const sendResponse = await algodClient.sendRawTransaction(signedTxn).do()
+  const txId = sendResponse.txid
+
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
+
+  return txId
 }

@@ -688,7 +688,7 @@ function BattleMemePageContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: activeAccount.address, walletAddress: activeAccount.address })
         })
-        
+
         const userData = await userResponse.json()
         const user = userData.data || userData.user
         if (user) {
@@ -697,13 +697,21 @@ function BattleMemePageContent() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId: user.id,
-              teamData: { playerTeam, opponentTeam },
+              teamData: {
+                playerTeam,
+                opponentTeam,
+                priceHistory
+              },
               opponentStrategy,
               playerScore: playerFinalScore,
               opponentScore: opponentFinalScore,
               result: playerFinalScore > opponentFinalScore ? 'win' : opponentFinalScore > playerFinalScore ? 'loss' : 'tie'
             })
           })
+
+          // Refresh user stats and battle history
+          await fetchUserStats(activeAccount.address)
+          await fetchBattleHistory(activeAccount.address)
         }
       }
     } catch (error) {
@@ -834,6 +842,13 @@ function BattleMemePageContent() {
             >
               📊 CHART
             </Button>
+            <Button
+              $variant={currentView === 'history' ? 'primary' : 'outline'}
+              onClick={() => setCurrentView('history')}
+              $size="sm"
+            >
+              📜 HISTORY
+            </Button>
           </div>
         </MobileHidden>
 
@@ -897,6 +912,96 @@ function BattleMemePageContent() {
             opponentScore={opponentScore}
             isActive={battleActive}
           />
+        )}
+
+        {currentView === 'history' && (
+          <TeamSection>
+            <TeamTitle>📜 BATTLE HISTORY</TeamTitle>
+            {battleHistory.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono)'
+              }}>
+                <h3>⚔️ No Battles Yet</h3>
+                <p>Complete your first battle to see your history here!</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {battleHistory.map((battle) => {
+                  const isPlayer1 = battle.player1Id === userStats?.id
+                  const playerScore = isPlayer1 ? battle.player1Score : battle.player2Score
+                  const opponentScore = isPlayer1 ? battle.player2Score : battle.player1Score
+                  const opponent = isPlayer1 ? battle.player2 : battle.player1
+                  const result = battle.winnerId === userStats?.id ? 'win' :
+                               battle.winnerId === null ? 'tie' : 'loss'
+
+                  return (
+                    <div
+                      key={battle.id}
+                      style={{
+                        background: result === 'win' ? 'rgba(0, 255, 65, 0.1)' :
+                                   result === 'loss' ? 'rgba(255, 68, 68, 0.1)' :
+                                   'rgba(255, 215, 0, 0.1)',
+                        border: `2px solid ${result === 'win' ? '#00ff41' :
+                                           result === 'loss' ? '#ff4444' : '#ffd700'}`,
+                        padding: '16px',
+                        borderRadius: '8px',
+                        fontFamily: 'var(--font-mono)'
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ fontSize: '14px', fontWeight: '900' }}>
+                          🆚 {opponent.username}
+                        </div>
+                        <div style={{
+                          fontSize: '12px',
+                          color: result === 'win' ? '#00ff41' :
+                                 result === 'loss' ? '#ff4444' : '#ffd700',
+                          fontWeight: '900'
+                        }}>
+                          {result.toUpperCase()}
+                        </div>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '12px'
+                      }}>
+                        <div>
+                          <span style={{ color: 'var(--text-primary)' }}>
+                            You: {playerScore.toFixed(2)}%
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--text-primary)' }}>
+                            {opponent.username}: {opponentScore.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        fontSize: '10px',
+                        color: '#888',
+                        marginTop: '4px',
+                        textAlign: 'right'
+                      }}>
+                        {new Date(battle.createdAt).toLocaleDateString()} {new Date(battle.createdAt).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </TeamSection>
         )}
 
         {winner && (

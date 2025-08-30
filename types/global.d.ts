@@ -1,7 +1,7 @@
 // Global type declarations for wallet providers
 declare global {
   interface Window {
-    avalanche?: any
+    algorand?: any
     ethereum?: any
   }
 }

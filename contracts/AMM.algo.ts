@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+import algosdk from 'algosdk'
 
-interface IERC20 {
-    function totalSupply() external view returns (uint);
-    function balanceOf(address) external view returns (uint);
-    function allowance(address owner, address spender) external view returns (uint);
-    function approve(address spender, uint value) external returns (bool);
-    function transfer(address to, uint value) external returns (bool);
-    function transferFrom(address from, address to, uint value) external returns (bool);
-    function decimals() external view returns (uint8);
+export interface AMMPool {
+  id: string
+  degenAssetId: number
+  algoReserve: number
+  degenReserve: number
+  totalShares: number
+  feeRate: number
 }
 
-interface IWAVAX is IERC20 {
-    function deposit() external payable;   // wraps native AVAX -> WAVAX
-    function withdraw(uint wad) external;  // unwraps WAVAX -> AVAX
+export const AMM_POOL: AMMPool = {
+  id: 'degen_algo_pool',
+  degenAssetId: 0, // To be set after DEGEN creation
+  algoReserve: 0,
+  degenReserve: 0,
+  totalShares: 0,
+  feeRate: 0.003 // 0.3%
 }
 
-contract WamAmm {
-    IERC20 public immutable WAM;
-    IWAVAX public immutable WAVAX;
+export async function createAMMPool(
+  algodClient: algosdk.Algodv2,
+  creatorAccount: algosdk.Account,
+  initialAlgoAmount: number,
+  initialDegenAmount: number,
+  degenAssetId: number
+): Promise<string> {
+  const poolAccount = algosdk.generateAccount()
 
-    uint public reserveWAM;    // WAM in pool
-    uint public reserveWAVAX;  // WAVAX in pool
+  const params = await algodClient.getTransactionParams().do()
 
-    uint public totalShares;   // LP total supply
-    mapping(address => uint) public shares; // LP balances
+  // Fund pool with ALGO
+  const algoTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: creatorAccount.addr,
+    receiver: poolAccount.addr,
+    amount: initialAlgoAmount * 1e6,
+    suggestedParams: params,
+  })
 
-    error InsufficientLiquidity();
-    error InvalidAmounts();
+  // Add DEGEN to pool
+  const degenTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    sender: creatorAccount.addr,
+    receiver: poolAccount.addr,
+    amount: initialDegenAmount * 1e6,
+    assetIndex: degenAssetId,
+    suggestedParams: params,
+  })
 
-    constructor(address _wam, address _wavax) {
-        WAM = IERC20(_wam);
-        WAVAX = IWAVAX(_wavax);
-    }
+  const txns = [algoTxn, degenTxn]
+  algosdk.assignGroupID(txns)
 
-    // ----------- internal helpers -----------
-    function _update(uint newWAM, uint newWAVAX) private {
-        reserveWAM = newWAM;
-        reserveWAVAX = newWAVAX;
-    }
+  const signedTxns = [
+    algoTxn.signTxn(creatorAccount.sk),
+    degenTxn.signTxn(creatorAccount.sk)
+  ]
 
-    function _mintShares(address to, uint s) private {
-        totalShares += s;
-        shares[to] += s;
-    }
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns).do()
+  const txId = sendResponse.txid
 
-    function _burnShares(address from, uint s) private {
-        shares[from] -= s;
-        totalShares -= s;
-    }
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
 
-    // ----------- views -----------
-    function getK() public view returns (uint) { return reserveWAM * reserveWAVAX; }
+  return poolAccount.addr as unknown as string
+}
 
-    function getPriceWAMperAVAX() external view returns (uint num, uint den) {
-        // returns price as fraction: WAM per AVAX ~ reserveWAM / reserveWAVAX
-        num = reserveWAM; den = reserveWAVAX;
-    }
+export function getK(reserveA: number, reserveB: number): number {
+  return reserveA * reserveB
+}
 
-    // ----------- add liquidity -----------
-    // Add with ERC20s you already hold (WAM + WAVAX)
-    function addLiquidity(uint amountWAM, uint amountWAVAX) external returns (uint mintedShares) {
-        if (amountWAM == 0 || amountWAVAX == 0) revert InvalidAmounts();
+export function calculateSwapOutput(
+  inputAmount: number,
+  inputReserve: number,
+  outputReserve: number,
+  feeRate: number = 0.003
+): number {
+  const inputAmountWithFee = inputAmount * (1 - feeRate)
+  const numerator = inputAmountWithFee * outputReserve
+  const denominator = inputReserve + inputAmountWithFee
+  return numerator / denominator
+}
 
-        // pull tokens
-        require(WAM.transferFrom(msg.sender, address(this), amountWAM), "WAM tf");
-        require(WAVAX.transferFrom(msg.sender, address(this), amountWAVAX), "WAVAX tf");
+export function calculateLiquidityShares(
+  algoAmount: number,
+  degenAmount: number,
+  algoReserve: number,
+  degenReserve: number,
+  totalShares: number
+): number {
+  if (totalShares === 0) {
+    return Math.sqrt(algoAmount * degenAmount)
+  }
 
-        if (totalShares == 0) {
-            // arbitrary seed; 1:1 with geometric mean is common, but simple sum works for demo
-            mintedShares = sqrt(amountWAM * amountWAVAX);
-        } else {
-            // must keep ratio
-            uint share1 = (amountWAM * totalShares) / reserveWAM;
-            uint share2 = (amountWAVAX * totalShares) / reserveWAVAX;
-            require(share1 > 0 && share1 == share2, "bad ratio");
-            mintedShares = share1;
-        }
+  const algoRatio = algoAmount / algoReserve
+  const degenRatio = degenAmount / degenReserve
+  const ratio = Math.min(algoRatio, degenRatio)
 
-        _mintShares(msg.sender, mintedShares);
-        _update(reserveWAM + amountWAM, reserveWAVAX + amountWAVAX);
-    }
+  return totalShares * ratio
+}
 
-    // Add using native AVAX (contract wraps to WAVAX)
-    function addLiquidityWithAVAX(uint amountWAM) external payable returns (uint mintedShares) {
-        if (amountWAM == 0 || msg.value == 0) revert InvalidAmounts();
+export async function addLiquidity(
+  algodClient: algosdk.Algodv2,
+  userAccount: algosdk.Account,
+  algoAmount: number,
+  degenAmount: number,
+  poolAddress: string,
+  degenAssetId: number
+): Promise<string> {
+  if (algoAmount <= 0 || degenAmount <= 0) throw new Error('Invalid amounts')
 
-        // wrap AVAX -> WAVAX
-        WAVAX.deposit{value: msg.value}();
+  const params = await algodClient.getTransactionParams().do()
 
-        require(WAM.transferFrom(msg.sender, address(this), amountWAM), "WAM tf");
+  // Send ALGO to pool
+  const algoTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: userAccount.addr,
+    receiver: poolAddress,
+    amount: algoAmount * 1e6,
+    suggestedParams: params,
+  })
 
-        if (totalShares == 0) {
-            mintedShares = sqrt(amountWAM * msg.value);
-        } else {
-            uint share1 = (amountWAM * totalShares) / reserveWAM;
-            uint share2 = (msg.value * totalShares) / reserveWAVAX;
-            require(share1 > 0 && share1 == share2, "bad ratio");
-            mintedShares = share1;
-        }
+  // Send DEGEN to pool
+  const degenTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    sender: userAccount.addr,
+    receiver: poolAddress,
+    amount: degenAmount * 1e6,
+    assetIndex: degenAssetId,
+    suggestedParams: params,
+  })
 
-        _mintShares(msg.sender, mintedShares);
-        _update(reserveWAM + amountWAM, reserveWAVAX + msg.value);
-    }
+  const txns = [algoTxn, degenTxn]
+  algosdk.assignGroupID(txns)
 
-    // ----------- remove liquidity -----------
-    function removeLiquidity(uint share) external returns (uint amtWAM, uint amtWAVAX) {
-        if (share == 0 || share > shares[msg.sender]) revert InvalidAmounts();
-        if (totalShares == 0) revert InsufficientLiquidity();
+  const signedTxns = [
+    algoTxn.signTxn(userAccount.sk),
+    degenTxn.signTxn(userAccount.sk)
+  ]
 
-        amtWAM = (reserveWAM * share) / totalShares;
-        amtWAVAX = (reserveWAVAX * share) / totalShares;
+  const sendResponse = await algodClient.sendRawTransaction(signedTxns).do()
+  const txId = sendResponse.txid
 
-        _burnShares(msg.sender, share);
-        _update(reserveWAM - amtWAM, reserveWAVAX - amtWAVAX);
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
 
-        require(WAM.transfer(msg.sender, amtWAM), "WAM t");
-        require(WAVAX.transfer(msg.sender, amtWAVAX), "WAVAX t");
-    }
+  return txId
+}
 
-    // ----------- swaps -----------
-    // exact WAVAX in -> WAM out
-    function swapExactAVAXForWAM(uint minOut) external payable returns (uint outWAM) {
-        if (msg.value == 0) revert InvalidAmounts();
-        if (reserveWAVAX == 0 || reserveWAM == 0) revert InsufficientLiquidity();
+export async function swapExactAlgoForDegen(
+  algodClient: algosdk.Algodv2,
+  userAccount: algosdk.Account,
+  algoAmount: number,
+  minDegenOut: number,
+  poolAddress: string,
+  degenAssetId: number
+): Promise<string> {
+  if (algoAmount <= 0) throw new Error('Invalid amount')
 
-        // wrap
-        WAVAX.deposit{value: msg.value}();
+  const outDegen = calculateSwapOutput(algoAmount, AMM_POOL.algoReserve, AMM_POOL.degenReserve)
+  if (outDegen < minDegenOut || outDegen <= 0) throw new Error('Slippage')
 
-        // x*y=k with no fee (add your fee if you want)
-        uint newWAVAX = reserveWAVAX + msg.value;
-        uint newWAM = getK() / newWAVAX;
-        outWAM = reserveWAM - newWAM;
-        require(outWAM >= minOut && outWAM > 0, "slippage");
+  const params = await algodClient.getTransactionParams().do()
 
-        // adjust reserves
-        _update(newWAM, newWAVAX);
+  // Send ALGO to pool
+  const algoTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: userAccount.addr,
+    receiver: poolAddress,
+    amount: algoAmount * 1e6,
+    suggestedParams: params,
+  })
 
-        // send WAM to trader
-        require(WAM.transfer(msg.sender, outWAM), "WAM t");
-    }
+  // Pool sends DEGEN (placeholder, would need smart contract)
+  const degenTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    sender: poolAddress,
+    receiver: userAccount.addr,
+    amount: Math.floor(outDegen * 1e6),
+    assetIndex: degenAssetId,
+    suggestedParams: params,
+  })
 
-    // exact WAM in -> AVAX out (unwrap before sending)
-    function swapExactWAMForAVAX(uint amountIn, uint minOutAVAX) external returns (uint outAVAX) {
-        if (amountIn == 0) revert InvalidAmounts();
-        if (reserveWAVAX == 0 || reserveWAM == 0) revert InsufficientLiquidity();
+  // For demo, only send ALGO
+  const signedTxn = algoTxn.signTxn(userAccount.sk)
+  const sendResponse = await algodClient.sendRawTransaction(signedTxn).do()
+  const txId = sendResponse.txid
 
-        require(WAM.transferFrom(msg.sender, address(this), amountIn), "WAM tf");
+  await algosdk.waitForConfirmation(algodClient, txId, 4)
 
-        uint newWAM = reserveWAM + amountIn;
-        uint newWAVAX = getK() / newWAM;
-        uint outWAVAX = reserveWAVAX - newWAVAX;
-        require(outWAVAX > 0, "no out");
-
-        // update reserves
-        _update(newWAM, newWAVAX);
-
-        // unwrap to AVAX and send
-        WAVAX.withdraw(outWAVAX);
-        (bool ok, ) = msg.sender.call{value: outWAVAX}("");
-        require(ok, "AVAX send");
-
-        require(outWAVAX >= minOutAVAX, "slippage");
-        outAVAX = outWAVAX;
-    }
-
-    // util
-    function sqrt(uint y) internal pure returns (uint z) {
-        if (y > 3) {
-            z = y;
-            uint x = y / 2 + 1;
-            while (x < z) {
-                z = x;
-                x = (y / x + x) / 2;
-            }
-        } else if (y != 0) {
-            z = 1;
-        }
-    }
-
-    receive() external payable {}
+  return txId
 }
