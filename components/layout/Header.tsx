@@ -6,7 +6,7 @@ import { Button } from "../styled/GlobalStyles"
 import { useWallet } from "@txnlab/use-wallet-react"
 import { useRouter } from "next/navigation"
 import { algodClient } from "../../lib/algorand-config"
-import ConnectWallet from "../wallet/ConnectWallet"
+import { SimpleConnectButton } from "../wallet/SimpleConnectButton"
 import Image from "next/image"
 
 const HeaderContainer = styled.header`
@@ -20,18 +20,20 @@ const HeaderContainer = styled.header`
   top: 0;
   z-index: 100;
   font-family: var(--font-mono);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
     padding: 12px;
     border-bottom-width: 3px;
-    flex-direction: column;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   @media (max-width: 480px) {
-    padding: 8px;
+    padding: 10px 8px;
     border-bottom-width: 2px;
-    gap: 8px;
+    gap: 6px;
   }
 `
 
@@ -298,15 +300,16 @@ const AppName = styled.span`
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 2px;
+  white-space: nowrap;
 
   @media (max-width: 768px) {
-    font-size: 20px;
+    font-size: 18px;
     letter-spacing: 1px;
   }
 
   @media (max-width: 480px) {
-    font-size: 16px;
-    letter-spacing: 1px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
   }
 `
 
@@ -314,15 +317,18 @@ const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 
   @media (max-width: 768px) {
     gap: 8px;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-end;
   }
 
   @media (max-width: 480px) {
     gap: 6px;
+    width: 100%;
+    justify-content: space-between;
   }
 `
 
@@ -564,11 +570,14 @@ export function Header() {
         <ProfileButton onClick={toggleTheme}>
           {isDark ? '☀️ LIGHT' : '🌙 DARK'}
         </ProfileButton>
-        <BalanceContainer onClick={handleWamClick}>
-          <TokenIcon>$D</TokenIcon>
-          <Balance>{degenBalance}</Balance>
-          <AddButton onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}>+</AddButton>
-        </BalanceContainer>
+        {activeAccount?.address && (
+          <BalanceContainer onClick={handleWamClick}>
+            <TokenIcon>$D</TokenIcon>
+            <Balance>{degenBalance}</Balance>
+            <AddButton onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}>+</AddButton>
+          </BalanceContainer>
+        )}
+        <SimpleConnectButton />
       </RightSection>
     </HeaderContainer>
     

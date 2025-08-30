@@ -5,6 +5,7 @@ import { useWallet } from "@txnlab/use-wallet-react"
 import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Button } from "../../components/styled/GlobalStyles"
+import { brutalToast } from "../../components/ui/BrutalToast"
 
 const TournamentContainer = styled.div`
   display: flex;
@@ -87,6 +88,42 @@ const PrizePool = styled.div`
   color: var(--text-primary);
 `
 
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+`
+
+const StatusBadge = styled.div<{ $status: string }>`
+  background: ${props => {
+    switch (props.$status) {
+      case 'LIVE': return 'var(--brutal-lime)'
+      case 'STARTING SOON': return 'var(--brutal-yellow)'
+      case 'UPCOMING': return 'var(--brutal-cyan)'
+      default: return 'var(--light-bg)'
+    }
+  }};
+  border: 2px solid var(--border-primary);
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+`
+
+const TournamentButton = styled(Button)<{ $status: string }>`
+  width: 100%;
+  margin-top: 16px;
+  background: ${props => {
+    switch (props.$status) {
+      case 'LIVE': return 'var(--brutal-lime)'
+      case 'STARTING SOON': return 'var(--brutal-cyan)'
+      default: return 'var(--brutal-cyan)'
+    }
+  }};
+`
+
 export default function TournamentPage() {
   const { activeAccount } = useWallet()
   const [tournaments, setTournaments] = useState([
@@ -125,22 +162,19 @@ export default function TournamentPage() {
     }
   ])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'LIVE': return 'var(--brutal-lime)'
-      case 'STARTING SOON': return 'var(--brutal-yellow)'
-      case 'UPCOMING': return 'var(--brutal-cyan)'
-      default: return 'var(--light-bg)'
-    }
-  }
+
 
   const handleJoinTournament = (tournamentId: number) => {
     if (!activeAccount?.address) {
-      alert('Please connect your wallet first!')
+      brutalToast.error('Please connect your wallet first!')
       return
     }
     // Tournament join logic here
-    console.log('Joining tournament:', tournamentId)
+    const tournament = tournaments.find(t => t.id === tournamentId)
+    if (tournament) {
+      brutalToast.info(`Joining ${tournament.name}...`)
+      // Add actual tournament join logic here
+    }
   }
 
   if (!activeAccount?.address) {
@@ -167,21 +201,12 @@ export default function TournamentPage() {
         <TournamentGrid>
           {tournaments.map((tournament) => (
             <TournamentCard key={tournament.id} onClick={() => handleJoinTournament(tournament.id)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <CardHeader>
                 <CardTitle>{tournament.name}</CardTitle>
-                <div 
-                  style={{ 
-                    background: getStatusColor(tournament.status),
-                    border: '2px solid var(--border-primary)',
-                    padding: '4px 8px',
-                    fontSize: '10px',
-                    fontWeight: '900',
-                    fontFamily: 'var(--font-mono)'
-                  }}
-                >
+                <StatusBadge $status={tournament.status}>
                   {tournament.status}
-                </div>
-              </div>
+                </StatusBadge>
+              </CardHeader>
               
               <CardInfo>{tournament.description}</CardInfo>
               
@@ -191,15 +216,9 @@ export default function TournamentPage() {
               <CardInfo>💳 Entry Fee: {tournament.entryFee}</CardInfo>
               <CardInfo>⏰ {tournament.timeLeft}</CardInfo>
               
-              <Button 
-                style={{ 
-                  width: '100%', 
-                  marginTop: '16px',
-                  background: tournament.status === 'LIVE' ? 'var(--brutal-lime)' : 'var(--brutal-cyan)'
-                }}
-              >
+              <TournamentButton $status={tournament.status}>
                 {tournament.status === 'LIVE' ? 'JOIN NOW' : tournament.status === 'STARTING SOON' ? 'REGISTER' : 'COMING SOON'}
-              </Button>
+              </TournamentButton>
             </TournamentCard>
           ))}
         </TournamentGrid>

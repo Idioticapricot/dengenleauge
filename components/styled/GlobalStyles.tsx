@@ -14,9 +14,20 @@ export const GlobalStyle = createGlobalStyle`
     --dark-bg: #000000;
     --light-bg: #ffffff;
     --text-primary: #000000;
-    --text-secondary: #000000;
+    --text-secondary: #666666;
     --border-primary: #000000;
     --font-mono: 'Courier New', monospace;
+    --shadow-brutal: 6px 6px 0px 0px var(--border-primary);
+    --shadow-brutal-sm: 3px 3px 0px 0px var(--border-primary);
+    --shadow-brutal-lg: 8px 8px 0px 0px var(--border-primary);
+  }
+  
+  .dark {
+    --dark-bg: #ffffff;
+    --light-bg: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --border-primary: #ffffff;
   }
 
   /* Responsive breakpoints */
@@ -53,14 +64,20 @@ export const Container = styled.div`
   min-height: 100vh;
   background: var(--light-bg);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   border-left: 4px solid var(--border-primary);
   border-right: 4px solid var(--border-primary);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   
   @media (max-width: 768px) {
+    border-left: 3px solid var(--border-primary);
+    border-right: 3px solid var(--border-primary);
+    max-width: 100%;
+  }
+  
+  @media (max-width: 480px) {
     border-left: 2px solid var(--border-primary);
     border-right: 2px solid var(--border-primary);
-    max-width: 100%;
   }
 `
 
@@ -198,16 +215,16 @@ export const Button = styled.button<{
       case "sm":
         return "10px 16px"
       case "lg":
-        return "16px 32px"
+        return "18px 36px"
       default:
-        return "12px 24px"
+        return "14px 28px"
     }
   }};
   width: ${(props) => (props.$fullWidth ? "100%" : "auto")};
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  box-shadow: var(--shadow-brutal);
   
   background: ${(props) => {
     switch (props.$variant) {
@@ -226,9 +243,9 @@ export const Button = styled.button<{
   
   color: var(--text-primary);
   
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    box-shadow: var(--shadow-brutal-sm);
     background: ${(props) => {
       switch (props.$variant) {
         case "primary":
@@ -245,21 +262,21 @@ export const Button = styled.button<{
     }};
   }
   
-  &:active {
+  &:active:not(:disabled) {
     transform: translate(4px, 4px);
     box-shadow: none;
   }
   
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-    box-shadow: 4px 4px 0px 0px var(--border-primary);
+    box-shadow: var(--shadow-brutal);
+    filter: grayscale(0.3);
   }
 
   @media (max-width: 768px) {
     border-width: 3px;
-    box-shadow: 3px 3px 0px 0px var(--border-primary);
     font-size: ${(props) => {
       switch (props.$size) {
         case "sm":
@@ -273,27 +290,25 @@ export const Button = styled.button<{
     padding: ${(props) => {
       switch (props.$size) {
         case "sm":
-          return "8px 12px"
+          return "8px 14px"
         case "lg":
-          return "14px 24px"
+          return "16px 28px"
         default:
-          return "10px 18px"
+          return "12px 22px"
       }
     }};
     
-    &:hover {
+    &:hover:not(:disabled) {
       transform: translate(1px, 1px);
-      box-shadow: 2px 2px 0px 0px var(--border-primary);
     }
     
-    &:active {
+    &:active:not(:disabled) {
       transform: translate(2px, 2px);
     }
   }
 
   @media (max-width: 480px) {
     border-width: 2px;
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
     font-size: ${(props) => {
       switch (props.$size) {
         case "sm":
@@ -307,22 +322,27 @@ export const Button = styled.button<{
     padding: ${(props) => {
       switch (props.$size) {
         case "sm":
-          return "6px 10px"
+          return "6px 12px"
         case "lg":
-          return "12px 20px"
+          return "14px 24px"
         default:
-          return "8px 14px"
+          return "10px 18px"
       }
     }};
     
-    &:hover {
+    &:hover:not(:disabled) {
       transform: none;
-      box-shadow: 2px 2px 0px 0px var(--border-primary);
     }
     
-    &:active {
+    &:active:not(:disabled) {
       transform: translate(1px, 1px);
     }
+  }
+  
+  /* Focus styles for accessibility */
+  &:focus-visible {
+    outline: 2px solid var(--brutal-yellow);
+    outline-offset: 2px;
   }
 `
 
