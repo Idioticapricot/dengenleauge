@@ -27,9 +27,9 @@ export async function GET(request: Request) {
       
       for (const asset of sortedAssets) {
         try {
-          const assetInfo = await algodClient.getAssetByID(asset['asset-id']).do()
+          const assetInfo = await algodClient.getAssetByID(asset.assetId).do()
           const decimals = assetInfo.params.decimals || 0
-          const unitName = assetInfo.params['unit-name'] || `ASA-${asset['asset-id']}`
+          const unitName = assetInfo.params.unitName || `ASA-${asset.assetId}`
           const balance = (Number(asset.amount) / Math.pow(10, decimals)).toFixed(decimals)
           balances[unitName] = balance
         } catch (e) {

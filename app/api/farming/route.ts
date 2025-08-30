@@ -1,5 +1,30 @@
 import { NextResponse } from 'next/server'
-import { YIELD_FARMS, calculateFarmRewards, calculateAPR } from '../../../contracts/YieldFarm.algo'
+
+// Mock functions for farming calculations
+const calculateFarmRewards = (userPosition: any, farm: any, currentTime: number) => {
+  const timeStaked = currentTime - userPosition.lastUpdateTime
+  const rewards = (userPosition.stakedAmount * farm.rewardRate * timeStaked) / (24 * 60 * 60)
+  return Math.floor(rewards)
+}
+
+const calculateAPR = (farm: any, lpTokenPrice: number, degenPrice: number) => {
+  const dailyRewardsUSD = farm.rewardRate * 24 * 60 * 60 * degenPrice
+  const tvl = farm.totalStaked * lpTokenPrice
+  return tvl > 0 ? (dailyRewardsUSD * 365 * 100) / tvl : 0
+}
+
+// Mock yield farms data
+const YIELD_FARMS = [
+  {
+    id: 'algo_degen_farm',
+    name: 'ALGO-DEGEN LP Farm',
+    rewardToken: 'DEGEN',
+    totalStaked: 50000,
+    rewardRate: 100, // DEGEN per second
+    lockPeriod: 30 * 24 * 60 * 60, // 30 days
+    apr: 0
+  }
+]
 
 export async function GET(request: Request) {
   try {

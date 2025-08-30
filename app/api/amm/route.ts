@@ -1,5 +1,20 @@
 import { NextResponse } from 'next/server'
-import { calculateSwapOutput, calculateLiquidityTokens } from '../../../contracts/LiquidityPool.algo'
+
+// Mock functions for AMM calculations
+const calculateSwapOutput = (inputAmount: number, inputReserve: number, outputReserve: number, feeRate: number) => {
+  const inputAmountWithFee = inputAmount * (1 - feeRate)
+  return (inputAmountWithFee * outputReserve) / (inputReserve + inputAmountWithFee)
+}
+
+const calculateLiquidityTokens = (algoAmount: number, degenAmount: number, algoReserve: number, degenReserve: number, totalLiquidity: number) => {
+  if (totalLiquidity === 0) {
+    return Math.sqrt(algoAmount * degenAmount)
+  }
+  const algoRatio = algoAmount / algoReserve
+  const degenRatio = degenAmount / degenReserve
+  const liquidityRatio = Math.min(algoRatio, degenRatio)
+  return liquidityRatio * totalLiquidity
+}
 
 // Mock pool data
 const POOL_DATA = {

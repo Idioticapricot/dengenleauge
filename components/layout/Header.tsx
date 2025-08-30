@@ -402,9 +402,9 @@ export function Header() {
     if (!activeAccount?.address) return
 
     try {
-      const response = await fetch(`/api/user-balance?address=${activeAccount.address}`)
+      const response = await fetch(`/api/user-degen-balance?walletAddress=${activeAccount.address}`)
       const data = await response.json()
-      
+
       if (data.success) {
         setDegenBalance(data.data.degenBalance.toFixed(2))
       } else {

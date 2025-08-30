@@ -132,6 +132,9 @@ export default function BattleMemePage() {
   const [winStreak, setWinStreak] = useState(0)
   const [totalBattles, setTotalBattles] = useState(0)
   const [totalWins, setTotalWins] = useState(0)
+  const [degenBalance, setDegenBalance] = useState(0)
+  const [stakeAmount, setStakeAmount] = useState(10)
+  const [currentBattleId, setCurrentBattleId] = useState<string | null>(null)
   const { activeAccount } = useWallet()
 
   useEffect(() => {
@@ -141,7 +144,7 @@ export default function BattleMemePage() {
       setPlayerTeam(team)
       generateOpponentTeam()
     }
-    
+
     // Load battle stats
     const streak = localStorage.getItem('winStreak')
     const battles = localStorage.getItem('totalBattles')
@@ -149,7 +152,26 @@ export default function BattleMemePage() {
     if (streak) setWinStreak(parseInt(streak))
     if (battles) setTotalBattles(parseInt(battles))
     if (wins) setTotalWins(parseInt(wins))
-  }, [])
+
+    // Load DEGEN balance
+    if (activeAccount?.address) {
+      fetchDegenBalance()
+    }
+  }, [activeAccount?.address])
+
+  const fetchDegenBalance = async () => {
+    if (!activeAccount?.address) return
+
+    try {
+      const response = await fetch(`/api/user-degen-balance?walletAddress=${activeAccount.address}`)
+      const data = await response.json()
+      if (data.success) {
+        setDegenBalance(data.data.degenBalance)
+      }
+    } catch (error) {
+      console.error('Failed to fetch DEGEN balance:', error)
+    }
+  }
 
   useEffect(() => {
     if (battleActive && timeLeft > 0) {
@@ -271,29 +293,53 @@ export default function BattleMemePage() {
 
   const startBattle = async () => {
     if (playerTeam.length !== 3 || !activeAccount?.address) return
-    
+    if (degenBalance < stakeAmount) {
+      alert('Insufficient DEGEN balance! You need at least ' + stakeAmount + ' DEGEN to battle.')
+      return
+    }
+
     try {
-      // Initialize battle without saving to DB first
+      // Create battle stake first
+      const stakeResponse = await fetch('/api/battle-stake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: activeAccount.address,
+          stakeAmount,
+          battleType: 'ai'
+        })
+      })
+
+      const stakeData = await stakeResponse.json()
+      if (!stakeData.success) {
+        alert('Failed to create stake: ' + stakeData.error)
+        return
+      }
+
+      setCurrentBattleId(stakeData.data.battleId)
+      setDegenBalance(prev => prev - stakeAmount) // Update local balance
+
+      // Initialize battle
       setBattleActive(true)
       setTimeLeft(60)
       setWinner(null)
       setPriceHistory([])
       setPlayerScore(0)
       setOpponentScore(0)
-      
+
       // Initialize with current API prices
       setPlayerTeam(prev => prev.map(coin => ({
         ...coin,
         initialPrice: coin.price || 0.1,
         currentPrice: coin.price || 0.1
       })))
-      
+
       setOpponentTeam(prev => prev.map(coin => ({
         ...coin,
         initialPrice: coin.price || 0.1,
         currentPrice: coin.price || 0.1
       })))
-      
+
       setTimeout(() => {
         const initialPlayerScore = calculateTeamScore(playerTeam)
         const initialOpponentScore = calculateTeamScore(opponentTeam)
@@ -302,6 +348,7 @@ export default function BattleMemePage() {
 
     } catch (error) {
       console.error('Failed to start battle:', error)
+      alert('Failed to start battle. Please try again.')
     }
   }
 
@@ -309,16 +356,18 @@ export default function BattleMemePage() {
     setBattleActive(false)
     const playerFinalScore = calculateTeamScore(playerTeam)
     const opponentFinalScore = calculateTeamScore(opponentTeam)
-    
+
     setPlayerScore(playerFinalScore)
     setOpponentScore(opponentFinalScore)
-    
+
     const newTotalBattles = totalBattles + 1
     setTotalBattles(newTotalBattles)
     localStorage.setItem('totalBattles', newTotalBattles.toString())
-    
+
+    let battleResult = 'tie'
     if (playerFinalScore > opponentFinalScore) {
       setWinner('player')
+      battleResult = 'win'
       const newStreak = winStreak + 1
       const newWins = totalWins + 1
       setWinStreak(newStreak)
@@ -327,12 +376,43 @@ export default function BattleMemePage() {
       localStorage.setItem('totalWins', newWins.toString())
     } else if (opponentFinalScore > playerFinalScore) {
       setWinner('opponent')
+      battleResult = 'loss'
       setWinStreak(0)
       localStorage.setItem('winStreak', '0')
     } else {
       setWinner('tie')
+      battleResult = 'tie'
     }
-    
+
+    // Settle battle stake and award winner
+    if (currentBattleId && activeAccount?.address) {
+      try {
+        const settlementResponse = await fetch('/api/battle-stake', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            battleId: currentBattleId,
+            winnerAddress: battleResult === 'win' ? activeAccount.address : 'ai_opponent',
+            loserAddress: battleResult === 'loss' ? activeAccount.address : 'ai_opponent',
+            stakeAmount
+          })
+        })
+
+        const settlementData = await settlementResponse.json()
+        if (settlementData.success) {
+          // Update local balance based on result
+          if (battleResult === 'win') {
+            setDegenBalance(prev => prev + stakeAmount * 2) // Get stake back + opponent's stake
+          } else if (battleResult === 'tie') {
+            setDegenBalance(prev => prev + stakeAmount) // Get stake back
+          }
+          // If loss, stake is already deducted
+        }
+      } catch (error) {
+        console.error('Failed to settle battle stake:', error)
+      }
+    }
+
     // Save battle to database
     try {
       if (activeAccount?.address) {
@@ -341,19 +421,21 @@ export default function BattleMemePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: activeAccount.address })
         })
-        
+
         const userData = await userResponse.json()
-        if (userData.user) {
+        if (userData.success && userData.data) {
           await fetch('/api/meme-battles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userId: userData.user.id,
+              userId: userData.data.id,
               teamData: { playerTeam, opponentTeam },
               opponentStrategy,
               playerScore: playerFinalScore,
               opponentScore: opponentFinalScore,
-              result: playerFinalScore > opponentFinalScore ? 'win' : opponentFinalScore > playerFinalScore ? 'loss' : 'tie'
+              result: battleResult,
+              stakeAmount,
+              battleId: currentBattleId
             })
           })
         }
@@ -361,6 +443,9 @@ export default function BattleMemePage() {
     } catch (error) {
       console.error('Failed to save battle:', error)
     }
+
+    // Reset battle ID
+    setCurrentBattleId(null)
   }
 
   if (!activeAccount?.address) {
@@ -402,13 +487,32 @@ export default function BattleMemePage() {
             <div>🏆 Streak: {winStreak}</div>
             <div>📊 Battles: {totalBattles}</div>
             <div>📈 Win Rate: {totalBattles > 0 ? ((totalWins / totalBattles) * 100).toFixed(1) : 0}%</div>
+            <div>💰 DEGEN: {degenBalance.toFixed(2)}</div>
           </div>
-          {battleActive ? (
+
+          {!battleActive && (
+            <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <div style={{ marginBottom: '12px', fontSize: '16px', fontFamily: 'var(--font-mono)' }}>
+                <label style={{ color: 'var(--text-primary)' }}>
+                  Stake Amount: {stakeAmount} DEGEN
+                </label>
+                <input
+                  type="range"
+                  min="10"
+                  max={Math.min(degenBalance, 100)}
+                  value={stakeAmount}
+                  onChange={(e) => setStakeAmount(Number(e.target.value))}
+                  style={{ marginLeft: '12px', width: '120px' }}
+                />
+              </div>
+              <Button onClick={startBattle} style={{ fontSize: '18px' }}>
+                🎯 START BATTLE ({stakeAmount} DEGEN STAKE)
+              </Button>
+            </div>
+          )}
+
+          {battleActive && (
             <Timer>{Math.floor(timeLeft/60)}:{(timeLeft%60).toString().padStart(2,'0')}</Timer>
-          ) : (
-            <Button onClick={startBattle} style={{ marginTop: '16px', fontSize: '18px' }}>
-              START BATTLE
-            </Button>
           )}
         </BattleHeader>
 
@@ -468,9 +572,14 @@ export default function BattleMemePage() {
               <div style={{ marginTop: '16px', fontSize: '18px', fontFamily: 'var(--font-mono)' }}>
                 Final Score: {playerScore.toFixed(4)}% vs {opponentScore.toFixed(4)}%
               </div>
+              <div style={{ marginTop: '12px', fontSize: '16px', fontFamily: 'var(--font-mono)', color: winner === 'player' ? 'var(--primary-green)' : winner === 'tie' ? 'var(--text-primary)' : 'var(--brutal-red)' }}>
+                {winner === 'player' && `💰 +${stakeAmount * 2} DEGEN (stake returned + opponent's stake)`}
+                {winner === 'tie' && `💰 +${stakeAmount} DEGEN (stake returned)`}
+                {winner === 'opponent' && `💸 -${stakeAmount} DEGEN (stake lost)`}
+              </div>
             </WinnerSection>
-            <Button 
-              onClick={() => navigator.share ? navigator.share({title: 'Meme Coin Battle Result', text: `I ${winner === 'player' ? 'won' : 'lost'} with ${playerScore.toFixed(4)}% vs ${opponentScore.toFixed(4)}%!`}) : null}
+            <Button
+              onClick={() => navigator.share ? navigator.share({title: 'Meme Coin Battle Result', text: `I ${winner === 'player' ? 'won' : 'lost'} a ${stakeAmount} DEGEN stake with ${playerScore.toFixed(4)}% vs ${opponentScore.toFixed(4)}%!`}) : null}
               style={{ marginTop: '16px', fontSize: '18px' }}
             >
               📤 SHARE RESULTS

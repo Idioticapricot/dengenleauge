@@ -11,7 +11,7 @@ export function generateTournamentBrackets(participantIds: string[]): Tournament
       round: 1,
       position: i / 2,
       player1Id: participantIds[i],
-      player2Id: participantIds[i + 1] || null,
+      player2Id: participantIds[i + 1] || undefined,
       status: 'pending'
     })
   }

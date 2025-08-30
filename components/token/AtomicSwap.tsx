@@ -127,7 +127,22 @@ export default function AtomicSwap() {
   const [result, setResult] = useState<any>(null)
 
   const handleAtomicSwap = async () => {
-    if (!activeAddress || !algoAmount) return
+    // Enhanced validation
+    if (!activeAddress) {
+      setResult({ error: 'Please connect your wallet first' })
+      return
+    }
+
+    if (!algoAmount || parseFloat(algoAmount) <= 0) {
+      setResult({ error: 'Please enter a valid ALGO amount' })
+      return
+    }
+
+    const amount = parseFloat(algoAmount)
+    if (amount < 0.1 || amount > 100) {
+      setResult({ error: 'Amount must be between 0.1 and 100 ALGO' })
+      return
+    }
 
     setLoading(true)
     setResult(null)
@@ -139,20 +154,25 @@ export default function AtomicSwap() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           buyerAddress: activeAddress,
-          algoAmount: parseFloat(algoAmount)
+          algoAmount: amount
         })
       })
 
       const data = await response.json()
-      
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`)
+      }
+
       if (!data.success) {
-        throw new Error(data.error)
+        throw new Error(data.error || 'Failed to create swap transaction')
       }
 
       // Step 2: Sign transaction (wallet handles decoding)
       const unsignedTxnArray = data.data.unsignedTransaction
       const unsignedTxn = new Uint8Array(unsignedTxnArray)
-      
+
+      // Pass as array of transactions
       const signedTxns = await signTransactions([unsignedTxn])
 
       // Step 3: Submit atomic transaction group
@@ -165,7 +185,9 @@ export default function AtomicSwap() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           signedUserTransaction: Array.from(signedTxns[0]),
-          signedCreatorTransaction: data.data.signedCreatorTransaction
+          signedCreatorTransaction: data.data.signedCreatorTransaction,
+          buyerAddress: activeAddress,
+          degenAmount: data.data.degenAmount
         })
       })
 

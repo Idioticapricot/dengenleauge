@@ -1,5 +1,23 @@
 import { NextResponse } from 'next/server'
-import { STAKE_POOLS, calculateStakeRewards } from '../../../contracts/Staking.algo'
+
+// Mock functions for staking calculations
+const calculateStakeRewards = (amount: number, durationSeconds: number, rewardRate: number) => {
+  return (amount * rewardRate * durationSeconds) / (24 * 60 * 60)
+}
+
+// Mock stake pools data
+const STAKE_POOLS = [
+  {
+    id: 'degen_30d',
+    name: 'DEGEN 30-Day Stake',
+    rewardToken: 'DEGEN',
+    minStake: 100,
+    totalStaked: 100000,
+    rewardRate: 12, // 12% APY
+    lockPeriod: 30 * 24 * 60 * 60, // 30 days
+    apr: 12
+  }
+]
 
 export async function GET(request: Request) {
   try {
