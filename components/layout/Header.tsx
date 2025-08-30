@@ -546,7 +546,15 @@ export function Header() {
       <LeftSection>
         <LogoNameBox onClick={() => router.push('/')}>
           <LogoContainer>
-            <Image src="/wolf-removebg-preview.png" alt="Beastiar Logo" width={40} height={40} />
+            <Image
+              src="/wolf-removebg-preview.png"
+              alt="Beastiar Logo"
+              width={40}
+              height={40}
+              priority
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+IRjWjBqO6O2mhP//Z"
+            />
           </LogoContainer>
           <AppName>DEGEN LEAGUE</AppName>
         </LogoNameBox>
