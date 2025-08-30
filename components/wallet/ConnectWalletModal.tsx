@@ -28,7 +28,7 @@ const ModalOverlay = styled.div`
 `
 
 const ModalContent = styled.div`
-  background: #ff0000; /* Temporary bright red background for debugging */
+  background: var(--light-bg);
   border: 4px solid var(--border-primary);
   box-shadow: 8px 8px 0px 0px var(--border-primary);
   padding: 32px;
@@ -37,7 +37,6 @@ const ModalContent = styled.div`
   font-family: var(--font-mono);
   position: relative;
   z-index: 1000000;
-  color: white; /* Make text visible on red background */
 `
 
 const ModalTitle = styled.h2`
@@ -131,8 +130,6 @@ const ConnectWalletModal = ({
 }: ConnectWalletModalProps) => {
   const { activeAccount } = useWallet()
 
-  console.log('Modal render - isOpen:', isOpen, 'wallets:', wallets.length)
-  
   if (!isOpen) return null
 
   const handleWalletClick = async (wallet: Wallet) => {

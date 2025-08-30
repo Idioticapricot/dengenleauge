@@ -18,8 +18,8 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: "Beastiar - Battle Beast Arena",
-  description: "Create, battle, and trade powerful beasts in the ultimate NFT arena",
+  title: "Degen League",
+  description: "Battle and trade in the ultimate Degen League arena",
   generator: "v0.app",
   icons: {
     icon: "/wolf-removebg-preview.png",

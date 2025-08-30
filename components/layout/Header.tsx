@@ -485,7 +485,6 @@ export function Header() {
 
   const handleNetworkSwitch = () => {
     // Algorand doesn't need network switching like EVM chains
-    console.log('Network switching not needed on Algorand')
   }
 
   const toggleTheme = () => {
@@ -554,7 +553,7 @@ export function Header() {
           <LogoContainer>
             <Image
               src="/wolf-removebg-preview.png"
-              alt="Beastiar Logo"
+              alt="Degen League Logo"
               width={40}
               height={40}
               priority
