@@ -48,7 +48,7 @@ const NavItem = styled(Link)<{ $active: boolean; $isBattle?: boolean }>`
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: ${(props) => (props.$isBattle ? "12px 16px" : "8px 12px")};
+  padding: ${(props) => (props.$isBattle ? "14px 18px" : "10px 14px")};
   border-radius: 0;
   text-decoration: none;
   color: var(--text-primary);
@@ -69,16 +69,23 @@ const NavItem = styled(Link)<{ $active: boolean; $isBattle?: boolean }>`
     if (props.$active) return "2px 2px 0px 0px var(--border-primary)"
     return "none"
   }};
-  transition: all 0.1s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 900;
   text-transform: uppercase;
-  transform: ${(props) => (props.$isBattle ? "scale(1.1)" : "scale(1)")};
+  transform: ${(props) => (props.$isBattle ? "scale(1.05)" : "scale(1)")};
+  min-height: 44px;
+  min-width: 44px;
   
   &:hover {
     background: ${(props) => (props.$isBattle ? "var(--brutal-red)" : "var(--brutal-lime)")};
     border: ${(props) => (props.$isBattle ? "4px" : "3px")} solid var(--border-primary);
     box-shadow: ${(props) => (props.$isBattle ? "3px 3px" : "2px 2px")} 0px 0px var(--border-primary);
-    transform: ${(props) => (props.$isBattle ? "scale(1.1) translate(1px, 1px)" : "translate(1px, 1px)")};
+    transform: ${(props) => (props.$isBattle ? "scale(1.05) translate(1px, 1px)" : "translate(1px, 1px)")};
+  }
+  
+  &:active {
+    transform: ${(props) => (props.$isBattle ? "scale(1.05) translate(2px, 2px)" : "translate(2px, 2px)")};
+    box-shadow: ${(props) => (props.$isBattle ? "1px 1px" : "1px 1px")} 0px 0px var(--border-primary);
   }
   
   @media (max-width: 768px) {
@@ -162,8 +169,8 @@ const NavLabel = styled.span`
 
 const navItems = [
   { href: "/team", icon: Users, label: "Team" },
-  { href: "/battle", icon: Swords, label: "Battle" },
   { href: "/tournament", icon: Trophy, label: "Tournament" },
+  { href: "/battle", icon: Swords, label: "Battle", isBattle: true },
   { href: "/defi", icon: DollarSign, label: "DeFi" },
   { href: "/profile", icon: User, label: "Profile" },
 ]

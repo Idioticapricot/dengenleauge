@@ -567,9 +567,6 @@ export function Header() {
       </LeftSection>
 
       <RightSection>
-        <ProfileButton onClick={toggleTheme}>
-          {isDark ? '☀️ LIGHT' : '🌙 DARK'}
-        </ProfileButton>
         {activeAccount?.address && (
           <BalanceContainer onClick={handleWamClick}>
             <TokenIcon>$D</TokenIcon>

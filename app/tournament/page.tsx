@@ -42,21 +42,63 @@ const TournamentSubtitle = styled.p`
 
 const TournamentGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 16px;
+  }
 `
 
 const TournamentCard = styled.div`
   background: var(--light-bg);
   border: 4px solid var(--border-primary);
   padding: 24px;
-  box-shadow: 6px 6px 0px 0px var(--border-primary);
+  box-shadow: var(--shadow-brutal);
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
   
   &:hover {
     transform: translate(2px, 2px);
-    box-shadow: 4px 4px 0px 0px var(--border-primary);
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  
+  &:active {
+    transform: translate(4px, 4px);
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
+  }
+  
+  @media (max-width: 768px) {
+    border-width: 3px;
+    padding: 20px;
+    
+    &:hover {
+      transform: translate(1px, 1px);
+    }
+    
+    &:active {
+      transform: translate(2px, 2px);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    border-width: 2px;
+    padding: 16px;
+    
+    &:hover {
+      transform: none;
+    }
+    
+    &:active {
+      transform: translate(1px, 1px);
+    }
   }
 `
 
@@ -105,11 +147,35 @@ const StatusBadge = styled.div<{ $status: string }>`
     }
   }};
   border: 2px solid var(--border-primary);
-  padding: 4px 8px;
+  padding: 6px 10px;
   font-size: 10px;
   font-weight: 900;
   font-family: var(--font-mono);
   color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  
+  ${props => props.$status === 'LIVE' && `
+    animation: pulse 2s infinite;
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+  `}
+  
+  @media (max-width: 768px) {
+    padding: 4px 8px;
+    font-size: 9px;
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
+  }
+  
+  @media (max-width: 480px) {
+    padding: 3px 6px;
+    font-size: 8px;
+  }
 `
 
 const TournamentButton = styled(Button)<{ $status: string }>`
