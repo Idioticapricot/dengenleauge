@@ -164,7 +164,7 @@ const navItems = [
   { href: "/team", icon: Users, label: "Team" },
   { href: "/battle", icon: Swords, label: "Battle" },
   { href: "/game", icon: Zap, label: "PvP", isBattle: true },
-  { href: "/defi", icon: DollarSign, label: "DeFi" },
+  { href: "/tournament", icon: Trophy, label: "Tournament" },
   { href: "/profile", icon: User, label: "Profile" },
 ]
 
