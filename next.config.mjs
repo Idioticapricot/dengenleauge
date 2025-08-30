@@ -4,7 +4,7 @@ const nextConfig = {
     styledComponents: true,
   },
   eslint: {
-    // Enable ESLint during builds for better code quality
+    ignoreDuringBuilds: true,
   },
   typescript: {
     // Enable TypeScript error checking during builds

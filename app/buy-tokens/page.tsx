@@ -4,11 +4,6 @@ import { AppLayout } from '../../components/layout/AppLayout'
 import dynamic from 'next/dynamic'
 import styled from 'styled-components'
 
-// Dynamically import AtomicSwap to prevent SSR issues
-const AtomicSwap = dynamic(() => import('../../components/token/AtomicSwap'), {
-  ssr: false,
-  loading: () => <LoadingCard>Loading swap...</LoadingCard>
-})
 
 const BuyTokensContainer = styled.div`
   display: flex;
@@ -161,9 +156,6 @@ export default function BuyTokensPage() {
           </PageDescription>
         </PageHeader>
 
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <AtomicSwap />
-        </div>
 
         <InfoGrid>
           <InfoCard>

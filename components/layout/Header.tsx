@@ -7,7 +7,6 @@ import { useWallet } from "@txnlab/use-wallet-react"
 import { useRouter } from "next/navigation"
 import { algodClient } from "../../lib/algorand-config"
 import ConnectWallet from "../wallet/ConnectWallet"
-import { DegenSwap } from "../swap/DegenSwap"
 import Image from "next/image"
 
 const HeaderContainer = styled.header`
@@ -21,14 +20,14 @@ const HeaderContainer = styled.header`
   top: 0;
   z-index: 100;
   font-family: var(--font-mono);
-  
+
   @media (max-width: 768px) {
     padding: 12px;
     border-bottom-width: 3px;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   @media (max-width: 480px) {
     padding: 8px;
     border-bottom-width: 2px;
@@ -257,17 +256,71 @@ const PopupButton = styled(Button)`
   }
 `
 
+const LogoNameBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--brutal-lime);
+  border: 3px solid var(--border-primary);
+  border-radius: 0;
+  padding: 8px 16px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  cursor: pointer;
+  transition: all 0.1s ease;
+
+  &:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+  }
+
+  @media (max-width: 768px) {
+    border-width: 2px;
+    padding: 6px 12px;
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    gap: 8px;
+
+    &:hover {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px 0px var(--border-primary);
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+`
+
+const AppName = styled.span`
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+`
+
 const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  
+
   @media (max-width: 768px) {
     gap: 8px;
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   @media (max-width: 480px) {
     gap: 6px;
   }
@@ -407,12 +460,11 @@ export function Header() {
   const { activeAccount } = useWallet()
   const router = useRouter()
   const [showWamPopup, setShowWamPopup] = useState(false)
-  const [showDegenSwap, setShowDegenSwap] = useState(false)
   const [degenBalance, setDegenBalance] = useState('0')
   const DEGEN_ASA_ID = parseInt(process.env.DEGEN_ASSET_ID || '745007115')
 
   const handleWamClick = () => {
-    setShowDegenSwap(true)
+    router.push('/buy-tokens')
   }
 
   const handleGoToDeposit = () => {
@@ -479,31 +531,23 @@ export function Header() {
     
     <HeaderContainer>
       <LeftSection>
-        <LogoContainer onClick={() => router.push('/')}>
-          <Image src="/wolf-removebg-preview.png" alt="Beastiar Logo" width={40} height={40} />
-        </LogoContainer>
-        <BalanceContainer onClick={handleWamClick}>
-          <TokenIcon>$D</TokenIcon>
-          <Balance>{degenBalance}</Balance>
-          <AddButton onClick={(e) => { e.stopPropagation(); setShowDegenSwap(true); }}>+</AddButton>
-        </BalanceContainer>
+        <LogoNameBox onClick={() => router.push('/')}>
+          <LogoContainer>
+            <Image src="/wolf-removebg-preview.png" alt="Beastiar Logo" width={40} height={40} />
+          </LogoContainer>
+          <AppName>DEGEN LEAGUE</AppName>
+        </LogoNameBox>
       </LeftSection>
 
       <RightSection>
-        <ProfileButton onClick={() => router.push('/buy-tokens')}>
-          ⚡ SWAP DEGEN
-        </ProfileButton>
-        <ProfileButton onClick={handleProfileClick}>
-          👤 PROFILE
-        </ProfileButton>
-        <ConnectWallet />
+        <BalanceContainer onClick={handleWamClick}>
+          <TokenIcon>$D</TokenIcon>
+          <Balance>{degenBalance}</Balance>
+          <AddButton onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}>+</AddButton>
+        </BalanceContainer>
       </RightSection>
     </HeaderContainer>
     
-    <DegenSwap 
-      isOpen={showDegenSwap} 
-      onClose={() => setShowDegenSwap(false)} 
-    />
     </>
   )
 }

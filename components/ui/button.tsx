@@ -20,6 +20,10 @@ const buttonVariants = cva(
         ghost:
           "bg-transparent border-transparent shadow-none hover:bg-yellow-300 hover:border-black hover:shadow-brutal",
         link: "bg-transparent border-transparent shadow-none text-black underline-offset-4 hover:underline hover:bg-yellow-300",
+        success:
+          "bg-lime-300 text-black border-black hover:bg-lime-400",
+        warning:
+          "bg-orange-300 text-black border-black hover:bg-orange-400",
       },
       size: {
         default: "h-12 px-6 py-3",
