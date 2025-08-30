@@ -1,6 +1,8 @@
 "use client"
 
 import styled from "styled-components"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCoins } from '@fortawesome/free-solid-svg-icons'
 
 const CardContainer = styled.div`
   background: var(--light-bg);
@@ -125,7 +127,7 @@ export function MemeCard({ asset }: MemeCardProps) {
               }}
             />
           ) : (
-            '🪙'
+            <FontAwesomeIcon icon={faCoins} />
           )}
         </TokenIcon>
         <TokenInfo>

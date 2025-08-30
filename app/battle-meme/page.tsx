@@ -6,6 +6,8 @@ import { useWallet } from "@txnlab/use-wallet-react"
 import styled from "styled-components"
 import { Button } from "../../components/styled/GlobalStyles"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCrosshairs, faTrophy, faChartBar, faChartLine, faCoins, faRobot, faFire, faBolt, faGauge, faShare, faLink, faExclamationTriangle, faUser, faCrown, faHandshake, faRocket, faChartSimple } from '@fortawesome/free-solid-svg-icons'
 
 const BattleContainer = styled.div`
   display: flex;
@@ -19,6 +21,15 @@ const BattleHeader = styled.div`
   padding: 20px;
   border: 4px solid var(--border-primary);
   box-shadow: 4px 4px 0px 0px var(--border-primary);
+  position: relative;
+`
+
+const IconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  font-size: 1.2em;
 `
 
 const BattleTitle = styled.h1`
@@ -453,7 +464,12 @@ export default function BattleMemePage() {
       <AppLayout>
         <BattleContainer>
           <BattleHeader>
-            <BattleTitle>🔗 CONNECT WALLET</BattleTitle>
+            <BattleTitle>
+              <IconWrapper>
+                <FontAwesomeIcon icon={faLink} />
+              </IconWrapper>
+              CONNECT WALLET
+            </BattleTitle>
             <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: '10px 0 0 0' }}>
               Connect your wallet to start battling!
             </p>
@@ -468,7 +484,12 @@ export default function BattleMemePage() {
       <AppLayout>
         <BattleContainer>
           <BattleHeader>
-            <BattleTitle>⚠️ NO TEAM SELECTED</BattleTitle>
+            <BattleTitle>
+              <IconWrapper>
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+              </IconWrapper>
+              NO TEAM SELECTED
+            </BattleTitle>
             <p style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', margin: '10px 0 0 0' }}>
               Go to Team page and select 3 meme coins first!
             </p>
@@ -482,12 +503,37 @@ export default function BattleMemePage() {
     <AppLayout>
       <BattleContainer>
         <BattleHeader>
-          <BattleTitle>⚔️ MEME COIN BATTLE</BattleTitle>
+          <BattleTitle>
+            <IconWrapper>
+              <FontAwesomeIcon icon={faCrosshairs} />
+            </IconWrapper>
+            MEME COIN BATTLE
+          </BattleTitle>
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '12px', fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
-            <div>🏆 Streak: {winStreak}</div>
-            <div>📊 Battles: {totalBattles}</div>
-            <div>📈 Win Rate: {totalBattles > 0 ? ((totalWins / totalBattles) * 100).toFixed(1) : 0}%</div>
-            <div>💰 DEGEN: {degenBalance.toFixed(2)}</div>
+            <div>
+              <IconWrapper>
+                <FontAwesomeIcon icon={faTrophy} />
+              </IconWrapper>
+              Streak: {winStreak}
+            </div>
+            <div>
+              <IconWrapper>
+                <FontAwesomeIcon icon={faChartBar} />
+              </IconWrapper>
+              Battles: {totalBattles}
+            </div>
+            <div>
+              <IconWrapper>
+                <FontAwesomeIcon icon={faChartLine} />
+              </IconWrapper>
+              Win Rate: {totalBattles > 0 ? ((totalWins / totalBattles) * 100).toFixed(1) : 0}%
+            </div>
+            <div>
+              <IconWrapper>
+                <FontAwesomeIcon icon={faCoins} />
+              </IconWrapper>
+              DEGEN: {degenBalance.toFixed(2)}
+            </div>
           </div>
 
           {!battleActive && (
@@ -506,7 +552,10 @@ export default function BattleMemePage() {
                 />
               </div>
               <Button onClick={startBattle} style={{ fontSize: '18px' }}>
-                🎯 START BATTLE ({stakeAmount} DEGEN STAKE)
+                <IconWrapper>
+                  <FontAwesomeIcon icon={faCrosshairs} />
+                </IconWrapper>
+                START BATTLE ({stakeAmount} DEGEN STAKE)
               </Button>
             </div>
           )}
@@ -518,7 +567,12 @@ export default function BattleMemePage() {
 
         <TeamsContainer>
           <TeamSection>
-            <TeamTitle>👤 YOUR TEAM</TeamTitle>
+            <TeamTitle>
+              <IconWrapper>
+                <FontAwesomeIcon icon={faUser} />
+              </IconWrapper>
+              YOUR TEAM
+            </TeamTitle>
             {playerTeam.map((coin, index) => (
               <CoinItem key={index}>
                 <CoinName>{coin.name || coin.ticker}</CoinName>
@@ -538,10 +592,34 @@ export default function BattleMemePage() {
 
           <TeamSection>
             <TeamTitle>
-              🤖 OPPONENT ({opponentStrategy.toUpperCase()})
+              <IconWrapper>
+                <FontAwesomeIcon icon={faRobot} />
+              </IconWrapper>
+              OPPONENT ({opponentStrategy.toUpperCase()})
               {battleActive && (
                 <div style={{ fontSize: '12px', marginTop: '4px', color: '#888' }}>
-                  {battleIntensity === 3 ? '🔥 INTENSE' : battleIntensity === 2 ? '⚡ HEATED' : '📊 STEADY'}
+                  {battleIntensity === 3 ? (
+                    <>
+                      <IconWrapper>
+                        <FontAwesomeIcon icon={faFire} />
+                      </IconWrapper>
+                      INTENSE
+                    </>
+                  ) : battleIntensity === 2 ? (
+                    <>
+                      <IconWrapper>
+                        <FontAwesomeIcon icon={faBolt} />
+                      </IconWrapper>
+                      HEATED
+                    </>
+                  ) : (
+                    <>
+                      <IconWrapper>
+                        <FontAwesomeIcon icon={faGauge} />
+                      </IconWrapper>
+                      STEADY
+                    </>
+                  )}
                 </div>
               )}
             </TeamTitle>
@@ -567,22 +645,67 @@ export default function BattleMemePage() {
           <>
             <WinnerSection $winner={winner === 'player'}>
               <WinnerText>
-                {winner === 'player' ? '🎉 YOU WIN!' : winner === 'opponent' ? '😢 YOU LOSE!' : '🤝 TIE!'}
+                {winner === 'player' ? (
+                  <>
+                    <IconWrapper>
+                      <FontAwesomeIcon icon={faCrown} />
+                    </IconWrapper>
+                    YOU WIN!
+                  </>
+                ) : winner === 'opponent' ? (
+                  <>
+                    <IconWrapper>
+                      <FontAwesomeIcon icon={faExclamationTriangle} />
+                    </IconWrapper>
+                    YOU LOSE!
+                  </>
+                ) : (
+                  <>
+                    <IconWrapper>
+                      <FontAwesomeIcon icon={faHandshake} />
+                    </IconWrapper>
+                    TIE!
+                  </>
+                )}
               </WinnerText>
               <div style={{ marginTop: '16px', fontSize: '18px', fontFamily: 'var(--font-mono)' }}>
                 Final Score: {playerScore.toFixed(4)}% vs {opponentScore.toFixed(4)}%
               </div>
               <div style={{ marginTop: '12px', fontSize: '16px', fontFamily: 'var(--font-mono)', color: winner === 'player' ? 'var(--primary-green)' : winner === 'tie' ? 'var(--text-primary)' : 'var(--brutal-red)' }}>
-                {winner === 'player' && `💰 +${stakeAmount * 2} DEGEN (stake returned + opponent's stake)`}
-                {winner === 'tie' && `💰 +${stakeAmount} DEGEN (stake returned)`}
-                {winner === 'opponent' && `💸 -${stakeAmount} DEGEN (stake lost)`}
+                {winner === 'player' && (
+                  <>
+                    <IconWrapper>
+                      <FontAwesomeIcon icon={faCoins} />
+                    </IconWrapper>
+                    +{stakeAmount * 2} DEGEN (stake returned + opponent's stake)
+                  </>
+                )}
+                {winner === 'tie' && (
+                  <>
+                    <IconWrapper>
+                      <FontAwesomeIcon icon={faCoins} />
+                    </IconWrapper>
+                    +{stakeAmount} DEGEN (stake returned)
+                  </>
+                )}
+                {winner === 'opponent' && (
+                  <>
+                    <IconWrapper>
+                      <FontAwesomeIcon icon={faExclamationTriangle} />
+                    </IconWrapper>
+                    -{stakeAmount} DEGEN (stake lost)
+                  </>
+                )}
               </div>
             </WinnerSection>
             <Button
               onClick={() => navigator.share ? navigator.share({title: 'Meme Coin Battle Result', text: `I ${winner === 'player' ? 'won' : 'lost'} a ${stakeAmount} DEGEN stake with ${playerScore.toFixed(4)}% vs ${opponentScore.toFixed(4)}%!`}) : null}
               style={{ marginTop: '16px', fontSize: '18px' }}
             >
-              📤 SHARE RESULTS
+              <IconWrapper>
+                <FontAwesomeIcon icon={faShare} />
+              </IconWrapper>
+              SHARE RESULTS
             </Button>
           </>
         )}
@@ -615,7 +738,10 @@ export default function BattleMemePage() {
               
               {/* Strategy Display */}
               <div style={{ position: 'absolute', top: '10px', left: '10px', fontSize: '12px', color: '#888', fontFamily: 'var(--font-mono)' }}>
-                🤖 {opponentStrategy.toUpperCase()} STRATEGY
+                <IconWrapper>
+                  <FontAwesomeIcon icon={faRobot} />
+                </IconWrapper>
+                {opponentStrategy.toUpperCase()} STRATEGY
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'center', gap: '80px', marginBottom: '32px' }}>
@@ -633,7 +759,21 @@ export default function BattleMemePage() {
                   border: '2px solid #00ff41',
                   borderRadius: '12px'
                 }}>
-                  {playerScore >= opponentScore ? '🚀' : '📈'} YOU: {playerScore.toFixed(4)}%
+                  {playerScore >= opponentScore ? (
+                    <>
+                      <IconWrapper>
+                        <FontAwesomeIcon icon={faRocket} />
+                      </IconWrapper>
+                      YOU
+                    </>
+                  ) : (
+                    <>
+                      <IconWrapper>
+                        <FontAwesomeIcon icon={faChartSimple} />
+                      </IconWrapper>
+                      YOU
+                    </>
+                  )}: {playerScore.toFixed(4)}%
                 </div>
                 <div style={{ 
                   color: '#ff1493', 
@@ -649,7 +789,21 @@ export default function BattleMemePage() {
                   border: '2px solid #ff1493',
                   borderRadius: '12px'
                 }}>
-                  {opponentScore >= playerScore ? '🔥' : '🤖'} AI: {opponentScore.toFixed(4)}%
+                  {opponentScore >= playerScore ? (
+                    <>
+                      <IconWrapper>
+                        <FontAwesomeIcon icon={faFire} />
+                      </IconWrapper>
+                      AI
+                    </>
+                  ) : (
+                    <>
+                      <IconWrapper>
+                        <FontAwesomeIcon icon={faRobot} />
+                      </IconWrapper>
+                      AI
+                    </>
+                  )}: {opponentScore.toFixed(4)}%
                 </div>
               </div>
               
@@ -685,10 +839,31 @@ export default function BattleMemePage() {
                       boxShadow: '0 0 20px rgba(0, 255, 65, 0.3)'
                     }}
                     formatter={(value: any, name: string) => [
-                      `${Number(value).toFixed(4)}%`, 
-                      name === 'you' ? '🚀 YOU' : '🤖 AI'
+                      `${Number(value).toFixed(4)}%`,
+                      name === 'you' ? (
+                        <>
+                          <IconWrapper>
+                            <FontAwesomeIcon icon={faRocket} />
+                          </IconWrapper>
+                          YOU
+                        </>
+                      ) : (
+                        <>
+                          <IconWrapper>
+                            <FontAwesomeIcon icon={faRobot} />
+                          </IconWrapper>
+                          AI
+                        </>
+                      )
                     ]}
-                    labelFormatter={(label) => `⏱️ ${label}s`}
+                    labelFormatter={(label) => (
+                      <>
+                        <IconWrapper>
+                          <FontAwesomeIcon icon={faBolt} />
+                        </IconWrapper>
+                        {label}s
+                      </>
+                    )}
                     labelStyle={{ color: '#fff', fontWeight: '900' }}
                   />
                   <Line 
@@ -725,7 +900,9 @@ export default function BattleMemePage() {
               border: '4px solid var(--border-primary)',
               boxShadow: '0 0 30px rgba(0, 255, 65, 0.1)'
             }}>
-              <div style={{ fontSize: '64px', marginBottom: '24px', textShadow: '0 0 20px #00ff41' }}>⚡</div>
+              <div style={{ fontSize: '64px', marginBottom: '24px', textShadow: '0 0 20px #00ff41' }}>
+                <FontAwesomeIcon icon={faBolt} />
+              </div>
               <div style={{ fontSize: '24px', fontWeight: '900', textShadow: '0 0 10px currentColor' }}>BATTLE INITIALIZING...</div>
               <div style={{ fontSize: '16px', color: '#00ff41', marginTop: '12px', textShadow: '0 0 8px #00ff41' }}>Real-time price tracking starting</div>
             </div>
