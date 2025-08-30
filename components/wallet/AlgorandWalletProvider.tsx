@@ -7,6 +7,7 @@ interface AlgorandWalletState {
   isConnected: boolean;
   address: string | null;
   balance: number;
+  degenBalance: number;
   connecting: boolean;
   accounts: string[];
 }
@@ -37,6 +38,7 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
     isConnected: false,
     address: null,
     balance: 0,
+    degenBalance: 0,
     connecting: false,
     accounts: [],
   });
@@ -55,6 +57,7 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
             isConnected: true,
             address: savedAddress,
             balance: 0,
+            degenBalance: 0,
             connecting: false,
             accounts,
           })
@@ -69,6 +72,7 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
             isConnected: true,
             address: accounts[0] || null,
             balance: 0,
+            degenBalance: 0,
             connecting: false,
             accounts,
           });
@@ -138,6 +142,7 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
         isConnected: false,
         address: null,
         balance: 0,
+        degenBalance: 0,
         connecting: false,
         accounts: [],
       });
@@ -150,7 +155,47 @@ export function AlgorandWalletProvider({ children }: AlgorandWalletProviderProps
     try {
       const accountInfo = await algodClient.accountInformation(address).do();
       const balanceInAlgos = Number(accountInfo.amount)/1e6; // Convert microAlgos to Algos
-      setWallet(prev => ({ ...prev, balance: balanceInAlgos }));
+
+      // Find DEGEN token balance - try multiple possible asset IDs
+      const possibleDegenAssetIds = [745007115, 745007115]; // Add more asset IDs if needed
+      let degenBalance = 0;
+
+      if (accountInfo.assets && accountInfo.assets.length > 0) {
+        console.log('Available assets:', accountInfo.assets.map((asset: any) => ({
+          id: asset.assetId || asset['asset-id'],
+          amount: Number(asset.amount) / 1e6,
+          name: 'Unknown' // Asset names not available in account info
+        })));
+
+        // Try to find DEGEN by asset ID
+        let degenAsset = accountInfo.assets.find((asset: any) =>
+          possibleDegenAssetIds.includes(asset.assetId || asset['asset-id'])
+        );
+
+        if (degenAsset) {
+          degenBalance = Number(degenAsset.amount) / 1e6; // Convert microDEGEN to DEGEN
+          console.log('Found DEGEN asset:', {
+            id: degenAsset.assetId,
+            balance: degenBalance
+          });
+        } else {
+          console.log('No DEGEN asset found in wallet for asset IDs:', possibleDegenAssetIds);
+        }
+      } else {
+        console.log('No assets found in wallet');
+      }
+
+      console.log('Setting wallet balances:', {
+        balance: balanceInAlgos,
+        degenBalance: degenBalance,
+        address
+      });
+
+      setWallet(prev => ({
+        ...prev,
+        balance: balanceInAlgos,
+        degenBalance: degenBalance
+      }));
     } catch (error) {
       console.error("Failed to fetch balance:", error);
     }

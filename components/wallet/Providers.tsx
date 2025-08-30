@@ -4,6 +4,7 @@ import type React from "react"
 import { NetworkId, WalletId, WalletManager, WalletProvider } from "@txnlab/use-wallet-react"
 import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import { AlgorandWalletProvider } from "./AlgorandWalletProvider"
 
 const walletManager = new WalletManager({
   wallets: [
@@ -21,19 +22,21 @@ const walletManager = new WalletManager({
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WalletProvider manager={walletManager}>
-      {children}
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
+      <AlgorandWalletProvider>
+        {children}
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+      </AlgorandWalletProvider>
     </WalletProvider>
   )
 }
