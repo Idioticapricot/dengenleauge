@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import algosdk from 'algosdk'
+const algosdk = require('algosdk')
 import { prisma } from '@/lib/prisma'
 
 const algodClient = new algosdk.Algodv2('', 'https://testnet-api.algonode.cloud', '');

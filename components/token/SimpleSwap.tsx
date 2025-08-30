@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import styled from 'styled-components'
 import { Button } from '../styled/GlobalStyles'
@@ -78,8 +78,21 @@ const PreviewText = styled.div`
   text-align: center;
 `
 
-const InfoBox = styled.div`
+const PaymentAddress = styled.div`
   background: var(--brutal-cyan);
+  border: 3px solid var(--border-primary);
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  word-break: break-all;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+`
+
+const Instructions = styled.div`
+  background: var(--brutal-pink);
   border: 2px solid var(--border-primary);
   padding: 12px;
   margin-bottom: 16px;
@@ -88,7 +101,6 @@ const InfoBox = styled.div`
   font-weight: 700;
   color: var(--text-primary);
   font-family: var(--font-mono);
-  text-align: center;
 `
 
 const ResultBox = styled.div<{ $success?: boolean }>`
@@ -106,35 +118,43 @@ const ResultText = styled.div`
   font-family: var(--font-mono);
 `
 
-const ExplorerLink = styled.a`
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  text-decoration: underline;
-  margin-top: 8px;
-  display: block;
-  
-  &:hover {
-    color: var(--brutal-cyan);
-  }
-`
+interface SaleInfo {
+  paymentAddress: string
+  rate: number
+  availableTokens: number
+}
 
-export default function AtomicSwap() {
-  const { activeAddress, signTransactions } = useWallet()
+export default function SimpleSwap() {
+  const { activeAddress } = useWallet()
   const [algoAmount, setAlgoAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [saleInfo, setSaleInfo] = useState<SaleInfo | null>(null)
 
-  const handleAtomicSwap = async () => {
+  useEffect(() => {
+    fetchSaleInfo()
+  }, [])
+
+  const fetchSaleInfo = async () => {
+    try {
+      const response = await fetch('/api/token-sales')
+      const data = await response.json()
+      if (data.success) {
+        setSaleInfo(data.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch sale info:', error)
+    }
+  }
+
+  const handleSwap = async () => {
     if (!activeAddress || !algoAmount) return
 
     setLoading(true)
     setResult(null)
 
     try {
-      // Step 1: Create atomic transaction group
-      const response = await fetch('/api/atomic-swap', {
+      const response = await fetch('/api/token-sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -145,42 +165,16 @@ export default function AtomicSwap() {
 
       const data = await response.json()
       
-      if (!data.success) {
+      if (data.success) {
+        setResult(data.data)
+        setAlgoAmount('')
+        fetchSaleInfo()
+      } else {
         throw new Error(data.error)
       }
 
-      // Step 2: Sign transaction (wallet handles decoding)
-      const unsignedTxnArray = data.data.unsignedTransaction
-      const unsignedTxn = new Uint8Array(unsignedTxnArray)
-      
-      const signedTxns = await signTransactions([unsignedTxn])
-
-      // Step 3: Submit atomic transaction group
-      const submitResponse = await fetch('/api/atomic-swap', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signedUserTransaction: Array.from(signedTxns[0]),
-          signedCreatorTransaction: data.data.signedCreatorTransaction
-        })
-      })
-
-      const submitResult = await submitResponse.json()
-      
-      if (submitResult.success) {
-        setResult({
-          success: true,
-          txId: submitResult.data.txId,
-          explorerUrl: submitResult.data.explorerUrl,
-          degenAmount: data.data.degenAmount
-        })
-        setAlgoAmount('')
-      } else {
-        throw new Error(submitResult.error)
-      }
-
     } catch (error: any) {
-      console.error('Atomic swap failed:', error)
+      console.error('Swap failed:', error)
       setResult({ error: error.message })
     } finally {
       setLoading(false)
@@ -188,22 +182,36 @@ export default function AtomicSwap() {
   }
 
   const calculateDegenAmount = () => {
-    if (!algoAmount) return 0
-    return parseFloat(algoAmount) * 10000
+    if (!algoAmount || !saleInfo) return 0
+    return parseFloat(algoAmount) * saleInfo.rate
+  }
+
+  if (!saleInfo) {
+    return (
+      <SwapCard>
+        <CardTitle>Loading...</CardTitle>
+      </SwapCard>
+    )
   }
 
   return (
     <SwapCard>
-      <CardTitle>⚡ ATOMIC SWAP</CardTitle>
+      <CardTitle>🪙 DEGEN SWAP</CardTitle>
       
       <RateDisplay>
-        <RateText>1 ALGO = 10,000 DEGEN</RateText>
+        <RateText>1 ALGO = {saleInfo.rate.toLocaleString()} DEGEN</RateText>
       </RateDisplay>
 
-      <InfoBox>
-        🔄 Atomic Transaction - Instant & Safe!<br/>
-        Both transactions execute together or both fail
-      </InfoBox>
+      <div style={{ fontSize: '12px', marginBottom: '16px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+        Available: {saleInfo.availableTokens.toLocaleString()} DEGEN
+      </div>
+
+      <div style={{ fontSize: '12px', fontWeight: '900', marginBottom: '4px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+        💳 PAYMENT ADDRESS:
+      </div>
+      <PaymentAddress>
+        {saleInfo.paymentAddress}
+      </PaymentAddress>
 
       <InputLabel>ALGO Amount</InputLabel>
       <Input
@@ -222,12 +230,20 @@ export default function AtomicSwap() {
         </PreviewText>
       )}
 
+      <Instructions>
+        <strong>📋 INSTRUCTIONS:</strong><br/>
+        1. Send {algoAmount || 'X'} ALGO to payment address above<br/>
+        2. Click "Request DEGEN" button below<br/>
+        3. DEGEN tokens will be sent to your wallet<br/>
+        <strong>⚠️ Send ALGO first, then click button!</strong>
+      </Instructions>
+
       <Button 
-        onClick={handleAtomicSwap}
+        onClick={handleSwap}
         disabled={!activeAddress || !algoAmount || loading}
         style={{ width: '100%', fontSize: '16px' }}
       >
-        {loading ? '🔄 SWAPPING...' : '⚡ ATOMIC SWAP'}
+        {loading ? '🔄 PROCESSING...' : '🚀 REQUEST DEGEN TOKENS'}
       </Button>
 
       {!activeAddress && (
@@ -250,16 +266,25 @@ export default function AtomicSwap() {
           ) : (
             <>
               <ResultText>
-                ✅ Atomic swap successful!<br/>
+                ✅ Swap successful!<br/>
                 Received: {result.degenAmount.toLocaleString()} DEGEN
               </ResultText>
-              <ExplorerLink 
+              <a 
                 href={result.explorerUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
+                style={{ 
+                  fontSize: '12px', 
+                  fontWeight: '700', 
+                  color: 'var(--text-primary)', 
+                  fontFamily: 'var(--font-mono)', 
+                  textDecoration: 'underline',
+                  marginTop: '8px',
+                  display: 'block'
+                }}
               >
-                View transaction on explorer
-              </ExplorerLink>
+                View transaction
+              </a>
             </>
           )}
         </ResultBox>

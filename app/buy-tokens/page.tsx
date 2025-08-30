@@ -1,8 +1,14 @@
 'use client'
 
 import { AppLayout } from '../../components/layout/AppLayout'
-import AtomicSwap from '../../components/token/AtomicSwap'
+import dynamic from 'next/dynamic'
 import styled from 'styled-components'
+
+// Dynamically import AtomicSwap to prevent SSR issues
+const AtomicSwap = dynamic(() => import('../../components/token/AtomicSwap'), {
+  ssr: false,
+  loading: () => <LoadingCard>Loading swap...</LoadingCard>
+})
 
 const BuyTokensContainer = styled.div`
   display: flex;
@@ -37,6 +43,19 @@ const PageDescription = styled.p`
   color: var(--text-primary);
   margin: 0;
   font-family: var(--font-mono);
+`
+
+const LoadingCard = styled.div`
+  background: var(--brutal-yellow);
+  border: 4px solid var(--border-primary);
+  padding: 32px;
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-primary);
 `
 
 const InfoGrid = styled.div`

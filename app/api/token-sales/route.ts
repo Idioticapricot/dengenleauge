@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import algosdk from 'algosdk'
+const algosdk = require('algosdk')
 
 const algodClient = new algosdk.Algodv2('', 'https://testnet-api.algonode.cloud', '');
 
@@ -58,16 +58,13 @@ export async function POST(request: Request) {
     // Create transaction to send DEGEN tokens
     const params = await algodClient.getTransactionParams().do()
     
-    const txn = algosdk.makeAssetTransferTxnWithSuggestedParams(
-      creatorAccount.addr,
-      buyerAddress,
-      undefined,
-      undefined,
-      degenAmount,
-      undefined,
-      DEGEN_SALE_CONFIG.assetId,
-      params
-    )
+    const txn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: creatorAccount.addr,
+      to: buyerAddress,
+      amount: degenAmount,
+      assetIndex: DEGEN_SALE_CONFIG.assetId,
+      suggestedParams: params
+    })
 
     const signedTxn = txn.signTxn(creatorAccount.sk)
     const { txId } = await algodClient.sendRawTransaction(signedTxn).do()
