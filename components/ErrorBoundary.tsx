@@ -2,6 +2,8 @@
 
 import React from 'react'
 import styled from 'styled-components'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamationTriangle, faRotate } from '@fortawesome/free-solid-svg-icons'
 
 const ErrorContainer = styled.div`
   display: flex;
@@ -73,12 +75,16 @@ export class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return (
         <ErrorContainer>
-          <ErrorTitle>⚠️ Something Went Wrong</ErrorTitle>
+          <ErrorTitle>
+            <FontAwesomeIcon icon={faExclamationTriangle} style={{ marginRight: '8px' }} />
+            Something Went Wrong
+          </ErrorTitle>
           <ErrorMessage>
             The application encountered an unexpected error. Please try refreshing the page.
           </ErrorMessage>
           <RetryButton onClick={() => window.location.reload()}>
-            🔄 Reload Page
+            <FontAwesomeIcon icon={faRotate} style={{ marginRight: '8px' }} />
+            Reload Page
           </RetryButton>
         </ErrorContainer>
       )

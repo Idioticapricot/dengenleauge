@@ -2,6 +2,8 @@
 
 import styled from "styled-components"
 import { useAlgorandWallet } from "./AlgorandWalletProvider"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCoins, faRotate, faLink } from '@fortawesome/free-solid-svg-icons'
 
 const ConnectButton = styled.button<{ $variant?: "primary" | "secondary" }>`
   display: flex;
@@ -67,8 +69,14 @@ export function ConnectWalletButton({
           textAlign: 'center',
           boxShadow: '2px 2px 0px 0px var(--border-primary)'
         }}>
-          <div>💰 {wallet.balance.toFixed(2)} ALGO</div>
-          <div>🪙 {wallet.degenBalance.toFixed(2)} DEGEN</div>
+          <div>
+            <FontAwesomeIcon icon={faCoins} style={{ marginRight: '4px' }} />
+            {wallet.balance.toFixed(2)} ALGO
+          </div>
+          <div>
+            <FontAwesomeIcon icon={faCoins} style={{ marginRight: '4px' }} />
+            {wallet.degenBalance.toFixed(2)} DEGEN
+          </div>
           <button
             onClick={() => wallet.address && fetchBalance(wallet.address)}
             style={{
@@ -83,13 +91,16 @@ export function ConnectWalletButton({
               fontWeight: '700'
             }}
           >
-            🔄 Refresh
+            <FontAwesomeIcon icon={faRotate} style={{ marginRight: '4px' }} />
+            Refresh
           </button>
         </div>
 
         {/* Disconnect Button */}
         <ConnectButton $variant={variant} className={className} onClick={disconnectWallet}>
-          <WalletIcon>🔗</WalletIcon>
+          <WalletIcon>
+            <FontAwesomeIcon icon={faLink} />
+          </WalletIcon>
           Disconnect
         </ConnectButton>
       </div>
@@ -103,7 +114,9 @@ export function ConnectWalletButton({
       disabled={wallet.connecting}
       className={className}
     >
-      <WalletIcon>🔗</WalletIcon>
+      <WalletIcon>
+        <FontAwesomeIcon icon={faLink} />
+      </WalletIcon>
       {wallet.connecting ? "Connecting..." : children}
     </ConnectButton>
   )

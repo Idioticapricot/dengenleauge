@@ -3,6 +3,8 @@
 import { type Wallet, useWallet } from "@txnlab/use-wallet-react"
 import styled from "styled-components"
 import { brutalToast } from "../ui/BrutalToast"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faLink } from '@fortawesome/free-solid-svg-icons'
 
 interface ConnectWalletModalProps {
   wallets: Wallet[]
@@ -164,7 +166,10 @@ const ConnectWalletModal = ({
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
         <CloseButton onClick={onClose}>×</CloseButton>
-        <ModalTitle>🔗 Connect Wallet</ModalTitle>
+        <ModalTitle>
+          <FontAwesomeIcon icon={faLink} style={{ marginRight: '8px' }} />
+          Connect Wallet
+        </ModalTitle>
         
         <WalletList>
           {wallets.map((wallet) => (

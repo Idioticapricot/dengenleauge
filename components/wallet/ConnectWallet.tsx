@@ -6,6 +6,8 @@ import { algodClient } from "../../lib/algorand-config"
 import ConnectWalletModal from "./ConnectWalletModal"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faLink } from '@fortawesome/free-solid-svg-icons'
 
 const ConnectButton = styled(Button)`
   background: var(--brutal-cyan);
@@ -70,7 +72,8 @@ export function ConnectWallet() {
     return (
       <>
         <ConnectButton onClick={handleConnectClick}>
-          🔗 Connect Wallet ({wallets?.length || 0})
+          <FontAwesomeIcon icon={faLink} style={{ marginRight: '8px' }} />
+          Connect Wallet ({wallets?.length || 0})
         </ConnectButton>
         <ConnectWalletModal
           wallets={wallets || []}

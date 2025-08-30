@@ -2,6 +2,8 @@
 
 import styled from "styled-components"
 import { useWallet } from "@txnlab/use-wallet-react"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faLink } from '@fortawesome/free-solid-svg-icons'
 
 const ConnectButton = styled.button<{ $variant?: "primary" | "secondary" }>`
   display: flex;
@@ -69,7 +71,9 @@ export function AlgorandConnectButton({
   if (activeAccount?.address) {
     return (
       <ConnectButton $variant={variant} className={className} onClick={handleDisconnect}>
-        <WalletIcon>🔗</WalletIcon>
+        <WalletIcon>
+          <FontAwesomeIcon icon={faLink} />
+        </WalletIcon>
         Disconnect
       </ConnectButton>
     )
@@ -81,7 +85,9 @@ export function AlgorandConnectButton({
       onClick={handleConnect}
       className={className}
     >
-      <WalletIcon>🔗</WalletIcon>
+      <WalletIcon>
+        <FontAwesomeIcon icon={faLink} />
+      </WalletIcon>
       {children}
     </ConnectButton>
   )

@@ -1,61 +1,208 @@
 "use client"
 
-import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+import { useState, useRef, useEffect } from "react"
+import styled from "styled-components"
 
-import { cn } from "@/lib/utils"
+const TooltipContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`
 
-function TooltipProvider({
-  delayDuration = 0,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-  return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delayDuration={delayDuration}
-      {...props}
-    />
-  )
+const TooltipTrigger = styled.div`
+  cursor: pointer;
+  display: inline-block;
+`
+
+const TooltipContent = styled.div<{ $position: 'top' | 'bottom' | 'left' | 'right' }>`
+  position: absolute;
+  background: var(--light-bg);
+  border: 3px solid var(--border-primary);
+  border-radius: 0;
+  padding: 12px;
+  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  max-width: 200px;
+  word-wrap: break-word;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+
+  ${(props) => {
+    switch (props.$position) {
+      case 'top':
+        return `
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%) translateY(10px);
+          margin-bottom: 8px;
+        `
+      case 'bottom':
+        return `
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%) translateY(-10px);
+          margin-top: 8px;
+        `
+      case 'left':
+        return `
+          right: 100%;
+          top: 50%;
+          transform: translateY(-50%) translateX(10px);
+          margin-right: 8px;
+        `
+      case 'right':
+        return `
+          left: 100%;
+          top: 50%;
+          transform: translateY(-50%) translateX(-10px);
+          margin-left: 8px;
+        `
+    }
+  }}
+
+  &::after {
+    content: '';
+    position: absolute;
+    border: 6px solid transparent;
+
+    ${(props) => {
+      switch (props.$position) {
+        case 'top':
+          return `
+            border-top-color: var(--border-primary);
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+          `
+        case 'bottom':
+          return `
+            border-bottom-color: var(--border-primary);
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+          `
+        case 'left':
+          return `
+            border-left-color: var(--border-primary);
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+          `
+        case 'right':
+          return `
+            border-right-color: var(--border-primary);
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+          `
+      }
+    }}
+  }
+
+  ${TooltipContainer}:hover & {
+    opacity: 1;
+    visibility: visible;
+
+    ${(props) => {
+      switch (props.$position) {
+        case 'top':
+          return 'transform: translateX(-50%) translateY(0);'
+        case 'bottom':
+          return 'transform: translateX(-50%) translateY(0);'
+        case 'left':
+          return 'transform: translateY(-50%) translateX(0);'
+        case 'right':
+          return 'transform: translateY(-50%) translateX(0);'
+      }
+    }}
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px;
+    font-size: 11px;
+    max-width: 150px;
+    border-width: 2px;
+    box-shadow: 3px 3px 0px 0px var(--border-primary);
+
+    &::after {
+      border-width: 4px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+    font-size: 10px;
+    max-width: 120px;
+    border-width: 1px;
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+
+    &::after {
+      border-width: 3px;
+    }
+  }
+`
+
+interface TooltipProps {
+  content: string
+  position?: 'top' | 'bottom' | 'left' | 'right'
+  children: React.ReactNode
 }
 
-function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TooltipProvider>
-  )
-}
+export function Tooltip({
+  content,
+  position = 'top',
+  children
+}: TooltipProps) {
+  const [isVisible, setIsVisible] = useState(false)
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
 
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node) &&
+        tooltipRef.current &&
+        !tooltipRef.current.contains(event.target as Node)
+      ) {
+        setIsVisible(false)
+      }
+    }
 
-function TooltipContent({
-  className,
-  sideOffset = 0,
-  children,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+    if (isVisible) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isVisible])
+
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
-        className={cn(
-          "bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
-          className
-        )}
-        {...props}
+    <TooltipContainer>
+      <TooltipTrigger
+        ref={triggerRef}
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
       >
         {children}
-        <TooltipPrimitive.Arrow className="bg-primary fill-primary z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
+      </TooltipTrigger>
+      <TooltipContent
+        ref={tooltipRef}
+        $position={position}
+        style={{
+          opacity: isVisible ? 1 : 0,
+          visibility: isVisible ? 'visible' : 'hidden'
+        }}
+      >
+        {content}
+      </TooltipContent>
+    </TooltipContainer>
   )
 }
-
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

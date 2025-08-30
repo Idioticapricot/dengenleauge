@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faRotate, faSeedling, faShield } from '@fortawesome/free-solid-svg-icons'
 
 const DashboardContainer = styled.div`
   display: grid;
@@ -85,7 +87,10 @@ export function DeFiDashboard({ userAddress }: DeFiDashboardProps) {
   return (
     <DashboardContainer>
       <DeFiCard>
-        <CardTitle>🔄 ALGO/DEGEN Pool</CardTitle>
+        <CardTitle>
+          <FontAwesomeIcon icon={faRotate} style={{ marginRight: '8px' }} />
+          ALGO/DEGEN Pool
+        </CardTitle>
         <StatRow>
           <span>TVL:</span>
           <span>${poolData?.pool?.tvl?.toLocaleString()}</span>
@@ -102,7 +107,10 @@ export function DeFiDashboard({ userAddress }: DeFiDashboardProps) {
       </DeFiCard>
 
       <DeFiCard>
-        <CardTitle>🌾 Yield Farming</CardTitle>
+        <CardTitle>
+          <FontAwesomeIcon icon={faSeedling} style={{ marginRight: '8px' }} />
+          Yield Farming
+        </CardTitle>
         {farmData?.farms?.map((farm: any) => (
           <div key={farm.id}>
             <StatRow>
@@ -119,7 +127,10 @@ export function DeFiDashboard({ userAddress }: DeFiDashboardProps) {
       </DeFiCard>
 
       <DeFiCard>
-        <CardTitle>⚔️ Battle Rewards</CardTitle>
+        <CardTitle>
+          <FontAwesomeIcon icon={faShield} style={{ marginRight: '8px' }} />
+          Battle Rewards
+        </CardTitle>
         <StatRow>
           <span>Base Reward:</span>
           <span>50 DEGEN</span>

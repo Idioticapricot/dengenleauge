@@ -1,494 +1,574 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atomic Swap Component</title>
-    <!-- React Libraries -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel for JSX transpilation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Algorand SDK -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/algosdk/2.7.0/algosdk.min.js"></script>
+'use client'
 
-    <style>
-        :root {
-            --brutal-yellow: #ffc700;
-            --border-primary: #000000;
-            --text-primary: #000000;
-            --brutal-cyan: #00c7ff;
-            --light-bg: #ffffff;
-            --primary-green: #00ff87;
-            --brutal-red: #ff5470;
-            --font-mono: 'Courier New', Courier, monospace;
-        }
+import { useState } from 'react'
+import { useWallet } from '@txnlab/use-wallet-react'
+import algosdk from 'algosdk'
+import styled from 'styled-components'
+import { Button } from '../styled/GlobalStyles'
+import { useAlgorandWallet } from '../wallet/AlgorandWalletProvider'
 
-        body {
-            font-family: sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f0f0;
-            margin: 0;
-        }
+const SwapCard = styled.div`
+  background: var(--brutal-yellow);
+  border: 4px solid var(--border-primary);
+  padding: 32px;
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
+  max-width: 400px;
+  width: 100%;
+`
 
-        #root {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+const CardTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+`
 
-        .swap-card {
-            background: var(--brutal-yellow);
-            border: 4px solid var(--border-primary);
-            padding: 32px;
-            box-shadow: 8px 8px 0px 0px var(--border-primary);
-            max-width: 400px;
-            width: 100%;
-        }
+const RateDisplay = styled.div`
+  background: var(--light-bg);
+  border: 3px solid var(--border-primary);
+  padding: 12px;
+  text-align: center;
+  margin-bottom: 20px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+`
 
-        .card-title {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--text-primary);
-            margin: 0 0 20px 0;
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-        }
+const RateText = styled.div`
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+`
 
-        .rate-display {
-            background: var(--light-bg);
-            border: 3px solid var(--border-primary);
-            padding: 12px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 3px 3px 0px 0px var(--border-primary);
-        }
+const InputLabel = styled.label`
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+`
 
-        .rate-text {
-            font-size: 16px;
-            font-weight: 900;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-        }
+const PresetButtons = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+`
 
-        .input-label {
-            font-size: 14px;
-            font-weight: 900;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 8px;
-        }
+const PresetButton = styled.button<{ $active?: boolean }>`
+  padding: 8px 12px;
+  border: 2px solid var(--border-primary);
+  background: ${props => props.$active ? 'var(--brutal-cyan)' : 'var(--light-bg)'};
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
 
-        .preset-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 16px;
-        }
+  &:hover {
+    background: var(--brutal-cyan);
+    transform: translate(-1px, -1px);
+  }
 
-        .preset-button {
-            padding: 8px 12px;
-            border: 2px solid var(--border-primary);
-            background: var(--light-bg);
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+  &:active {
+    transform: translate(0px, 0px);
+  }
+`
 
-        .preset-button:hover {
-            background: var(--brutal-cyan);
-            transform: translate(-1px, -1px);
-        }
+const Input = styled.input`
+  width: 100%;
+  padding: 12px;
+  border: 3px solid var(--border-primary);
+  background: var(--light-bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 12px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  
+  &:focus {
+    outline: none;
+    background: var(--brutal-cyan);
+  }
+`
 
-        .preset-button:active {
-            transform: translate(0px, 0px);
+const PreviewText = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-green);
+  font-family: var(--font-mono);
+  margin-bottom: 20px;
+  text-align: center;
+`
+
+const InfoBox = styled.div`
+  background: var(--brutal-cyan);
+  border: 2px solid var(--border-primary);
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-align: center;
+`
+
+const ResultBox = styled.div<{ $success?: boolean }>`
+  background: ${props => props.$success ? 'var(--primary-green)' : 'var(--brutal-red)'};
+  border: 3px solid var(--border-primary);
+  padding: 16px;
+  margin-top: 16px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+`
+
+const ResultText = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+`
+
+const ExplorerLink = styled.a`
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-decoration: underline;
+  margin-top: 8px;
+  display: block;
+  
+  &:hover {
+    color: var(--brutal-cyan);
+  }
+`
+
+export default function AtomicSwap() {
+  const { activeAddress, signTransactions } = useWallet()
+  const { fetchBalance } = useAlgorandWallet()
+  const [algoAmount, setAlgoAmount] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<any>(null)
+
+  const handleAtomicSwap = async () => {
+    if (!activeAddress || !algoAmount) return
+
+    // Debug: Check wallet state
+    console.log('=== WALLET DEBUG INFO ===')
+    console.log('Wallet state:', {
+      activeAddress,
+      signTransactions: typeof signTransactions,
+      algoAmount,
+      walletConnected: !!activeAddress
+    })
+
+    // Validation: Check wallet connection
+    if (!activeAddress) {
+      throw new Error('Wallet not connected - please connect your wallet first')
+    }
+    if (!signTransactions) {
+      throw new Error('Wallet signTransactions function not available')
+    }
+
+    setLoading(true)
+    setResult(null)
+
+    try {
+      // Step 1: Call POST endpoint to create atomic swap
+      const response = await fetch('/api/atomic-swap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          buyerAddress: activeAddress,
+          algoAmount: parseFloat(algoAmount)
+        })
+      })
+
+      const data = await response.json()
+
+      console.log('API Response:', data)
+      console.log('API Response data structure:', {
+        hasData: !!data.data,
+        hasTransactions: !!(data.data && data.data.transactions),
+        hasSignedCreator: !!(data.data && data.data.signedCreatorTransaction),
+        signedCreatorLength: data.data && data.data.signedCreatorTransaction ? data.data.signedCreatorTransaction.length : 0
+      })
+
+      if (!data.success) {
+        throw new Error(data.error)
+      }
+
+      // Step 2: Handle transaction signing and submission
+      let submitResponse: Response
+
+      if (data.data.transactions) {
+        // New format: Complete transaction group (3 transactions: opt-in, payment, transfer)
+        const txnGroup = data.data.transactions.map((txnData: any) => {
+          // Validate transaction data before creating Uint8Array
+          if (!txnData.txn || !Array.isArray(txnData.txn) || txnData.txn.length === 0) {
+            throw new Error('Invalid transaction data received from server')
+          }
+          return new Uint8Array(txnData.txn)
+        })
+
+        console.log('Transaction group to sign:', txnGroup.length, 'transactions')
+        console.log('Transaction details:', txnGroup.map((txn: Uint8Array, i: number) => ({
+          index: i,
+          length: txn.length,
+          type: 'Uint8Array'
+        })))
+
+        // Step 3: Pass complete transaction group to wallet
+        console.log('=== SIGNING DEBUG ===')
+        console.log('Calling signTransactions with:', txnGroup)
+        console.log('Wallet activeAddress:', activeAddress)
+        console.log('Wallet signTransactions function:', typeof signTransactions)
+        console.log('Transaction group valid:', txnGroup.every((txn: Uint8Array) => txn instanceof Uint8Array && txn.length > 0))
+
+        // Handle the case where wallet might return different number of transactions
+        let signedUserTransactions: number[][] = []
+        let signedCreatorTransaction: number[] = []
+        let signedTxns: any = null
+
+        // Pera wallet compatibility: Use only payment transaction
+        console.log('=== USING PERA WALLET COMPATIBLE METHOD ===')
+        const paymentTxn = txnGroup[1] // Payment transaction only
+        console.log('Payment transaction to sign:', paymentTxn)
+        console.log('About to call signTransactions...')
+        
+        try {
+          console.log('Calling signTransactions with payment txn...')
+          signedTxns = await signTransactions([paymentTxn])
+          console.log('signTransactions completed successfully')
+          console.log('=== DETAILED SIGNING RESPONSE ===')
+          console.log('signTransactions returned:', signedTxns)
+          console.log('Signed transactions type:', typeof signedTxns)
+          console.log('Is array:', Array.isArray(signedTxns))
+          console.log('Number of signed transactions:', signedTxns ? signedTxns.length : 0)
+
+          if (signedTxns) {
+            signedTxns.forEach((txn: any, i: number) => {
+              console.log(`=== SIGNED TRANSACTION ${i} DETAILS ===`)
+              console.log('Type:', typeof txn)
+              console.log('Is Uint8Array:', txn instanceof Uint8Array)
+              console.log('Is Array:', Array.isArray(txn))
+              console.log('Length:', txn ? txn.length : 'null/undefined')
+              console.log('Constructor:', txn ? txn.constructor.name : 'null')
+              if (txn && txn.length > 0) {
+                console.log('First 10 bytes:', Array.from(txn).slice(0, 10))
+              }
+            })
+          } else {
+            console.log('signTransactions returned null/undefined')
+          }
+        } catch (signError: any) {
+          console.error('=== SIGNING ERROR CAUGHT ===')
+          console.error('Error during signTransactions:', signError)
+          console.error('Error details:', {
+            message: signError.message,
+            stack: signError.stack,
+            name: signError.name
+          })
+          console.error('This error prevented any further processing')
+          throw new Error(`Wallet signing failed: ${signError.message}`)
         }
         
-        .preset-button.active {
-            background: var(--brutal-cyan);
-        }
+        console.log('=== POST SIGNING ANALYSIS ===')
+        console.log('signedTxns after signing:', signedTxns)
+        console.log('signedTxns is array:', Array.isArray(signedTxns))
+        console.log('signedTxns length:', signedTxns ? signedTxns.length : 'null/undefined')
 
-        .input {
-            width: 100%;
-            padding: 12px;
-            border: 3px solid var(--border-primary);
-            background: var(--light-bg);
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 12px;
-            box-shadow: 3px 3px 0px 0px var(--border-primary);
-            box-sizing: border-box;
-        }
-
-        .input:focus {
-            outline: none;
-            background: var(--brutal-cyan);
-        }
-
-        .preview-text {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--primary-green);
-            font-family: var(--font-mono);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .info-box {
-            background: var(--brutal-cyan);
-            border: 2px solid var(--border-primary);
-            padding: 12px;
-            margin-bottom: 16px;
-            box-shadow: 2px 2px 0px 0px var(--border-primary);
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            text-align: center;
+        // Process single payment transaction result
+        if (!signedTxns || !Array.isArray(signedTxns) || signedTxns.length === 0) {
+          console.log('Payment transaction signing failed')
+          throw new Error('Wallet failed to sign payment transaction')
+        } else {
+          console.log('=== PROCESSING PAYMENT TRANSACTION ===')
+          signedUserTransactions = [Array.from(signedTxns[0])]
+          signedCreatorTransaction = data.data.signedCreatorTransaction
+          
+          console.log('Payment signed successfully')
+          console.log('User transaction length:', signedUserTransactions[0].length)
+          console.log('Creator transaction length:', signedCreatorTransaction.length)
         }
         
-        .result-box {
-            border: 3px solid var(--border-primary);
-            padding: 16px;
-            margin-top: 16px;
-            box-shadow: 3px 3px 0px 0px var(--border-primary);
-        }
-        
-        .result-box.success {
-            background: var(--primary-green);
-        }
+        // Old fallback code (now unused)
+        if (false) {
+          console.log('Wallet signing failed or returned empty results, using fallback method')
 
-        .result-box.error {
-            background: var(--brutal-red);
-        }
+          // Fallback: Use single transaction method (just payment, creator handles the rest)
+          console.log('Using fallback: single transaction method')
+          const unsignedTxn = txnGroup[1] // Use the payment transaction (index 1)
+          console.log('Fallback transaction to sign:', unsignedTxn)
 
-        .result-text {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            word-wrap: break-word;
-        }
-        
-        .explorer-link {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            text-decoration: underline;
-            margin-top: 8px;
-            display: block;
-        }
+          try {
+            const fallbackSignedTxns = await signTransactions([unsignedTxn])
+            console.log('Fallback signing result:', fallbackSignedTxns)
 
-        .explorer-link:hover {
-            color: var(--brutal-cyan);
-        }
+            if (fallbackSignedTxns && fallbackSignedTxns[0]) {
+              console.log('=== FALLBACK TRANSACTION DETAILS ===')
+              console.log('Fallback txn type:', typeof fallbackSignedTxns[0])
+              console.log('Fallback txn constructor:', fallbackSignedTxns[0].constructor.name)
+              console.log('Fallback txn length:', fallbackSignedTxns[0].length)
+              console.log('Fallback txn first 10 bytes:', Array.from(fallbackSignedTxns[0]).slice(0, 10))
+              
+              signedUserTransactions = [Array.from(fallbackSignedTxns[0])]
 
-        .button {
-            background: var(--brutal-yellow);
-            border: 3px solid var(--border-primary);
-            box-shadow: 4px 4px 0px 0px var(--border-primary);
-            padding: 12px 24px;
-            font-family: var(--font-mono);
-            font-weight: 900;
-            font-size: 16px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
-        }
-
-        .button:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0px 0px var(--border-primary);
-        }
-
-        .button:active {
-            transform: translate(0, 0);
-            box-shadow: 4px 4px 0px 0px var(--border-primary);
-        }
-
-        .button:disabled {
-            background-color: #ccc;
-            color: #888;
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
-        }
-
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        // --- Mock Functions for Environment Simulation ---
-        // In a real application, these would be provided by wallet libraries.
-        // We mock them here to make the component runnable.
-        
-        const useWallet = () => {
-            const [activeAddress, setActiveAddress] = useState('5AF5PA2L7M2Y4A5Y5J3J5Q5Z5B5V5X5W5H5U5P5I5V5R5U5N5Z5K5M');
-
-            const signTransactions = async (txns) => {
-                console.log("MOCK: Signing transactions:", txns);
-                // In a real app, this prompts the user. Here, we just log and return.
-                // We must return a Uint8Array, so we'll just return the input.
-                window.alert('This is a simulated wallet signature. Check the developer console for details.');
-                return txns;
-            };
-
-            return { activeAddress, signTransactions };
-        };
-
-        const useAlgorandWallet = () => {
-            const fetchBalance = (address) => {
-                console.log(`MOCK: Fetching balance for ${address}`);
-            };
-            return { fetchBalance };
-        };
-
-        // Mock the fetch API to simulate backend responses
-        const originalFetch = window.fetch;
-        window.fetch = async (url, options) => {
-            if (url === '/api/atomic-swap') {
-                console.log(`MOCK: Intercepted fetch for ${url} with method ${options.method}`);
-
-                if (options.method === 'POST') {
-                    await new Promise(res => setTimeout(res, 500)); // Simulate network delay
-                    const body = JSON.parse(options.body);
-                    const algoAmount = body.algoAmount;
-                    
-                    // Simulate creating transaction data
-                    const encoder = new TextEncoder();
-                    const fakeOptInTxn = { txn: Array.from(encoder.encode(`opt-in-txn-for-${algoAmount}`)) };
-                    const fakePaymentTxn = { txn: Array.from(encoder.encode(`payment-txn-for-${algoAmount}`)) };
-                    const fakeCreatorTxn = { txn: Array.from(encoder.encode(`creator-txn-for-${algoAmount}`)) };
-                    
-                    return new Response(JSON.stringify({
-                        success: true,
-                        data: {
-                            transactions: [fakeOptInTxn, fakePaymentTxn, fakeCreatorTxn],
-                            signedCreatorTransaction: Array.from(encoder.encode(`signed-creator-txn-for-${algoAmount}`))
-                        }
-                    }), { headers: { 'Content-Type': 'application/json' } });
+              // Extract signed creator transaction from API response
+              if (data.data && data.data.signedCreatorTransaction) {
+                // Validate creator transaction data
+                if (!Array.isArray(data.data.signedCreatorTransaction) || data.data.signedCreatorTransaction.length === 0) {
+                  throw new Error('Invalid creator transaction format from server')
                 }
-
-                if (options.method === 'PUT') {
-                    await new Promise(res => setTimeout(res, 1000)); // Simulate network delay
-                    const txId = `MOCK_TX_ID_${Math.random().toString(36).substring(2, 12).toUpperCase()}`;
-                    return new Response(JSON.stringify({
-                        success: true,
-                        data: {
-                            txId: txId,
-                            explorerUrl: `https://testnet.algoexplorer.io/tx/${txId}`
-                        }
-                    }), { headers: { 'Content-Type': 'application/json' } });
+                signedCreatorTransaction = data.data.signedCreatorTransaction
+                console.log('Fallback successful: single transaction signed')
+                console.log('Creator transaction from API:', signedCreatorTransaction)
+                console.log('Creator transaction type:', typeof signedCreatorTransaction)
+                console.log('Creator transaction length:', signedCreatorTransaction.length)
+              } else if (data.data && data.data.transactions && data.data.transactions[2]) {
+                // Fallback: extract from transactions array (index 2 is creator transaction)
+                const creatorTxnData = data.data.transactions[2].txn
+                if (!Array.isArray(creatorTxnData) || creatorTxnData.length === 0) {
+                  throw new Error('Invalid creator transaction in transactions array')
                 }
+                signedCreatorTransaction = creatorTxnData
+                console.log('Fallback: extracted creator transaction from transactions array')
+                console.log('Creator transaction from transactions:', signedCreatorTransaction)
+              } else {
+                console.error('No creator transaction found in API response')
+                console.error('API response structure:', Object.keys(data.data || {}))
+                throw new Error('Creator transaction not available in API response.')
+              }
+
+              console.log('Sending to backend:', {
+                signedUserTransactions: signedUserTransactions.length,
+                signedCreatorTransaction: signedCreatorTransaction ? signedCreatorTransaction.length : 0
+              })
+
+              if (!signedCreatorTransaction || signedCreatorTransaction.length === 0) {
+                console.error('Creator transaction is empty!')
+                throw new Error('Creator transaction not available. Please try again.')
+              }
+            } else {
+              console.error('Fallback signing returned empty result')
+              throw new Error('Wallet signing failed. Please try refreshing the page or using a different wallet.')
             }
-            return originalFetch(url, options);
-        };
-        
-        // --- React Component ---
-
-        function AtomicSwap() {
-            const { activeAddress, signTransactions } = useWallet();
-            const { fetchBalance } = useAlgorandWallet();
-            const [algoAmount, setAlgoAmount] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [result, setResult] = useState(null);
-
-            const handleAtomicSwap = async () => {
-                if (!activeAddress || !algoAmount) return;
-
-                if (!signTransactions) {
-                    setResult({ error: 'Wallet signTransactions function not available.' });
-                    return;
-                }
-
-                setLoading(true);
-                setResult(null);
-
-                try {
-                    // Step 1: Call POST endpoint to create atomic swap
-                    const response = await fetch('/api/atomic-swap', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            buyerAddress: activeAddress,
-                            algoAmount: parseFloat(algoAmount)
-                        })
-                    });
-                    const data = await response.json();
-                    if (!data.success || !data.data || !data.data.transactions) {
-                        throw new Error(data.error || 'Failed to get transactions from server.');
-                    }
-                    
-                    const txnGroup = data.data.transactions.map(txnData => new Uint8Array(txnData.txn));
-                    const paymentTxn = txnGroup[1]; // Payment transaction only for Pera compatibility
-                    
-                    // Step 2: Sign the transaction
-                    const signedTxns = await signTransactions([paymentTxn]);
-
-                    if (!signedTxns || !Array.isArray(signedTxns) || signedTxns.length === 0) {
-                        throw new Error('Wallet failed to sign payment transaction.');
-                    }
-                    
-                    const signedUserTransaction = [Array.from(signedTxns[0])];
-                    const signedCreatorTransaction = data.data.signedCreatorTransaction;
-
-                    // Step 3: Send signed transactions to PUT endpoint
-                    const submitResponse = await fetch('/api/atomic-swap', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            signedUserTransaction,
-                            signedCreatorTransaction
-                        })
-                    });
-                    
-                    const submitResult = await submitResponse.json();
-                    if (submitResult.success && submitResult.data) {
-                        setResult({
-                            success: true,
-                            txId: submitResult.data.txId,
-                            explorerUrl: submitResult.data.explorerUrl,
-                            degenAmount: parseFloat(algoAmount) * 100
-                        });
-                        setAlgoAmount('');
-                        if (activeAddress) {
-                            setTimeout(() => fetchBalance(activeAddress), 2000);
-                        }
-                    } else {
-                        throw new Error(submitResult.error || 'Transaction failed or server returned an invalid response.');
-                    }
-
-                } catch (error) {
-                    console.error('Atomic swap failed:', error);
-                    setResult({ error: error.message });
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const calculateDegenAmount = () => {
-                if (!algoAmount) return 0;
-                return parseFloat(algoAmount) * 100;
-            };
-
-            const handlePresetClick = (degenAmount) => {
-                const requiredAlgo = degenAmount / 100;
-                setAlgoAmount(requiredAlgo.toString());
-            };
-
-            const presetOptions = [
-                { degen: 10, algo: 0.1 },
-                { degen: 25, algo: 0.25 },
-                { degen: 50, algo: 0.5 }
-            ];
-
-            return (
-                <div className="swap-card">
-                    <h2 className="card-title">⚡ ATOMIC SWAP</h2>
-                    
-                    <div className="rate-display">
-                        <div className="rate-text">1 ALGO = 100 DEGEN</div>
-                    </div>
-
-                    <div className="info-box">
-                        🔄 Atomic Transaction - Instant & Safe!<br/>
-                        Both transactions execute together or both fail
-                    </div>
-
-                    <label className="input-label">Quick Buy Options</label>
-                    <div className="preset-buttons">
-                        {presetOptions.map((option) => (
-                            <button
-                                key={option.degen}
-                                className={`preset-button ${parseFloat(algoAmount) === option.algo ? 'active' : ''}`}
-                                onClick={() => handlePresetClick(option.degen)}
-                            >
-                                {option.degen} DEGEN<br/>
-                                <small>{option.algo} ALGO</small>
-                            </button>
-                        ))}
-                    </div>
-
-                    <label className="input-label">Or Enter ALGO Amount</label>
-                    <input
-                        type="number"
-                        className="input"
-                        placeholder="Enter ALGO amount"
-                        value={algoAmount}
-                        onChange={(e) => setAlgoAmount(e.target.value)}
-                        min="0.01"
-                        max="1"
-                        step="0.01"
-                    />
-
-                    {algoAmount && (
-                        <div className="preview-text">
-                            You will receive: {calculateDegenAmount().toLocaleString()} DEGEN
-                        </div>
-                    )}
-
-                    <button 
-                        className="button"
-                        onClick={handleAtomicSwap}
-                        disabled={!activeAddress || !algoAmount || loading}
-                    >
-                        {loading ? '🔄 SWAPPING...' : '⚡ ATOMIC SWAP'}
-                    </button>
-
-                    {!activeAddress && (
-                        <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--brutal-red)', fontFamily: 'var(--font-mono)', textAlign: 'center', marginTop: '16px' }}>
-                            Connect your wallet to swap
-                        </div>
-                    )}
-
-                    {result && (
-                        <div className={`result-box ${result.error ? 'error' : 'success'}`}>
-                            {result.error ? (
-                                <p className="result-text">❌ Error: {result.error}</p>
-                            ) : (
-                                <>
-                                    <p className="result-text">
-                                        ✅ Atomic swap successful!<br/>
-                                        Received: {result.degenAmount.toLocaleString()} DEGEN
-                                    </p>
-                                    <a 
-                                        href={result.explorerUrl} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="explorer-link"
-                                    >
-                                        View transaction on explorer
-                                    </a>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
-            );
+          } catch (fallbackError: any) {
+            console.error('Fallback signing failed:', fallbackError)
+            throw new Error(`Wallet signing failed: ${fallbackError.message}`)
+          }
+        } else {
+          // Normal processing for successful group signing
+          if (signedTxns.length === 3 && signedTxns[0] && signedTxns[1] && signedTxns[2]) {
+            // Full atomic group: opt-in, payment, creator
+            signedUserTransactions = [
+              Array.from(signedTxns[0]), // Opt-in
+              Array.from(signedTxns[1])  // Payment
+            ]
+            signedCreatorTransaction = Array.from(signedTxns[2])
+          } else if (signedTxns.length === 2 && signedTxns[0] && signedTxns[1]) {
+            // Partial group: payment, creator (no opt-in needed)
+            signedUserTransactions = [Array.from(signedTxns[0])] // Payment only
+            signedCreatorTransaction = Array.from(signedTxns[1])
+          } else if (signedTxns.length === 1 && signedTxns[0]) {
+            // Only creator transaction (user didn't sign anything)
+            signedUserTransactions = []
+            signedCreatorTransaction = Array.from(signedTxns[0])
+          }
         }
 
-        const container = document.getElementById('root');
-        const root = ReactDOM.createRoot(container);
-        root.render(<AtomicSwap />);
-    </script>
-</body>
-</html>
+        console.log('=== FINAL TRANSACTION DATA TO SEND ===')
+        console.log('signedUserTransactions length:', signedUserTransactions.length)
+        signedUserTransactions.forEach((txn, i) => {
+          console.log(`User txn ${i} - type:`, typeof txn, 'length:', txn.length, 'first 10:', txn.slice(0, 10))
+        })
+        console.log('signedCreatorTransaction type:', typeof signedCreatorTransaction)
+        console.log('signedCreatorTransaction length:', signedCreatorTransaction.length)
+        console.log('signedCreatorTransaction first 10:', signedCreatorTransaction.slice(0, 10))
+        
+        console.log('=== SENDING TO BACKEND ===')
+        console.log('Payload signedUserTransaction:', signedUserTransactions)
+        console.log('Payload signedCreatorTransaction:', signedCreatorTransaction)
+
+        // Step 4: Send signed transactions to PUT endpoint
+        submitResponse = await fetch('/api/atomic-swap', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            signedUserTransaction: signedUserTransactions,
+            signedCreatorTransaction
+          })
+        })
+      } else {
+        // Fallback to old format for backward compatibility
+        console.log('Using fallback transaction format')
+        const unsignedTransactionBytes = new Uint8Array(data.data.unsignedTransaction)
+        const unsignedTxn = algosdk.decodeUnsignedTransaction(unsignedTransactionBytes)
+        console.log('Decoded unsigned transaction:', unsignedTxn)
+
+        const signedTxns = await signTransactions([unsignedTxn])
+        console.log('Signed transactions result:', signedTxns)
+
+        const signedUserTransactions = signedTxns && signedTxns[0] ? [Array.from(signedTxns[0])] : []
+        const signedCreatorTransaction = data.data.signedCreatorTransaction
+
+        console.log('Fallback transaction data:', {
+          signedUserTransactions,
+          signedCreatorTransaction
+        })
+
+        // Step 4: Send signed transactions to PUT endpoint
+        submitResponse = await fetch('/api/atomic-swap', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            signedUserTransaction: signedUserTransactions,
+            signedCreatorTransaction
+          })
+        })
+      }
+
+      console.log('=== BACKEND RESPONSE ===')
+      const submitResult = await submitResponse.json()
+      console.log('Submit result:', submitResult)
+      console.log('Submit response status:', submitResponse.status)
+      
+      if (submitResult.success) {
+        setResult({
+          success: true,
+          txId: submitResult.data.txId,
+          explorerUrl: submitResult.data.explorerUrl,
+          degenAmount: parseFloat(algoAmount) * 100
+        })
+        setAlgoAmount('')
+
+        // Refresh wallet balance after successful transaction
+        if (activeAddress) {
+          setTimeout(() => {
+            fetchBalance(activeAddress)
+          }, 2000) // Wait 2 seconds for transaction to be confirmed
+        }
+      } else {
+        throw new Error(submitResult.error)
+      }
+
+    } catch (error: any) {
+      console.error('Atomic swap failed:', error)
+      setResult({ error: error.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const calculateDegenAmount = () => {
+    if (!algoAmount) return 0
+    return parseFloat(algoAmount) * 100
+  }
+
+  const handlePresetClick = (degenAmount: number) => {
+    const requiredAlgo = degenAmount / 100 // Since 1 ALGO = 100 DEGEN
+    setAlgoAmount(requiredAlgo.toString())
+  }
+
+  const presetOptions = [
+    { degen: 10, algo: 0.1 },
+    { degen: 25, algo: 0.25 },
+    { degen: 50, algo: 0.5 }
+  ]
+
+  return (
+    <SwapCard>
+      <CardTitle>⚡ ATOMIC SWAP</CardTitle>
+      
+      <RateDisplay>
+        <RateText>1 ALGO = 100 DEGEN</RateText>
+      </RateDisplay>
+
+      <InfoBox>
+        🔄 Atomic Transaction - Instant & Safe!<br/>
+        Both transactions execute together or both fail
+      </InfoBox>
+
+      <InputLabel>Quick Buy Options</InputLabel>
+      <PresetButtons>
+        {presetOptions.map((option) => (
+          <PresetButton
+            key={option.degen}
+            $active={parseFloat(algoAmount) === option.algo}
+            onClick={() => handlePresetClick(option.degen)}
+          >
+            {option.degen} DEGEN<br/>
+            <small>{option.algo} ALGO</small>
+          </PresetButton>
+        ))}
+      </PresetButtons>
+
+      <InputLabel>Or Enter ALGO Amount</InputLabel>
+      <Input
+        type="number"
+        placeholder="Enter ALGO amount"
+        value={algoAmount}
+        onChange={(e) => setAlgoAmount(e.target.value)}
+        min="0.01"
+        max="1"
+        step="0.01"
+      />
+
+      {algoAmount && (
+        <PreviewText>
+          You will receive: {calculateDegenAmount().toLocaleString()} DEGEN
+        </PreviewText>
+      )}
+
+      <Button 
+        onClick={handleAtomicSwap}
+        disabled={!activeAddress || !algoAmount || loading}
+        style={{ width: '100%', fontSize: '16px' }}
+      >
+        {loading ? '🔄 SWAPPING...' : '⚡ ATOMIC SWAP'}
+      </Button>
+
+      {!activeAddress && (
+        <div style={{ 
+          fontSize: '14px', 
+          fontWeight: '700', 
+          color: 'var(--brutal-red)', 
+          fontFamily: 'var(--font-mono)', 
+          textAlign: 'center', 
+          marginTop: '16px' 
+        }}>
+          Connect your wallet to swap
+        </div>
+      )}
+
+      {result && (
+        <ResultBox $success={!result.error}>
+          {result.error ? (
+            <ResultText>❌ Error: {result.error}</ResultText>
+          ) : (
+            <>
+              <ResultText>
+                ✅ Atomic swap successful!<br/>
+                Received: {result.degenAmount.toLocaleString()} DEGEN
+              </ResultText>
+              <ExplorerLink 
+                href={result.explorerUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                View transaction on explorer
+              </ExplorerLink>
+            </>
+          )}
+        </ResultBox>
+      )}
+    </SwapCard>
+  )
+}

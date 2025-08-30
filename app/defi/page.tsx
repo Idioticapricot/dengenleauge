@@ -4,6 +4,8 @@ import { useWallet } from '@txnlab/use-wallet-react'
 import { AppLayout } from '../../components/layout/AppLayout'
 import { DeFiDashboard } from '../../components/defi/DeFiDashboard'
 import styled from 'styled-components'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCoins } from '@fortawesome/free-solid-svg-icons'
 
 const DeFiContainer = styled.div`
   display: flex;
@@ -35,7 +37,10 @@ export default function DeFiPage() {
     <AppLayout>
       <DeFiContainer>
         <DeFiHeader>
-          <DeFiTitle>💰 DeFi Hub</DeFiTitle>
+          <DeFiTitle>
+            <FontAwesomeIcon icon={faCoins} style={{ marginRight: '8px' }} />
+            DeFi Hub
+          </DeFiTitle>
         </DeFiHeader>
         <DeFiDashboard userAddress={activeAccount?.address} />
       </DeFiContainer>
