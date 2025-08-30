@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useWallet } from "@txnlab/use-wallet-react"
+import { createPortal } from "react-dom"
 import styled from "styled-components"
 import { Button } from "../styled/GlobalStyles"
 
@@ -49,18 +50,38 @@ const WalletModal = styled.div<{ $isOpen: boolean }>`
   bottom: 0;
   background: rgba(0, 0, 0, 0.8);
   display: ${props => props.$isOpen ? 'flex' : 'none'};
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  z-index: 1000;
+  z-index: 999999;
+  padding: 20px;
+  padding-top: 10vh;
+  overflow-y: auto;
 `
 
 const ModalContent = styled.div`
-  background: var(--light-bg);
+  background: #ff0000; /* Temporary bright red background for debugging */
   border: 4px solid var(--border-primary);
   padding: 32px;
   max-width: 400px;
-  width: 90%;
+  width: 100%;
   box-shadow: 8px 8px 0px 0px var(--border-primary);
+  position: relative;
+  margin: auto;
+  z-index: 1000000;
+  color: white; /* Make text visible on red background */
+
+  @media (max-width: 768px) {
+    padding: 24px;
+    border-width: 3px;
+    box-shadow: 6px 6px 0px 0px var(--border-primary);
+    max-width: 90vw;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px;
+    border-width: 2px;
+    box-shadow: 4px 4px 0px 0px var(--border-primary);
+  }
 `
 
 const ModalTitle = styled.h2`
@@ -130,67 +151,74 @@ export function SimpleConnectButton() {
     return (
       <>
         <ConnectButton onClick={() => setIsModalOpen(true)}>
-          🔗 Connect Wallet
+          🔗 Connect
         </ConnectButton>
-        
-        <WalletModal $isOpen={isModalOpen}>
-          <ModalContent>
-            <ModalTitle>Connect Wallet</ModalTitle>
-            {wallets?.map((wallet) => (
-              <WalletButton
-                key={wallet.id}
-                onClick={() => handleConnect(wallet.id)}
-                disabled={connecting}
+
+        {isModalOpen && typeof document !== 'undefined' && createPortal(
+          <WalletModal $isOpen={isModalOpen}>
+            <ModalContent>
+              <ModalTitle>Connect Wallet</ModalTitle>
+              {wallets?.map((wallet) => (
+                <WalletButton
+                  key={wallet.id}
+                  onClick={() => handleConnect(wallet.id)}
+                  disabled={connecting}
+                >
+                  {connecting ? 'Connecting...' : `Connect ${wallet.metadata.name}`}
+                </WalletButton>
+              ))}
+              <Button
+                onClick={() => setIsModalOpen(false)}
+                style={{ width: '100%', background: 'var(--brutal-red)' }}
               >
-                {connecting ? 'Connecting...' : `Connect ${wallet.metadata.name}`}
-              </WalletButton>
-            ))}
-            <Button 
-              onClick={() => setIsModalOpen(false)}
-              style={{ width: '100%', background: 'var(--brutal-red)' }}
-            >
-              Cancel
-            </Button>
-          </ModalContent>
-        </WalletModal>
+                Cancel
+              </Button>
+            </ModalContent>
+          </WalletModal>,
+          document.body
+        )}
       </>
     )
   }
 
   return (
     <>
-      <AddressDisplay onClick={() => setIsModalOpen(true)}>
-        {formatAddress(activeAccount.address)}
-      </AddressDisplay>
-      
-      <WalletModal $isOpen={isModalOpen}>
-        <ModalContent>
-          <ModalTitle>Wallet Connected</ModalTitle>
-          <div style={{ 
-            padding: '16px', 
-            background: 'var(--brutal-lime)', 
-            border: '2px solid var(--border-primary)',
-            marginBottom: '16px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '14px',
-            wordBreak: 'break-all'
-          }}>
-            {activeAccount.address}
-          </div>
-          <Button 
-            onClick={handleDisconnect}
-            style={{ width: '100%', background: 'var(--brutal-red)', marginBottom: '12px' }}
-          >
-            Disconnect
-          </Button>
-          <Button 
-            onClick={() => setIsModalOpen(false)}
-            style={{ width: '100%', background: 'var(--brutal-cyan)' }}
-          >
-            Close
-          </Button>
-        </ModalContent>
-      </WalletModal>
+      <ConnectButton onClick={() => setIsModalOpen(true)}>
+        ⚙️ Wallet
+      </ConnectButton>
+
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
+        <WalletModal $isOpen={isModalOpen}>
+          <ModalContent>
+            <ModalTitle>Wallet Connected</ModalTitle>
+            <div style={{
+              padding: '16px',
+              background: 'var(--brutal-lime)',
+              border: '2px solid var(--border-primary)',
+              marginBottom: '16px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              wordBreak: 'break-all',
+              textAlign: 'center'
+            }}>
+              {activeAccount.address}
+            </div>
+            <Button
+              onClick={handleDisconnect}
+              style={{ width: '100%', background: 'var(--brutal-red)', marginBottom: '12px' }}
+            >
+              Disconnect
+            </Button>
+            <Button
+              onClick={() => setIsModalOpen(false)}
+              style={{ width: '100%', background: 'var(--brutal-cyan)' }}
+            >
+              Close
+            </Button>
+          </ModalContent>
+        </WalletModal>,
+        document.body
+      )}
     </>
   )
 }

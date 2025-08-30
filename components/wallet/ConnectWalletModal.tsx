@@ -1,6 +1,7 @@
 "use client"
 
 import { type Wallet, useWallet } from "@txnlab/use-wallet-react"
+import { createPortal } from "react-dom"
 import styled from "styled-components"
 import { brutalToast } from "../ui/BrutalToast"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -22,18 +23,21 @@ const ModalOverlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 999999;
   backdrop-filter: blur(4px);
 `
 
 const ModalContent = styled.div`
-  background: var(--light-bg);
+  background: #ff0000; /* Temporary bright red background for debugging */
   border: 4px solid var(--border-primary);
   box-shadow: 8px 8px 0px 0px var(--border-primary);
   padding: 32px;
   max-width: 400px;
   width: 90%;
   font-family: var(--font-mono);
+  position: relative;
+  z-index: 1000000;
+  color: white; /* Make text visible on red background */
 `
 
 const ModalTitle = styled.h2`
@@ -162,7 +166,9 @@ const ConnectWalletModal = ({
     }
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
         <CloseButton onClick={onClose}>×</CloseButton>
@@ -170,7 +176,7 @@ const ConnectWalletModal = ({
           <FontAwesomeIcon icon={faLink} style={{ marginRight: '8px' }} />
           Connect Wallet
         </ModalTitle>
-        
+
         <WalletList>
           {wallets.map((wallet) => (
             <WalletButton
@@ -197,7 +203,8 @@ const ConnectWalletModal = ({
           </DisconnectButton>
         )}
       </ModalContent>
-    </ModalOverlay>
+    </ModalOverlay>,
+    document.body
   )
 }
 

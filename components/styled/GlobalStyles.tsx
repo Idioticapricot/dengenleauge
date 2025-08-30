@@ -65,6 +65,7 @@ export const Container = styled.div`
   background: var(--light-bg);
   position: relative;
   overflow-x: hidden;
+  overflow-y: visible;
   border-left: 4px solid var(--border-primary);
   border-right: 4px solid var(--border-primary);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
