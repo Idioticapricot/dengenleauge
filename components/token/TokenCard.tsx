@@ -11,11 +11,33 @@ const TokenCardContainer = styled.div<{ $selected?: boolean }>`
   transition: all 0.1s ease;
   box-shadow: ${(props) => (props.$selected ? "6px 6px 0px 0px var(--border-primary)" : "4px 4px 0px 0px var(--border-primary)")};
   font-family: var(--font-mono);
-  
+
   &:hover {
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0px 0px var(--border-primary);
     background: var(--brutal-cyan);
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-width: 3px;
+    box-shadow: ${(props) => (props.$selected ? "4px 4px 0px 0px var(--border-primary)" : "3px 3px 0px 0px var(--border-primary)")};
+
+    &:hover {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px 0px var(--border-primary);
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-width: 2px;
+    box-shadow: ${(props) => (props.$selected ? "3px 3px 0px 0px var(--border-primary)" : "2px 2px 0px 0px var(--border-primary)")};
+
+    &:hover {
+      transform: none;
+      box-shadow: 1px 1px 0px 0px var(--border-primary);
+    }
   }
 `
 
@@ -32,6 +54,23 @@ const TokenLogo = styled.div`
   margin: 0 auto 12px;
   font-weight: 900;
   box-shadow: 2px 2px 0px 0px var(--border-primary);
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    margin-bottom: 10px;
+    border-width: 2px;
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
+  }
+
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    margin-bottom: 8px;
+    border-width: 1px;
+  }
 `
 
 const TokenSymbol = styled.h3`
@@ -43,6 +82,17 @@ const TokenSymbol = styled.h3`
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 1px;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-bottom: 3px;
+    letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
 `
 
 const TokenPrice = styled.p`
@@ -52,6 +102,16 @@ const TokenPrice = styled.p`
   margin-bottom: 4px;
   text-align: center;
   font-weight: 900;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
 `
 
 const TokenChange = styled.p<{ $positive: boolean }>`
@@ -69,6 +129,19 @@ const TokenChange = styled.p<{ $positive: boolean }>`
   display: inline-block;
   width: 100%;
   box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    font-size: 11px;
+    margin-bottom: 6px;
+    padding: 3px 6px;
+    border-width: 1px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    margin-bottom: 4px;
+    padding: 2px 4px;
+  }
 `
 
 const TokenPoints = styled.p`
@@ -83,6 +156,17 @@ const TokenPoints = styled.p`
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    padding: 5px 10px;
+    border-width: 1px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
 `
 
 interface TokenCardProps {
