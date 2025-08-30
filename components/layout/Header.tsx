@@ -20,12 +20,29 @@ const HeaderContainer = styled.header`
   top: 0;
   z-index: 100;
   font-family: var(--font-mono);
+  
+  @media (max-width: 768px) {
+    padding: 12px;
+    border-bottom-width: 3px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px;
+    border-bottom-width: 2px;
+    gap: 8px;
+  }
 `
 
 const LeftSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
 `
 
 const BalanceContainer = styled.div`
@@ -39,6 +56,31 @@ const BalanceContainer = styled.div`
   box-shadow: 3px 3px 0px 0px var(--border-primary);
   font-weight: 900;
   text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  
+  &:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+  }
+  
+  @media (max-width: 768px) {
+    border-width: 2px;
+    padding: 6px 10px;
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    font-size: 12px;
+    
+    &:hover {
+      transform: none;
+      box-shadow: 2px 2px 0px 0px var(--border-primary);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 6px;
+  }
 `
 
 const TokenIcon = styled.div`
@@ -53,12 +95,29 @@ const TokenIcon = styled.div`
   font-size: 12px;
   font-weight: 900;
   font-family: var(--font-mono);
+  
+  @media (max-width: 768px) {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    border-width: 1px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
 `
 
 const Balance = styled.span`
   font-weight: 900;
   color: var(--text-primary);
   font-family: var(--font-mono);
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `
 
 const AddButton = styled.button`
@@ -81,6 +140,19 @@ const AddButton = styled.button`
     background: var(--brutal-cyan);
     transform: translate(1px, 1px);
   }
+  
+  @media (max-width: 768px) {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    border-width: 1px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+  }
 `
 
 const PopupOverlay = styled.div`
@@ -94,6 +166,7 @@ const PopupOverlay = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 `
 
 const PopupContent = styled.div`
@@ -104,6 +177,18 @@ const PopupContent = styled.div`
   max-width: 400px;
   width: 90%;
   font-family: var(--font-mono);
+  
+  @media (max-width: 768px) {
+    border-width: 3px;
+    box-shadow: 4px 4px 0px 0px var(--border-primary);
+    padding: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    border-width: 2px;
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    padding: 20px;
+  }
 `
 
 const PopupTitle = styled.h2`
@@ -114,6 +199,16 @@ const PopupTitle = styled.h2`
   text-transform: uppercase;
   letter-spacing: 2px;
   text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
 `
 
 const PopupText = styled.p`
@@ -122,11 +217,26 @@ const PopupText = styled.p`
   color: var(--text-primary);
   margin: 0 0 24px 0;
   text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
 `
 
 const PopupButtons = styled.div`
   display: flex;
   gap: 12px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 8px;
+  }
 `
 
 const PopupButton = styled(Button)`
@@ -134,12 +244,32 @@ const PopupButton = styled(Button)`
   font-size: 14px;
   padding: 12px;
   text-transform: uppercase;
+  
+  @media (max-width: 768px) {
+    font-size: 13px;
+    padding: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: 8px;
+  }
 `
 
 const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  
+  @media (max-width: 768px) {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 `
 
 const ProfileButton = styled.div`
@@ -158,11 +288,30 @@ const ProfileButton = styled.div`
   text-transform: uppercase;
   box-shadow: 2px 2px 0px 0px var(--border-primary);
   transition: all 0.1s ease;
+  white-space: nowrap;
   
   &:hover {
     background: var(--brutal-lime);
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 0px 0px var(--border-primary);
+  }
+  
+  @media (max-width: 768px) {
+    border-width: 2px;
+    padding: 6px 10px;
+    font-size: 11px;
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    
+    &:hover {
+      transform: none;
+      box-shadow: 2px 2px 0px 0px var(--border-primary);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    padding: 4px 8px;
+    font-size: 10px;
+    gap: 4px;
   }
 `
 
@@ -188,6 +337,18 @@ const NetworkIndicator = styled.div`
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 0px 0px var(--border-primary);
   }
+  
+  @media (max-width: 768px) {
+    border-width: 1px;
+    padding: 4px 8px;
+    font-size: 9px;
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
+    
+    &:hover {
+      transform: none;
+      box-shadow: 1px 1px 0px 0px var(--border-primary);
+    }
+  }
 `
 
 const NetworkDot = styled.div<{ $network: string }>`
@@ -204,6 +365,11 @@ const NetworkDot = styled.div<{ $network: string }>`
         return "#6B7280"
     }
   }};
+  
+  @media (max-width: 768px) {
+    width: 6px;
+    height: 6px;
+  }
 `
 
 export function Header() {
