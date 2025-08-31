@@ -3,6 +3,7 @@
 import { AppLayout } from '../../components/layout/AppLayout'
 import dynamic from 'next/dynamic'
 import styled from 'styled-components'
+import AtomicSwap from '../../components/token/AtomicSwap'
 
 
 const BuyTokensContainer = styled.div`
@@ -156,6 +157,7 @@ export default function BuyTokensPage() {
           </PageDescription>
         </PageHeader>
 
+        <AtomicSwap />
 
         <InfoGrid>
           <InfoCard>
@@ -172,9 +174,9 @@ export default function BuyTokensPage() {
           <InfoCard>
             <InfoTitle>📊 Swap Details</InfoTitle>
             <InfoList>
-              <InfoItem>• Rate: 1 ALGO = 10,000 DEGEN</InfoItem>
+              <InfoItem>• Rate: 0.1 ALGO = 10 DEGEN</InfoItem>
               <InfoItem>• Min: 0.1 ALGO per swap</InfoItem>
-              <InfoItem>• Max: 100 ALGO per swap</InfoItem>
+              <InfoItem>• Max: 1 ALGO per swap</InfoItem>
               <InfoItem>• Network: Algorand Testnet</InfoItem>
               <InfoItem>• Asset ID: 745007115</InfoItem>
             </InfoList>

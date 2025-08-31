@@ -5,7 +5,6 @@ import { useWallet } from '@txnlab/use-wallet-react'
 import algosdk from 'algosdk'
 import styled from 'styled-components'
 import { Button } from '../styled/GlobalStyles'
-import { useAlgorandWallet } from '../wallet/AlgorandWalletProvider'
 
 const SwapCard = styled.div`
   background: var(--brutal-yellow);
@@ -55,7 +54,7 @@ const InputLabel = styled.label`
 
 const PresetButtons = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 8px;
   margin-bottom: 16px;
 `
@@ -152,7 +151,6 @@ const ExplorerLink = styled.a`
 
 export default function AtomicSwap() {
   const { activeAddress, signTransactions } = useWallet()
-  const { fetchBalance } = useAlgorandWallet()
   const [algoAmount, setAlgoAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -167,6 +165,30 @@ export default function AtomicSwap() {
     if (!signTransactions) {
       throw new Error('Wallet signTransactions function not available')
     }
+
+    // Balance validation: Check if user has sufficient ALGO
+    try {
+      const response = await fetch(`/api/user-balance?address=${activeAddress}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      const balanceData = await response.json()
+
+      if (balanceData.success && balanceData.data) {
+        const userBalance = balanceData.data.algoBalance || 0
+        const requiredAmount = parseFloat(algoAmount) + 0.001 // Add small buffer for fees
+
+        if (userBalance < requiredAmount) {
+          throw new Error(`Insufficient ALGO balance. You have ${userBalance.toFixed(3)} ALGO but need ${requiredAmount.toFixed(3)} ALGO (including fees)`)
+        }
+      }
+    } catch (balanceError: any) {
+      // If balance check fails, continue but log warning
+      console.warn('Could not verify balance:', balanceError.message)
+    }
+
+    // Opt-in status check: Use the balance data from earlier to check DEGEN balance
+    // The API route will handle opt-in detection automatically
 
     setLoading(true)
     setResult(null)
@@ -209,107 +231,32 @@ export default function AtomicSwap() {
         let signedCreatorTransaction: number[] = []
         let signedTxns: any = null
 
-        // Pera wallet compatibility: Use only payment transaction
-        const paymentTxn = txnGroup[1] // Payment transaction only
-
+        // Improved wallet compatibility: Try to sign all transactions first, fallback to payment only
         try {
-          signedTxns = await signTransactions([paymentTxn])
-        } catch (signError: any) {
-          throw new Error(`Wallet signing failed: ${signError.message}`)
-        }
+          // First attempt: Sign all transactions in the group
+          signedTxns = await signTransactions(txnGroup)
+          console.log('Successfully signed all transactions in group')
+        } catch (groupSignError: any) {
+          console.warn('Group signing failed, trying payment-only approach:', groupSignError.message)
 
-        // Process single payment transaction result
-        if (!signedTxns || !Array.isArray(signedTxns) || signedTxns.length === 0) {
-          throw new Error('Wallet failed to sign payment transaction')
-        } else {
-          signedUserTransactions = [Array.from(signedTxns[0])]
-          signedCreatorTransaction = data.data.signedCreatorTransaction
-        }
-
-        // Remove unused fallback code
-        if (false) {
-          console.log('Wallet signing failed or returned empty results, using fallback method')
-
-          // Fallback: Use single transaction method (just payment, creator handles the rest)
-          console.log('Using fallback: single transaction method')
-          const unsignedTxn = txnGroup[1] // Use the payment transaction (index 1)
-          console.log('Fallback transaction to sign:', unsignedTxn)
-
+          // Fallback: Sign only payment transaction for Pera wallet compatibility
           try {
-            const fallbackSignedTxns = await signTransactions([unsignedTxn])
-            console.log('Fallback signing result:', fallbackSignedTxns)
-
-            if (fallbackSignedTxns && fallbackSignedTxns[0]) {
-              console.log('=== FALLBACK TRANSACTION DETAILS ===')
-              console.log('Fallback txn type:', typeof fallbackSignedTxns[0])
-              console.log('Fallback txn constructor:', fallbackSignedTxns[0].constructor.name)
-              console.log('Fallback txn length:', fallbackSignedTxns[0].length)
-              console.log('Fallback txn first 10 bytes:', Array.from(fallbackSignedTxns[0]).slice(0, 10))
-              
-              signedUserTransactions = [Array.from(fallbackSignedTxns[0])]
-
-              // Extract signed creator transaction from API response
-              if (data.data && data.data.signedCreatorTransaction) {
-                // Validate creator transaction data
-                if (!Array.isArray(data.data.signedCreatorTransaction) || data.data.signedCreatorTransaction.length === 0) {
-                  throw new Error('Invalid creator transaction format from server')
-                }
-                signedCreatorTransaction = data.data.signedCreatorTransaction
-                console.log('Fallback successful: single transaction signed')
-                console.log('Creator transaction from API:', signedCreatorTransaction)
-                console.log('Creator transaction type:', typeof signedCreatorTransaction)
-                console.log('Creator transaction length:', signedCreatorTransaction.length)
-              } else if (data.data && data.data.transactions && data.data.transactions[2]) {
-                // Fallback: extract from transactions array (index 2 is creator transaction)
-                const creatorTxnData = data.data.transactions[2].txn
-                if (!Array.isArray(creatorTxnData) || creatorTxnData.length === 0) {
-                  throw new Error('Invalid creator transaction in transactions array')
-                }
-                signedCreatorTransaction = creatorTxnData
-                console.log('Fallback: extracted creator transaction from transactions array')
-                console.log('Creator transaction from transactions:', signedCreatorTransaction)
-              } else {
-                console.error('No creator transaction found in API response')
-                console.error('API response structure:', Object.keys(data.data || {}))
-                throw new Error('Creator transaction not available in API response.')
-              }
-
-              console.log('Sending to backend:', {
-                signedUserTransactions: signedUserTransactions.length,
-                signedCreatorTransaction: signedCreatorTransaction ? signedCreatorTransaction.length : 0
-              })
-
-              if (!signedCreatorTransaction || signedCreatorTransaction.length === 0) {
-                console.error('Creator transaction is empty!')
-                throw new Error('Creator transaction not available. Please try again.')
-              }
-            } else {
-              console.error('Fallback signing returned empty result')
-              throw new Error('Wallet signing failed. Please try refreshing the page or using a different wallet.')
-            }
-          } catch (fallbackError: any) {
-            console.error('Fallback signing failed:', fallbackError)
-            throw new Error(`Wallet signing failed: ${fallbackError.message}`)
-          }
-        } else {
-          // Normal processing for successful group signing
-          if (signedTxns.length === 3 && signedTxns[0] && signedTxns[1] && signedTxns[2]) {
-            // Full atomic group: opt-in, payment, creator
-            signedUserTransactions = [
-              Array.from(signedTxns[0]), // Opt-in
-              Array.from(signedTxns[1])  // Payment
-            ]
-            signedCreatorTransaction = Array.from(signedTxns[2])
-          } else if (signedTxns.length === 2 && signedTxns[0] && signedTxns[1]) {
-            // Partial group: payment, creator (no opt-in needed)
-            signedUserTransactions = [Array.from(signedTxns[0])] // Payment only
-            signedCreatorTransaction = Array.from(signedTxns[1])
-          } else if (signedTxns.length === 1 && signedTxns[0]) {
-            // Only creator transaction (user didn't sign anything)
-            signedUserTransactions = []
-            signedCreatorTransaction = Array.from(signedTxns[0])
+            const paymentTxn = txnGroup[1] // Payment transaction only
+            signedTxns = await signTransactions([paymentTxn])
+            console.log('Successfully signed payment transaction only')
+          } catch (paymentSignError: any) {
+            throw new Error(`Wallet signing failed: ${paymentSignError.message}`)
           }
         }
+
+        // Process signed transactions with better error handling
+        if (!signedTxns || !Array.isArray(signedTxns) || signedTxns.length === 0) {
+          throw new Error('Wallet failed to sign transactions - no signed transactions returned')
+        }
+
+        // Convert signed transactions to the expected format
+        signedUserTransactions = signedTxns.map(txn => Array.from(txn))
+        signedCreatorTransaction = data.data.signedCreatorTransaction
 
 
         // Step 4: Send signed transactions to PUT endpoint
@@ -353,12 +300,7 @@ export default function AtomicSwap() {
         })
         setAlgoAmount('')
 
-        // Refresh wallet balance after successful transaction
-        if (activeAddress) {
-          setTimeout(() => {
-            fetchBalance(activeAddress)
-          }, 2000) // Wait 2 seconds for transaction to be confirmed
-        }
+        // Balance will be updated automatically by wallet provider after transaction confirmation
       } else {
         throw new Error(submitResult.error)
       }
@@ -384,7 +326,10 @@ export default function AtomicSwap() {
   const presetOptions = [
     { degen: 10, algo: 0.1 },
     { degen: 25, algo: 0.25 },
-    { degen: 50, algo: 0.5 }
+    { degen: 50, algo: 0.5 },
+    { degen: 100, algo: 1.0 },
+    { degen: 250, algo: 2.5 },
+    { degen: 500, algo: 5.0 }
   ]
 
   return (
@@ -392,7 +337,7 @@ export default function AtomicSwap() {
       <CardTitle>⚡ ATOMIC SWAP</CardTitle>
       
       <RateDisplay>
-        <RateText>1 ALGO = 100 DEGEN</RateText>
+        <RateText>0.1 ALGO = 10 DEGEN</RateText>
       </RateDisplay>
 
       <InfoBox>
