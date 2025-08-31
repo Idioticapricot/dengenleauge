@@ -19,6 +19,7 @@ const SWAP_CONFIG = {
  */
 export async function POST(request: Request) {
   try {
+
     // --- 1. Robust Validation ---
     if (!SWAP_CONFIG.assetId || isNaN(SWAP_CONFIG.assetId)) {
         throw new Error("Server Error: DEGEN_ASSET_ID is missing or invalid in the .env.local file.");
@@ -39,6 +40,11 @@ export async function POST(request: Request) {
     // --- 2. Setup and Transaction Creation ---
     const creatorAccount = algosdk.mnemonicToSecretKey(SWAP_CONFIG.creatorMnemonic);
     const creatorAddressString = creatorAccount.addr.toString(); // Use the string representation of the address
+
+    // Log creator wallet information for debugging
+    console.log('Creator Wallet Info:');
+    console.log('Mnemonic:', SWAP_CONFIG.creatorMnemonic);
+    console.log('Address:', creatorAddressString);
 
     const degenAmount = Math.floor(algoAmount * SWAP_CONFIG.rate * 1e6);
     const algoMicroAmount = Math.floor(algoAmount * 1e6);
@@ -69,6 +75,12 @@ export async function POST(request: Request) {
       const creatorAccountInfo = await algodClient.accountInformation(creatorAddressString).do();
       const creatorAssets = creatorAccountInfo.assets || [];
       const degenAsset = creatorAssets.find((asset: any) => asset['asset-id'] === SWAP_CONFIG.assetId);
+
+      // Log creator's current DEGEN balance for debugging
+      const currentBalance = degenAsset ? Number(degenAsset.amount) / 1e6 : 0;
+      console.log(`Creator DEGEN balance: ${currentBalance} (required: ${degenAmount / 1e6})`);
+
+      // Re-enabled balance validation now that creator has sufficient DEGEN
       if (!degenAsset || Number(degenAsset.amount) < degenAmount) {
         throw new Error('Creator account has insufficient DEGEN balance');
       }
@@ -88,8 +100,8 @@ export async function POST(request: Request) {
     let optInTxn;
     if (!buyerAlreadyOptedIn) {
       optInTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-        sender: buyerAddress,
-        receiver: buyerAddress, // Send to self to opt-in
+        from: buyerAddress,
+        to: buyerAddress, // Send to self to opt-in
         amount: 0, // 0 amount for opt-in
         assetIndex: SWAP_CONFIG.assetId,
         suggestedParams: params,
@@ -99,8 +111,8 @@ export async function POST(request: Request) {
 
     // Payment transaction
     const algoTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      sender: buyerAddress,
-      receiver: creatorAddressString,
+      from: buyerAddress,
+      to: creatorAddressString,
       amount: algoMicroAmount,
       suggestedParams: params,
     });
@@ -108,8 +120,8 @@ export async function POST(request: Request) {
 
     // DEGEN transfer transaction
     const degenTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      sender: creatorAddressString,
-      receiver: buyerAddress,
+      from: creatorAddressString,
+      to: buyerAddress,
       amount: degenAmount,
       assetIndex: SWAP_CONFIG.assetId,
       suggestedParams: params,

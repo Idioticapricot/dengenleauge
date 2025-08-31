@@ -206,7 +206,6 @@ export default function AtomicSwap() {
 
       const data = await response.json()
 
-
       if (!data.success) {
         throw new Error(data.error)
       }
