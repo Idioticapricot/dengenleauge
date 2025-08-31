@@ -6,34 +6,32 @@ import styled from "styled-components"
 import { Users, Trophy, User, Swords, DollarSign } from "lucide-react"
 
 const NavContainer = styled.nav`
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 80px;
-  background: var(--light-bg);
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 80px !important;
+  background: var(--light-bg) !important;
   border-top: 4px solid var(--border-primary);
   padding: 12px 0 8px;
   z-index: 9998;
   font-family: var(--font-mono);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  
-  * {
-    transform: none !important;
-  }
+  transform: none !important;
+  will-change: auto !important;
   
   @media (max-width: 768px) {
     border-width: 3px;
     padding: 12px 0 6px;
-    height: 76px;
+    height: 76px !important;
   }
   
   @media (max-width: 480px) {
     border-width: 2px;
     padding: 10px 0 4px;
-    height: 72px;
+    height: 72px !important;
   }
 `
 
