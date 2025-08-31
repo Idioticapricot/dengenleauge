@@ -268,10 +268,7 @@ html {
     transform: scale(0.98);
   }
   
-  /* Prevent navigation jumping */
-  nav {
-    transform: none !important;
-  }
+
 }
 
 /* Performance optimizations */

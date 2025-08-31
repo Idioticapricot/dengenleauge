@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import styled from "styled-components"
 import { Users, Trophy, User, Swords, DollarSign } from "lucide-react"
@@ -190,9 +191,25 @@ const navItems = [
 export function BottomNavigation() {
   const pathname = usePathname()
   const router = useRouter()
+  const navRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (navRef.current) {
+      const rect = navRef.current.getBoundingClientRect()
+      const style = window.getComputedStyle(navRef.current)
+      console.log('BottomNavigation position:', rect)
+      console.log('Viewport height:', window.innerHeight)
+      console.log('Position property:', style.position)
+      console.log('Bottom property:', style.bottom)
+      console.log('Z-index:', style.zIndex)
+      console.log('Transform:', style.transform)
+    }
+  }, [])
+
+  console.log('BottomNavigation rendered')
 
   return (
-    <NavContainer>
+    <NavContainer ref={navRef}>
       <NavItems>
         {navItems.map(({ href, icon: Icon, label, isBattle }) => {
           const isActive = pathname === href

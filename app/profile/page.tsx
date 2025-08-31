@@ -131,7 +131,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const [balances, setBalances] = useState({ algo: 0, degen: 0 })
   const [loading, setLoading] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
 
   // Swipe gesture handlers for page navigation
   const swipeRef = useSwipe<HTMLDivElement>({
@@ -148,21 +148,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (activeAccount?.address) {
       fetchBalances()
-      // Refresh balances every 10 seconds
-      const interval = setInterval(fetchBalances, 10000)
-      return () => clearInterval(interval)
     }
-  }, [activeAccount])
-
-  // Refresh balances when page becomes visible
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && activeAccount?.address) {
-        fetchBalances()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [activeAccount])
 
   const fetchBalances = async () => {
@@ -177,7 +163,7 @@ export default function ProfilePage() {
           algo: data.data.algoBalance,
           degen: data.data.degenBalance
         })
-        setLastUpdated(new Date())
+
       }
     } catch (error) {
       console.error('Failed to fetch balances:', error)
@@ -224,60 +210,16 @@ export default function ProfilePage() {
                 <TokenCard>
                   <TokenSymbol>ALGO</TokenSymbol>
                   <TokenBalance>{balances.algo.toFixed(4)}</TokenBalance>
-                  <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginTop: '4px' }}>
-                    Last updated: {new Date().toLocaleTimeString()}
-                  </div>
                 </TokenCard>
                 <TokenCard>
                   <TokenSymbol>DEGEN</TokenSymbol>
                   <TokenBalance>{balances.degen.toFixed(2)}</TokenBalance>
-                  <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginTop: '4px' }}>
-                    Last updated: {new Date().toLocaleTimeString()}
-                  </div>
                 </TokenCard>
               </TokenGrid>
             )}
           </TokenSection>
 
-          <StatsGrid>
-            <StatCard>
-              <StatValue>0</StatValue>
-              <StatLabel>Wins</StatLabel>
-            </StatCard>
-            <StatCard>
-              <StatValue>0</StatValue>
-              <StatLabel>Losses</StatLabel>
-            </StatCard>
-            <StatCard>
-              <StatValue>0</StatValue>
-              <StatLabel>Total Battles</StatLabel>
-            </StatCard>
-            <StatCard>
-              <StatValue>0</StatValue>
-              <StatLabel>Win Streak</StatLabel>
-            </StatCard>
-          </StatsGrid>
 
-          <TokenSection>
-            <SectionTitle>⚡ Quick Actions</SectionTitle>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
-              <Button onClick={() => router.push('/buy-tokens')}>
-                🪙 Buy DEGEN
-              </Button>
-              <Button onClick={() => router.push('/battle')}>
-                ⚔️ Battle
-              </Button>
-              <Button onClick={() => router.push('/defi')}>
-                💱 DeFi
-              </Button>
-            </div>
-            <Button
-              onClick={fetchBalances}
-              style={{ background: 'var(--brutal-orange)', fontSize: '14px' }}
-            >
-              🔄 Refresh Balances
-            </Button>
-          </TokenSection>
         </ProfileContainer>
       </PullToRefresh>
     </AppLayout>

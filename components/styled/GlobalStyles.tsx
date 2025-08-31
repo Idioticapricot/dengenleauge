@@ -407,7 +407,6 @@ export const Container = styled.div`
   margin: 0 auto;
   min-height: 100vh;
   background: var(--light-bg);
-  position: relative;
   padding-bottom: 80px;
   
   @media (max-width: 768px) {
