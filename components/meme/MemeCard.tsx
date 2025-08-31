@@ -6,38 +6,67 @@ import { faCoins } from '@fortawesome/free-solid-svg-icons'
 
 const CardContainer = styled.div`
   background: var(--light-bg);
-  border: 4px solid var(--border-primary);
-  box-shadow: 4px 4px 0px 0px var(--border-primary);
-  padding: 16px;
-  margin-bottom: 12px;
+  border: 2px solid var(--border-primary);
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  padding: 12px;
   font-family: var(--font-mono);
   transition: all 0.1s ease;
+  border-radius: 8px;
+  
+  @media (max-width: 768px) {
+    padding: 10px;
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px;
+    border-radius: 4px;
+    border-width: 1px;
+  }
   
   &:hover {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
   }
 `
 
 const CardHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 `
 
 const TokenIcon = styled.div`
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   background: var(--brutal-cyan);
-  border: 3px solid var(--border-primary);
+  border: 2px solid var(--border-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 900;
   color: var(--text-primary);
-  box-shadow: 2px 2px 0px 0px var(--border-primary);
+  box-shadow: 1px 1px 0px 0px var(--border-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+  
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    border-width: 1px;
+  }
 `
 
 const TokenInfo = styled.div`
@@ -46,49 +75,41 @@ const TokenInfo = styled.div`
 
 const TokenName = styled.h3`
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 900;
-  margin: 0 0 4px 0;
+  margin: 0;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+    letter-spacing: 0.3px;
+  }
 `
 
 const TokenSymbol = styled.div`
   color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 700;
-  background: var(--brutal-yellow);
-  padding: 2px 8px;
-  border: 2px solid var(--border-primary);
-  display: inline-block;
-`
-
-const TokenStats = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-`
-
-const StatItem = styled.div`
-  background: var(--brutal-lime);
-  border: 2px solid var(--border-primary);
-  padding: 8px;
-  text-align: center;
-`
-
-const StatLabel = styled.div`
   font-size: 10px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-  text-transform: uppercase;
+  background: var(--brutal-yellow);
+  padding: 2px 6px;
+  border: 1px solid var(--border-primary);
+  display: inline-block;
+  border-radius: 4px;
+  margin-top: 2px;
+  
+  @media (max-width: 480px) {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
 `
 
-const StatValue = styled.div`
-  font-size: 14px;
-  font-weight: 900;
-  color: var(--text-primary);
-`
+
 
 interface MemeCardProps {
   asset: {
@@ -119,7 +140,7 @@ export function MemeCard({ asset }: MemeCardProps) {
             <img
               src={asset.image}
               alt={asset.name || 'Token'}
-              style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement
                 target.style.display = 'none'
@@ -127,7 +148,7 @@ export function MemeCard({ asset }: MemeCardProps) {
               }}
             />
           ) : (
-            <FontAwesomeIcon icon={faCoins} />
+            '🪙'
           )}
         </TokenIcon>
         <TokenInfo>
@@ -135,17 +156,6 @@ export function MemeCard({ asset }: MemeCardProps) {
           <TokenSymbol>{asset.ticker || 'N/A'}</TokenSymbol>
         </TokenInfo>
       </CardHeader>
-      
-      <TokenStats>
-        <StatItem>
-          <StatLabel>Price</StatLabel>
-          <StatValue>${asset.price?.toFixed(8) || '0'}</StatValue>
-        </StatItem>
-        <StatItem>
-          <StatLabel>Rank</StatLabel>
-          <StatValue>#{asset.rank || 'N/A'}</StatValue>
-        </StatItem>
-      </TokenStats>
     </CardContainer>
   )
 }
