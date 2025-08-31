@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import { motion } from "framer-motion"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Users, Calendar, Trophy, User, Swords, BarChart3, Zap, DollarSign } from "lucide-react"
 import { useSwipe } from "../../hooks/useSwipe"
@@ -18,20 +18,25 @@ const navItems = [
 
 export function BottomNavigation() {
   const pathname = usePathname()
+  const router = useRouter()
 
   // Add swipe gesture support
   const navRef = useSwipe<HTMLDivElement>({
     onSwipeLeft: () => {
       // Navigate to next item or cycle through navigation
       const currentIndex = navItems.findIndex(item => item.href === pathname)
-      const nextIndex = (currentIndex + 1) % navItems.length
-      // Could implement navigation logic here
+      if (currentIndex !== -1) {
+        const nextIndex = (currentIndex + 1) % navItems.length
+        router.push(navItems[nextIndex].href)
+      }
     },
     onSwipeRight: () => {
       // Navigate to previous item
       const currentIndex = navItems.findIndex(item => item.href === pathname)
-      const prevIndex = currentIndex === 0 ? navItems.length - 1 : currentIndex - 1
-      // Could implement navigation logic here
+      if (currentIndex !== -1) {
+        const prevIndex = currentIndex === 0 ? navItems.length - 1 : currentIndex - 1
+        router.push(navItems[prevIndex].href)
+      }
     }
   })
 

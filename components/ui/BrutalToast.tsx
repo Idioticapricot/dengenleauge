@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import styled, { keyframes } from "styled-components"
+import { useSwipe } from "../../hooks/useSwipe"
 
 interface ToastProps {
   id: string

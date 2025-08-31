@@ -6,6 +6,8 @@ import { AppLayout } from "../../components/layout/AppLayout"
 import styled from "styled-components"
 import { Button } from "../../components/styled/GlobalStyles"
 import { brutalToast } from "../../components/ui/BrutalToast"
+import { useSwipe } from "../../hooks/useSwipe"
+import { useRouter } from "next/navigation"
 
 const TournamentContainer = styled.div`
   display: flex;
@@ -192,6 +194,7 @@ const TournamentButton = styled(Button)<{ $status: string }>`
 
 export default function TournamentPage() {
   const { activeAccount } = useWallet()
+  const router = useRouter()
   const [tournaments, setTournaments] = useState([
     {
       id: 1,
@@ -228,7 +231,17 @@ export default function TournamentPage() {
     }
   ])
 
-
+  // Swipe gesture handlers for page navigation
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => {
+      // Navigate to next page (battle)
+      router.push('/battle')
+    },
+    onSwipeRight: () => {
+      // Navigate to previous page (team)
+      router.push('/team')
+    }
+  })
 
   const handleJoinTournament = (tournamentId: number) => {
     if (!activeAccount?.address) {
@@ -246,7 +259,7 @@ export default function TournamentPage() {
   if (!activeAccount?.address) {
     return (
       <AppLayout>
-        <TournamentContainer>
+        <TournamentContainer ref={swipeRef}>
           <TournamentHeader>
             <TournamentTitle>🔗 CONNECT WALLET</TournamentTitle>
             <TournamentSubtitle>Connect your wallet to join tournaments</TournamentSubtitle>

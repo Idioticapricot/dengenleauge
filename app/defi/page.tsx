@@ -6,6 +6,8 @@ import { DeFiDashboard } from '../../components/defi/DeFiDashboard'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCoins } from '@fortawesome/free-solid-svg-icons'
+import { useSwipe } from '../../hooks/useSwipe'
+import { useRouter } from 'next/navigation'
 
 const DeFiContainer = styled.div`
   display: flex;
@@ -32,10 +34,23 @@ const DeFiTitle = styled.h1`
 
 export default function DeFiPage() {
   const { activeAccount } = useWallet()
+  const router = useRouter()
+
+  // Swipe gesture handlers for page navigation
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => {
+      // Navigate to next page (profile)
+      router.push('/profile')
+    },
+    onSwipeRight: () => {
+      // Navigate to previous page (battle)
+      router.push('/battle')
+    }
+  })
 
   return (
     <AppLayout>
-      <DeFiContainer>
+      <DeFiContainer ref={swipeRef}>
         <DeFiHeader>
           <DeFiTitle>
             <FontAwesomeIcon icon={faCoins} style={{ marginRight: '8px' }} />

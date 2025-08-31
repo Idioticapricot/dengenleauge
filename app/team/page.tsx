@@ -9,6 +9,9 @@ import { useWallet } from "@txnlab/use-wallet-react"
 import { CoinGridSkeleton } from "../../components/ui/skeleton"
 import { useSimpleApi } from "../../hooks/useApi"
 import { ErrorBoundary } from "../../components/ErrorBoundary"
+import { useSwipe } from "../../hooks/useSwipe"
+import { useRouter } from "next/navigation"
+import { PullToRefresh } from "../../components/ui/PullToRefresh"
 
 const TeamContainer = styled.div`
   display: flex;
@@ -261,6 +264,19 @@ function TeamPageContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const { activeAccount } = useWallet()
   const { loading: apiLoading, error: apiError, call: apiCall } = useSimpleApi()
+  const router = useRouter()
+
+  // Swipe gesture handlers for page navigation
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => {
+      // Navigate to next page (tournament)
+      router.push('/tournament')
+    },
+    onSwipeRight: () => {
+      // Navigate to previous page (profile)
+      router.push('/profile')
+    }
+  })
 
   const fetchMemeCoins = async (search = '') => {
     const url = search ? `/api/meme-coins?search=${encodeURIComponent(search)}` : '/api/meme-coins'
@@ -412,6 +428,10 @@ function TeamPageContent() {
     setSelectedCoins([preset.coin1Id, preset.coin2Id, preset.coin3Id])
   }
 
+  const handleRefresh = async () => {
+    await fetchMemeCoins(searchTerm)
+  }
+
   if (!activeAccount?.address) {
     return (
       <AppLayout>
@@ -427,7 +447,8 @@ function TeamPageContent() {
 
   return (
     <AppLayout>
-      <TeamContainer>
+      <PullToRefresh onRefresh={handleRefresh} className="flex-1">
+        <TeamContainer ref={swipeRef}>
         <TeamHeader>
           <TeamTitle>⚔️ MEME COIN BATTLE</TeamTitle>
           <TeamSubtitle>Select 3 meme coins and battle other players</TeamSubtitle>
@@ -592,7 +613,8 @@ function TeamPageContent() {
             )}
           </BeastGrid>
         </MyBeastsSection>
-      </TeamContainer>
+        </TeamContainer>
+      </PullToRefresh>
     </AppLayout>
   )
 }
