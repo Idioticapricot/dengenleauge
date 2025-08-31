@@ -24,15 +24,15 @@ export async function POST(request: Request) {
     // Use the aggregated price feeds instead of direct CMC API
     for (const symbol of symbols) {
       try {
-        prices[symbol] = await getAggregatedPrice(symbol)
+        const price = await getAggregatedPrice(symbol)
+        if (price > 0) {
+          prices[symbol] = price
+        } else {
+          throw new Error(`Invalid price received for ${symbol}`)
+        }
       } catch (error) {
         console.error(`Error fetching price for ${symbol}:`, error)
-        // Fallback to mock data
-        const basePrice = symbol === 'DOGE' ? 0.2113 :
-                         symbol === 'SHIB' ? 0.00001219 :
-                         symbol === 'PEPE' ? 0.00000994 : 0.1
-        const change = (Math.random() - 0.5) * 0.02 // ±1% change
-        prices[symbol] = basePrice * (1 + change)
+        throw new Error(`Failed to fetch real-time price for ${symbol}`)
       }
     }
 
@@ -45,25 +45,11 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Battle prices API error:', error)
 
-    // Enhanced fallback
-    const { symbols } = await request.json()
-    const mockPrices: { [key: string]: number } = {}
-
-    symbols.forEach((symbol: string) => {
-      const basePrice = symbol === 'DOGE' ? 0.2113 :
-                       symbol === 'SHIB' ? 0.00001219 :
-                       symbol === 'PEPE' ? 0.00000994 : 0.1
-
-      const change = (Math.random() - 0.5) * 0.02 // ±1% change
-      mockPrices[symbol] = basePrice * (1 + change)
-    })
-
+    // Return error response without mock data
     return NextResponse.json({
-      prices: mockPrices,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
       timestamp: new Date().toISOString(),
-      success: true,
-      fallback: true,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    })
+      success: false
+    }, { status: 500 })
   }
 }

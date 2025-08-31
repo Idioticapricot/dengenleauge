@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
   try {
     const response = await fetchWithRetry(
-      "https://api.vestigelabs.org/assets/list?network_id=0&exclude_labels=8,7&denominating_asset_id=31566704&limit=50&offset=0&order_by=rank&order_dir=asc",
+      "https://api.vestigelabs.org/assets/list?network_id=0&exclude_labels=8,7&denominating_asset_id=31566704&limit=20&offset=0&order_by=rank&order_dir=asc",
       {
         headers: {
           "accept": "application/json, text/plain, */*",
@@ -87,30 +87,11 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Vestige API Error:', error)
 
-    // Enhanced fallback with more coins and better data
-    let mockCoins = [
-      { id: 31566704, name: 'USDC', ticker: 'USDC', price: 1.0001, market_cap: 1000000000, rank: 2, percent_change_1h: 0.01, percent_change_24h: 0.02, image: 'https://asa-list.tinyman.org/assets/31566704/icon.png' },
-      { id: 386192725, name: 'goBTC', ticker: 'goBTC', price: 95000, market_cap: 500000000, rank: 3, percent_change_1h: 0.5, percent_change_24h: -2.1, image: 'https://asa-list.tinyman.org/assets/386192725/icon.png' },
-      { id: 386195940, name: 'goETH', ticker: 'goETH', price: 3500, market_cap: 300000000, rank: 4, percent_change_1h: -1.2, percent_change_24h: -4.5, image: 'https://asa-list.tinyman.org/assets/386195940/icon.png' },
-      { id: 27165954, name: 'PLANET', ticker: 'PLANETS', price: 0.000025, market_cap: 180000000, rank: 5, percent_change_1h: 0.8, percent_change_24h: -1.9, image: 'https://asa-list.tinyman.org/assets/27165954/icon.png' },
-      { id: 163650, name: 'Asia Reserve Currency Coin', ticker: 'ARCC', price: 0.45, market_cap: 150000000, rank: 6, percent_change_1h: 0.3, percent_change_24h: 1.2, image: 'https://asa-list.tinyman.org/assets/163650/icon.png' },
-      { id: 226701642, name: 'Dogecoin', ticker: 'DOGE', price: 0.2113, market_cap: 32000000000, rank: 7, percent_change_1h: 0.2, percent_change_24h: -1.5, image: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png' },
-      { id: 287867876, name: 'Shiba Inu', ticker: 'SHIB', price: 0.00001219, market_cap: 7200000000, rank: 8, percent_change_1h: -0.5, percent_change_24h: 2.1, image: 'https://assets.coingecko.com/coins/images/11939/small/shiba.png' },
-      { id: 244475981, name: 'Pepe', ticker: 'PEPE', price: 0.00000994, market_cap: 4200000000, rank: 9, percent_change_1h: 1.2, percent_change_24h: -0.8, image: 'https://assets.coingecko.com/coins/images/29850/small/pepe-token.jpeg' }
-    ]
-
-    if (search) {
-      mockCoins = mockCoins.filter(coin =>
-        coin.name.toLowerCase().includes(search.toLowerCase()) ||
-        coin.ticker.toLowerCase().includes(search.toLowerCase())
-      )
-    }
-
+    // Return error response without mock data
     return NextResponse.json({
-      coins: mockCoins,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
       timestamp: new Date().toISOString(),
-      source: 'fallback',
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    })
+      source: 'error'
+    }, { status: 500 })
   }
 }
