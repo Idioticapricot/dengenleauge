@@ -258,60 +258,7 @@ const PopupButton = styled(Button)`
   }
 `
 
-const LogoNameBox = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--brutal-lime);
-  border: 3px solid var(--border-primary);
-  border-radius: 0;
-  padding: 8px 16px;
-  box-shadow: 3px 3px 0px 0px var(--border-primary);
-  cursor: pointer;
-  transition: all 0.1s ease;
 
-  &:hover {
-    transform: translate(1px, 1px);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-  }
-
-  @media (max-width: 768px) {
-    border-width: 2px;
-    padding: 6px 12px;
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-    gap: 8px;
-
-    &:hover {
-      transform: translate(1px, 1px);
-      box-shadow: 1px 1px 0px 0px var(--border-primary);
-    }
-  }
-
-  @media (max-width: 480px) {
-    padding: 4px 8px;
-    gap: 6px;
-  }
-`
-
-const AppName = styled.span`
-  font-size: 24px;
-  font-weight: 900;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  white-space: nowrap;
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-    letter-spacing: 1px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-    letter-spacing: 0.5px;
-  }
-`
 
 const RightSection = styled.div`
   display: flex;
@@ -432,35 +379,6 @@ const NetworkDot = styled.div<{ $network: string }>`
   }
 `
 
-const LogoContainer = styled.div`
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  margin-right: 12px;
-
-  img {
-    width: 40px;
-    height: 40px;
-  }
-
-  @media (max-width: 768px) {
-    margin-right: 8px;
-
-    img {
-      width: 32px;
-      height: 32px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    margin-right: 6px;
-
-    img {
-      width: 28px;
-      height: 28px;
-    }
-  }
-`
 
 export function Header() {
   const { activeAccount } = useWallet()
@@ -549,20 +467,6 @@ export function Header() {
     
     <HeaderContainer>
       <LeftSection>
-        <LogoNameBox onClick={() => router.push('/')}>
-          <LogoContainer>
-            <Image
-              src="/wolf-removebg-preview.png"
-              alt="Degen League Logo"
-              width={40}
-              height={40}
-              priority
-              placeholder="blur"
-              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+IRjWjBqO6O2mhP//Z"
-            />
-          </LogoContainer>
-          <AppName>DEGEN LEAGUE</AppName>
-        </LogoNameBox>
       </LeftSection>
 
       <RightSection>
