@@ -11,12 +11,16 @@ export const GlobalStyle = createGlobalStyle`
     --brutal-red: #fa7a7a;
     --brutal-orange: #FF965B;
     --brutal-violet: #918efa;
+    --brutal-blue: #4A90E2;
+    --brutal-green: #7ED321;
     --dark-bg: #000000;
     --light-bg: #ffffff;
     --text-primary: #000000;
     --text-secondary: #666666;
+    --text-muted: #999999;
     --border-primary: #000000;
-    --font-mono: 'Courier New', monospace;
+    --font-mono: 'Courier New', 'Monaco', 'Menlo', monospace;
+    --font-sans: 'Arial', 'Helvetica', sans-serif;
     --shadow-brutal: 6px 6px 0px 0px var(--border-primary);
     --shadow-brutal-sm: 3px 3px 0px 0px var(--border-primary);
     --shadow-brutal-lg: 8px 8px 0px 0px var(--border-primary);
@@ -51,6 +55,29 @@ export const GlobalStyle = createGlobalStyle`
     --space-lg: 24px;
     --space-xl: 32px;
     --space-2xl: 48px;
+    
+    /* Typography scale */
+    --text-xs: 12px;
+    --text-sm: 14px;
+    --text-base: 16px;
+    --text-lg: 18px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 30px;
+    --text-4xl: 36px;
+    
+    /* Border radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    
+    /* Z-index scale */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal: 1040;
+    --z-popover: 1050;
+    --z-tooltip: 1060;
   }
 
   .dark {
@@ -473,9 +500,10 @@ export const Card = styled.div<{ $variant?: "primary" | "secondary" | "dark" }>`
 `
 
 export const Button = styled.button<{
-  $variant?: "primary" | "secondary" | "danger" | "outline"
+  $variant?: "primary" | "secondary" | "danger" | "outline" | "ghost"
   $size?: "sm" | "md" | "lg"
   $fullWidth?: boolean
+  $loading?: boolean
 }>`
   display: flex;
   align-items: center;
@@ -524,10 +552,15 @@ export const Button = styled.button<{
         return "var(--brutal-red)"
       case "outline":
         return "var(--light-bg)"
+      case "ghost":
+        return "transparent"
       default:
         return "var(--brutal-yellow)"
     }
   }};
+  
+  opacity: ${(props) => (props.$loading ? 0.7 : 1)};
+  pointer-events: ${(props) => (props.$loading ? 'none' : 'auto')};
   
   color: var(--text-primary);
   
@@ -544,10 +577,16 @@ export const Button = styled.button<{
           return "var(--brutal-orange)"
         case "outline":
           return "var(--brutal-yellow)"
+        case "ghost":
+          return "var(--brutal-yellow)"
         default:
           return "var(--brutal-lime)"
       }
     }};
+    
+    ${(props) => props.$loading && `
+      background: var(--text-muted) !important;
+    `}
   }
   
   &:active:not(:disabled) {
@@ -667,4 +706,71 @@ export const DesktopHidden = styled.div`
   @media (min-width: 769px) {
     display: none;
   }
+`
+
+// Loading Spinner Component
+export const LoadingSpinner = styled.div<{ $size?: 'sm' | 'md' | 'lg' }>`
+  width: ${(props) => {
+    switch (props.$size) {
+      case 'sm': return '16px'
+      case 'lg': return '32px'
+      default: return '24px'
+    }
+  }};
+  height: ${(props) => {
+    switch (props.$size) {
+      case 'sm': return '16px'
+      case 'lg': return '32px'
+      default: return '24px'
+    }
+  }};
+  border: 3px solid var(--text-muted);
+  border-top: 3px solid var(--brutal-yellow);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`
+
+// Badge Component
+export const Badge = styled.span<{
+  $variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
+  $size?: 'sm' | 'md' | 'lg'
+}>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${props => {
+    switch (props.$size) {
+      case 'sm': return '2px 6px'
+      case 'lg': return '6px 12px'
+      default: return '4px 8px'
+    }
+  }};
+  font-size: ${props => {
+    switch (props.$size) {
+      case 'sm': return '10px'
+      case 'lg': return '14px'
+      default: return '12px'
+    }
+  }};
+  font-weight: 900;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  border: 2px solid var(--border-primary);
+  background: ${props => {
+    switch (props.$variant) {
+      case 'primary': return 'var(--brutal-yellow)'
+      case 'secondary': return 'var(--brutal-cyan)'
+      case 'success': return 'var(--brutal-lime)'
+      case 'warning': return 'var(--brutal-orange)'
+      case 'danger': return 'var(--brutal-red)'
+      default: return 'var(--brutal-yellow)'
+    }
+  }};
+  color: var(--text-primary);
 `
