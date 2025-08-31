@@ -75,11 +75,13 @@ const NavItem = styled.div<{ $isActive: boolean; $isBattle?: boolean }>`
   
   transform: ${props => props.$isBattle ? 'scale(1.05)' : 'scale(1)'};
   
-  &:hover {
-    background: ${props => props.$isBattle ? 'var(--brutal-red)' : 'var(--brutal-lime)'};
-    border: 4px solid var(--border-primary);
-    box-shadow: 3px 3px 0px 0px var(--border-primary);
-    transform: ${props => props.$isBattle ? 'scale(1.1) translateY(-2px)' : 'scale(1.05) translateY(-2px)'};
+  @media (hover: hover) {
+    &:hover {
+      background: ${props => props.$isBattle ? 'var(--brutal-red)' : 'var(--brutal-lime)'};
+      border: 4px solid var(--border-primary);
+      box-shadow: 3px 3px 0px 0px var(--border-primary);
+      transform: ${props => props.$isBattle ? 'scale(1.1) translateY(-2px)' : 'scale(1.05) translateY(-2px)'};
+    }
   }
   
   &:active {
@@ -137,8 +139,10 @@ const IconContainer = styled.div<{ $isBattle?: boolean }>`
   justify-content: center;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
-  ${NavItem}:hover & {
-    transform: ${props => props.$isBattle ? 'rotate(15deg) scale(1.1)' : 'rotate(10deg) scale(1.05)'};
+  @media (hover: hover) {
+    ${NavItem}:hover & {
+      transform: ${props => props.$isBattle ? 'rotate(15deg) scale(1.1)' : 'rotate(10deg) scale(1.05)'};
+    }
   }
   
   ${NavItem}:active & {
