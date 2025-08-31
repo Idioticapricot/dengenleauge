@@ -47,7 +47,7 @@ const BattleContainer = styled.div`
 
 const BattleHeader = styled.div`
   text-align: center;
-  background: var(--brutal-red);
+  background: linear-gradient(135deg, var(--brutal-red) 0%, var(--brutal-orange) 100%);
   padding: var(--mobile-padding);
   border: var(--border-width) solid var(--border-primary);
   box-shadow: var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary);
@@ -65,10 +65,16 @@ const BattleHeader = styled.div`
       45deg,
       transparent,
       transparent 10px,
-      rgba(255, 255, 255, 0.1) 10px,
-      rgba(255, 255, 255, 0.1) 20px
+      rgba(255, 255, 255, 0.15) 10px,
+      rgba(255, 255, 255, 0.15) 20px
     );
     pointer-events: none;
+    animation: battlePulse 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes battlePulse {
+    0% { opacity: 0.8; }
+    100% { opacity: 1; }
   }
 
   @media (max-width: 768px) {
@@ -91,6 +97,15 @@ const BattleTitle = styled.h1`
   margin: 0;
   font-family: var(--font-mono);
   text-transform: uppercase;
+  text-shadow: 2px 2px 0px var(--border-primary);
+  position: relative;
+  z-index: 1;
+  animation: titleGlow 3s ease-in-out infinite alternate;
+  
+  @keyframes titleGlow {
+    0% { text-shadow: 2px 2px 0px var(--border-primary); }
+    100% { text-shadow: 2px 2px 0px var(--border-primary), 0 0 20px var(--brutal-yellow); }
+  }
   
   @media (max-width: 768px) {
     font-size: 24px;
@@ -298,6 +313,13 @@ const TeamSection = styled.div`
   border: 4px solid var(--border-primary);
   padding: 20px;
   box-shadow: 4px 4px 0px 0px var(--border-primary);
+  position: relative;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0px 0px var(--border-primary);
+  }
   
   @media (max-width: 768px) {
     border-width: 3px;
@@ -345,6 +367,29 @@ const CoinItem = styled.div`
   margin-bottom: 8px;
   background: var(--brutal-lime);
   border: 2px solid var(--border-primary);
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: -100%;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  &:hover {
+    transform: translateX(2px);
+    background: var(--brutal-cyan);
+    
+    &::before {
+      left: 100%;
+    }
+  }
   
   @media (max-width: 768px) {
     padding: 10px;
@@ -374,11 +419,40 @@ const PriceChange = styled.span<{ $positive: boolean }>`
 
 
 const WinnerSection = styled.div<{ $winner?: boolean }>`
-  background: ${props => props.$winner ? 'var(--brutal-lime)' : 'var(--brutal-red)'};
+  background: ${props => props.$winner ? 'linear-gradient(135deg, var(--brutal-lime) 0%, var(--brutal-yellow) 100%)' : 'linear-gradient(135deg, var(--brutal-red) 0%, var(--brutal-orange) 100%)'};
   border: 4px solid var(--border-primary);
   padding: 20px;
   text-align: center;
   box-shadow: 4px 4px 0px 0px var(--border-primary);
+  position: relative;
+  overflow: hidden;
+  animation: ${props => props.$winner ? 'winnerCelebration' : 'loserShake'} 1s ease-in-out;
+  
+  @keyframes winnerCelebration {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.05) rotate(1deg); }
+    75% { transform: scale(1.05) rotate(-1deg); }
+  }
+  
+  @keyframes loserShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => props.$winner ? 
+      'repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,215,0,0.2) 15px, rgba(255,215,0,0.2) 30px)' :
+      'repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)'
+    };
+    pointer-events: none;
+  }
   
   @media (max-width: 768px) {
     border-width: 3px;
