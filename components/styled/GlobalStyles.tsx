@@ -414,24 +414,6 @@ export const Container = styled.div`
     border-left: 2px solid var(--border-primary);
     border-right: 2px solid var(--border-primary);
   }
-`-width: 600px;
-  margin: 0 auto;
-  min-height: 100vh;
-  background: var(--light-bg);
-  padding-bottom: 84px;
-
-  @media (max-width: 768px) {
-    border-left: 3px solid var(--border-primary);
-    border-right: 3px solid var(--border-primary);
-    max-width: 100%;
-    padding-bottom: 79px;
-  }
-
-  @media (max-width: 480px) {
-    border-left: 2px solid var(--border-primary);
-    border-right: 2px solid var(--border-primary);
-    padding-bottom: 74px;
-  }
 `
 
 export const StadiumBackground = styled.div`
@@ -440,7 +422,7 @@ export const StadiumBackground = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--light-bg);
+  background: var(--brutal-violet);
   z-index: -2;
 `
 
