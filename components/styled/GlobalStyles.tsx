@@ -407,17 +407,19 @@ export const Container = styled.div`
   margin: 0 auto;
   min-height: 100vh;
   background: var(--light-bg);
-  padding-bottom: 80px;
-  
+  padding-bottom: 84px;
+
   @media (max-width: 768px) {
     border-left: 3px solid var(--border-primary);
     border-right: 3px solid var(--border-primary);
     max-width: 100%;
+    padding-bottom: 79px;
   }
-  
+
   @media (max-width: 480px) {
     border-left: 2px solid var(--border-primary);
     border-right: 2px solid var(--border-primary);
+    padding-bottom: 74px;
   }
 `
 
