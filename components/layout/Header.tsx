@@ -65,75 +65,56 @@ const RightSection = styled.div`
 const BalanceContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, var(--brutal-lime) 0%, var(--brutal-cyan) 100%);
-  border: 3px solid var(--border-primary);
-  padding: 8px 12px;
-  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  gap: 6px;
+  background: var(--brutal-lime);
+  border: 2px solid var(--border-primary);
+  padding: 6px 10px;
+  box-shadow: 2px 2px 0px 0px var(--border-primary);
   font-weight: 900;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--brutal-yellow);
-    animation: balancePulse 2s ease-in-out infinite;
-  }
-  
-  @keyframes balancePulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
-  }
   
   &:hover {
-    transform: translate(1px, 1px) scale(1.05);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px 0px var(--border-primary);
+    background: var(--brutal-cyan);
   }
   
   @media (max-width: 768px) {
-    border-width: 2px;
-    padding: 6px 10px;
+    padding: 4px 8px;
     font-size: 12px;
   }
   
   @media (max-width: 480px) {
-    padding: 4px 8px;
-    font-size: 11px;
+    padding: 3px 6px;
+    font-size: 10px;
+    gap: 4px;
   }
 `
 
 const TokenIcon = styled.div`
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   background: var(--brutal-yellow);
-  border: 2px solid var(--border-primary);
+  border: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 900;
   font-family: var(--font-mono);
-  transition: all 0.2s ease;
-  animation: tokenSpin 3s linear infinite;
-  
-  @keyframes tokenSpin {
-    0% { transform: rotateY(0deg); }
-    50% { transform: rotateY(180deg); }
-    100% { transform: rotateY(360deg); }
-  }
   
   @media (max-width: 768px) {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
   }
 `
 
@@ -384,6 +365,15 @@ export function Header() {
             />
           </LogoNameBox>
         </LeftSection>
+
+        <RightSection>
+          {activeAccount?.address && (
+            <BalanceContainer onClick={handleWamClick}>
+              <TokenIcon>$D</TokenIcon>
+              <Balance>{degenBalance}</Balance>
+            </BalanceContainer>
+          )}
+        </RightSection>
       </HeaderContainer>
     </>
   )

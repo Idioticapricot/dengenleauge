@@ -32,7 +32,7 @@ const TeamContainer = styled.div`
 
 const TeamHeader = styled.div`
   text-align: center;
-  background: var(--light-bg);
+  background: var(--brutal-yellow);
   padding: 20px 16px;
   border: 3px solid var(--border-primary);
   box-shadow: 3px 3px 0px 0px var(--border-primary);

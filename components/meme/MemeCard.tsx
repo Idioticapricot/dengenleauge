@@ -5,107 +5,115 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCoins } from '@fortawesome/free-solid-svg-icons'
 
 const CardContainer = styled.div`
-  background: var(--light-bg);
+  background: var(--brutal-pink);
   border: 2px solid var(--border-primary);
   box-shadow: 2px 2px 0px 0px var(--border-primary);
-  padding: 12px;
+  padding: 8px;
   font-family: var(--font-mono);
   transition: all 0.1s ease;
-  border-radius: 8px;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
   
   @media (max-width: 768px) {
-    padding: 10px;
-    border-radius: 6px;
+    padding: 6px;
   }
   
   @media (max-width: 480px) {
-    padding: 8px;
-    border-radius: 4px;
+    padding: 4px;
     border-width: 1px;
   }
   
   &:hover {
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 0px 0px var(--border-primary);
+    background: var(--brutal-orange);
   }
 `
 
 const CardHeader = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  
-  @media (max-width: 480px) {
-    gap: 6px;
-  }
+  gap: 4px;
+  text-align: center;
+  height: 100%;
+  justify-content: center;
 `
 
 const TokenIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  background: var(--brutal-cyan);
-  border: 2px solid var(--border-primary);
+  width: 32px;
+  height: 32px;
+  background: var(--brutal-yellow);
+  border: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 900;
   color: var(--text-primary);
-  box-shadow: 1px 1px 0px 0px var(--border-primary);
   border-radius: 50%;
   flex-shrink: 0;
+  margin-bottom: 4px;
   
   @media (max-width: 768px) {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
   }
   
   @media (max-width: 480px) {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-    border-width: 1px;
+    width: 24px;
+    height: 24px;
+    font-size: 8px;
   }
 `
 
-const TokenInfo = styled.div`
-  flex: 1;
-`
+
 
 const TokenName = styled.h3`
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 900;
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  line-height: 1.2;
+  letter-spacing: 0.3px;
+  line-height: 1.1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
   
   @media (max-width: 768px) {
-    font-size: 13px;
+    font-size: 9px;
   }
   
   @media (max-width: 480px) {
-    font-size: 12px;
-    letter-spacing: 0.3px;
+    font-size: 8px;
+    letter-spacing: 0.2px;
   }
 `
 
 const TokenSymbol = styled.div`
   color: var(--text-primary);
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
-  background: var(--brutal-yellow);
-  padding: 2px 6px;
+  background: var(--brutal-cyan);
+  padding: 1px 4px;
   border: 1px solid var(--border-primary);
   display: inline-block;
-  border-radius: 4px;
-  margin-top: 2px;
+  border-radius: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
   
   @media (max-width: 480px) {
-    font-size: 9px;
-    padding: 1px 4px;
+    font-size: 7px;
+    padding: 1px 3px;
   }
 `
 
@@ -151,10 +159,8 @@ export function MemeCard({ asset }: MemeCardProps) {
             '🪙'
           )}
         </TokenIcon>
-        <TokenInfo>
-          <TokenName>{asset.name || 'Unknown Token'}</TokenName>
-          <TokenSymbol>{asset.ticker || 'N/A'}</TokenSymbol>
-        </TokenInfo>
+        <TokenName>{asset.name || 'Unknown Token'}</TokenName>
+        <TokenSymbol>{asset.ticker || 'N/A'}</TokenSymbol>
       </CardHeader>
     </CardContainer>
   )
