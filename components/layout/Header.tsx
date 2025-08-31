@@ -19,6 +19,12 @@ const HeaderContainer = styled.header`
   top: 0;
   z-index: 100;
   font-family: var(--font-mono);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
 
   @media (max-width: 768px) {
     padding: 12px;
@@ -60,17 +66,35 @@ const BalanceContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--brutal-lime);
+  background: linear-gradient(135deg, var(--brutal-lime) 0%, var(--brutal-cyan) 100%);
   border: 3px solid var(--border-primary);
   padding: 8px 12px;
   box-shadow: 3px 3px 0px 0px var(--border-primary);
   font-weight: 900;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--brutal-yellow);
+    animation: balancePulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes balancePulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
   
   &:hover {
-    transform: translate(1px, 1px);
+    transform: translate(1px, 1px) scale(1.05);
     box-shadow: 2px 2px 0px 0px var(--border-primary);
   }
   
@@ -97,6 +121,14 @@ const TokenIcon = styled.div`
   font-size: 12px;
   font-weight: 900;
   font-family: var(--font-mono);
+  transition: all 0.2s ease;
+  animation: tokenSpin 3s linear infinite;
+  
+  @keyframes tokenSpin {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(180deg); }
+    100% { transform: rotateY(360deg); }
+  }
   
   @media (max-width: 768px) {
     width: 20px;
@@ -124,11 +156,16 @@ const AddButton = styled.button`
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  transition: all 0.1s ease;
+  transition: all 0.2s ease;
   
   &:hover {
     background: var(--brutal-cyan);
-    transform: translate(1px, 1px);
+    transform: translate(1px, 1px) rotate(90deg);
+    box-shadow: 0 0 10px var(--brutal-cyan);
+  }
+  
+  &:active {
+    transform: translate(2px, 2px) rotate(90deg) scale(0.95);
   }
   
   @media (max-width: 768px) {
@@ -204,16 +241,33 @@ const LogoNameBox = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--brutal-lime);
+  background: linear-gradient(135deg, var(--brutal-lime) 0%, var(--brutal-yellow) 100%);
   border: 3px solid var(--border-primary);
   padding: 8px 16px;
   box-shadow: 3px 3px 0px 0px var(--border-primary);
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+  }
 
   &:hover {
-    transform: translate(1px, 1px);
+    transform: translate(1px, 1px) scale(1.02);
     box-shadow: 2px 2px 0px 0px var(--border-primary);
+    
+    &::before {
+      left: 100%;
+    }
   }
 
   @media (max-width: 768px) {
