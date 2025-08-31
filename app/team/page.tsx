@@ -32,7 +32,7 @@ const TeamContainer = styled.div`
 
 const TeamHeader = styled.div`
   text-align: center;
-  background: var(--brutal-yellow);
+  background: var(--brutal-violet);
   padding: 20px 16px;
   border: 3px solid var(--border-primary);
   box-shadow: 3px 3px 0px 0px var(--border-primary);
@@ -87,10 +87,20 @@ const TeamSubtitle = styled.p`
 `
 
 const CurrentTeamSection = styled.div`
-  background: var(--light-bg);
-  border: 4px solid var(--border-primary);
-  padding: 24px;
-  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  background: var(--brutal-orange);
+  border: 3px solid var(--border-primary);
+  padding: 20px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-width: 2px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-width: 2px;
+  }
 `
 
 const SectionTitle = styled.h2`
@@ -187,10 +197,20 @@ const BeastLevel = styled.div`
 `
 
 const MyBeastsSection = styled.div`
-  background: var(--light-bg);
-  border: 4px solid var(--border-primary);
-  padding: 24px;
-  box-shadow: 4px 4px 0px 0px var(--border-primary);
+  background: var(--brutal-cyan);
+  border: 3px solid var(--border-primary);
+  padding: 20px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-width: 2px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-width: 2px;
+  }
 `
 
 const BeastGrid = styled.div`

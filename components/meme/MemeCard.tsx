@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCoins } from '@fortawesome/free-solid-svg-icons'
 
 const CardContainer = styled.div`
-  background: var(--brutal-pink);
+  background: var(--light-bg);
   border: 2px solid var(--border-primary);
   box-shadow: 2px 2px 0px 0px var(--border-primary);
   padding: 8px;
@@ -29,7 +29,7 @@ const CardContainer = styled.div`
   &:hover {
     transform: translate(1px, 1px);
     box-shadow: 1px 1px 0px 0px var(--border-primary);
-    background: var(--brutal-orange);
+    background: var(--brutal-yellow);
   }
 `
 
