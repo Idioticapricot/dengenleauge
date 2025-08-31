@@ -1,12 +1,243 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import styled from "styled-components"
+import { Button } from "../styled/GlobalStyles"
 import { useWallet } from "@txnlab/use-wallet-react"
 import { useRouter } from "next/navigation"
-import { algodClient } from "../../lib/algorand-config"
 import { SimpleConnectButton } from "../wallet/SimpleConnectButton"
 import Image from "next/image"
+
+const HeaderContainer = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--light-bg);
+  border-bottom: 4px solid var(--border-primary);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  font-family: var(--font-mono);
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    border-bottom-width: 3px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+    border-bottom-width: 2px;
+  }
+`
+
+const LeftSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+`
+
+const RightSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
+`
+
+const BalanceContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--brutal-lime);
+  border: 3px solid var(--border-primary);
+  padding: 8px 12px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  
+  &:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+  }
+  
+  @media (max-width: 768px) {
+    border-width: 2px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+`
+
+const TokenIcon = styled.div`
+  width: 24px;
+  height: 24px;
+  background: var(--brutal-yellow);
+  border: 2px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  
+  @media (max-width: 768px) {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+`
+
+const Balance = styled.span`
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+`
+
+const AddButton = styled.button`
+  width: 24px;
+  height: 24px;
+  background: var(--brutal-yellow);
+  border: 2px solid var(--border-primary);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  transition: all 0.1s ease;
+  
+  &:hover {
+    background: var(--brutal-cyan);
+    transform: translate(1px, 1px);
+  }
+  
+  @media (max-width: 768px) {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+  }
+`
+
+const PopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`
+
+const PopupContent = styled.div`
+  background: var(--light-bg);
+  border: 4px solid var(--border-primary);
+  box-shadow: 8px 8px 0px 0px var(--border-primary);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  font-family: var(--font-mono);
+  
+  @media (max-width: 768px) {
+    border-width: 3px;
+    padding: 24px;
+  }
+`
+
+const PopupTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  text-align: center;
+`
+
+const PopupText = styled.p`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 24px 0;
+  text-align: center;
+`
+
+const PopupButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+`
+
+const PopupButton = styled(Button)`
+  flex: 1;
+  font-size: 14px;
+  padding: 12px;
+  text-transform: uppercase;
+`
+
+const LogoNameBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--brutal-lime);
+  border: 3px solid var(--border-primary);
+  padding: 8px 16px;
+  box-shadow: 3px 3px 0px 0px var(--border-primary);
+  cursor: pointer;
+  transition: all 0.1s ease;
+
+  &:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px 0px var(--border-primary);
+  }
+
+  @media (max-width: 768px) {
+    border-width: 2px;
+    padding: 6px 12px;
+  }
+`
+
+const AppName = styled.span`
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
+`
 
 
 export function Header() {
@@ -76,83 +307,49 @@ export function Header() {
   return (
     <>
       {showWamPopup && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-5"
-          onClick={() => setShowWamPopup(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 max-w-md w-full font-mono md:border-3 md:shadow-[4px_4px_0px_0px_#000] md:p-6 sm:border-2 sm:shadow-[2px_2px_0px_0px_#000] sm:p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-black text-black mb-4 uppercase tracking-wider text-center md:text-xl md:mb-3 sm:text-lg sm:mb-2.5">
-              💰 BUY $DEGEN
-            </h2>
-            <p className="text-sm font-bold text-black mb-6 text-center md:text-xs md:mb-5 sm:text-xs sm:mb-4">
+        <PopupOverlay onClick={() => setShowWamPopup(false)}>
+          <PopupContent onClick={(e) => e.stopPropagation()}>
+            <PopupTitle>💰 BUY $DEGEN</PopupTitle>
+            <PopupText>
               Get more $DEGEN tokens to create beasts and battle other trainers!
-            </p>
-            <div className="flex gap-3 sm:flex-col sm:gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex-1 bg-[#FFE500] border-4 border-black px-3 py-3 font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 transition-all duration-150 md:border-3 md:px-2.5 md:py-2.5 md:text-xs sm:border-2 sm:px-2 sm:py-2 sm:text-xs"
-                onClick={() => setShowWamPopup(false)}
-              >
+            </PopupText>
+            <PopupButtons>
+              <PopupButton onClick={() => setShowWamPopup(false)}>
                 Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex-1 bg-[#79F7FF] border-4 border-black px-3 py-3 font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 transition-all duration-150 md:border-3 md:px-2.5 md:py-2.5 md:text-xs sm:border-2 sm:px-2 sm:py-2 sm:text-xs"
-                onClick={handleGoToDeposit}
-              >
+              </PopupButton>
+              <PopupButton onClick={handleGoToDeposit}>
                 Go to Deposit
-              </motion.button>
-            </div>
-          </motion.div>
-        </motion.div>
+              </PopupButton>
+            </PopupButtons>
+          </PopupContent>
+        </PopupOverlay>
       )}
 
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="flex items-center justify-between p-4 bg-white border-b-4 border-black sticky top-0 z-[100] font-mono backdrop-blur-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.1)] md:p-3 md:border-b-3 md:flex-wrap md:gap-2 sm:p-2.5 sm:border-b-2 sm:gap-1.5"
-      >
-        <div className="flex items-center gap-3 md:gap-2">
-          {/* Left section - can add logo or other elements here */}
-        </div>
+      <HeaderContainer>
+        <LeftSection>
+          <LogoNameBox onClick={() => router.push('/')}>
+            <Image
+              src="/wolf-removebg-preview.png"
+              alt="Degen League Logo"
+              width={40}
+              height={40}
+              priority
+            />
+            <AppName>DEGEN LEAGUE</AppName>
+          </LogoNameBox>
+        </LeftSection>
 
-        <div className="flex items-center gap-3 flex-shrink-0 md:gap-2 md:flex-wrap md:justify-end sm:gap-1.5 sm:w-full sm:justify-between">
+        <RightSection>
           {activeAccount?.address && (
-            <motion.div
-              whileHover={{ scale: 1.05, x: 2, y: 2 }}
-              whileTap={{ scale: 0.95, x: 4, y: 4 }}
-              className="flex items-center gap-2 bg-[#9dfc7c] border-3 border-black p-2 shadow-[3px_3px_0px_0px_#000] font-black uppercase cursor-pointer transition-all duration-100 hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 md:border-2 md:p-1.5 md:shadow-[2px_2px_0px_0px_#000] md:text-xs md:hover:translate-x-0 md:hover:translate-y-0 md:hover:shadow-[2px_2px_0px_0px_#000] sm:p-1 sm:text-xs sm:gap-1.5"
-              onClick={handleWamClick}
-            >
-              <div className="w-6 h-6 bg-[#FFE500] border-2 border-black flex items-center justify-center text-xs font-black font-mono md:w-5 md:h-5 md:text-[10px] md:border-1 sm:w-4.5 sm:h-4.5 sm:text-[9px]">
-                $D
-              </div>
-              <span className="font-black text-black font-mono sm:text-xs">
-                {degenBalance}
-              </span>
-              <motion.button
-                whileHover={{ rotate: 180 }}
-                className="w-6 h-6 bg-[#FFE500] border-2 border-black text-black text-base font-black flex items-center justify-center font-mono cursor-pointer transition-all duration-100 hover:bg-[#79F7FF] hover:translate-x-1 hover:translate-y-1 md:w-5 md:h-5 md:text-sm md:border-1 sm:w-4.5 sm:h-4.5 sm:text-xs"
-                onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}
-              >
-                +
-              </motion.button>
-            </motion.div>
+            <BalanceContainer onClick={handleWamClick}>
+              <TokenIcon>$D</TokenIcon>
+              <Balance>{degenBalance}</Balance>
+              <AddButton onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}>+</AddButton>
+            </BalanceContainer>
           )}
           <SimpleConnectButton />
-        </div>
-      </motion.header>
+        </RightSection>
+      </HeaderContainer>
     </>
   )
 }
