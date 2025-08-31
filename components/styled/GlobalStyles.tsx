@@ -408,11 +408,7 @@ export const Container = styled.div`
   min-height: 100vh;
   background: var(--light-bg);
   position: relative;
-  overflow-x: hidden;
-  overflow-y: visible;
-  border-left: 4px solid var(--border-primary);
-  border-right: 4px solid var(--border-primary);
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding-bottom: 80px;
   
   @media (max-width: 768px) {
     border-left: 3px solid var(--border-primary);
@@ -468,28 +464,17 @@ export const StadiumBackground = styled.div`
 `
 
 export const MainContent = styled.main`
-  padding: 20px 16px 100px;
+  padding: 20px 16px 20px;
   position: relative;
   z-index: 1;
-  animation: fadeInUp 0.6s ease-out;
-  
-  @keyframes fadeInUp {
-    0% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  flex: 1;
   
   @media (max-width: 768px) {
-    padding: 16px 12px 120px;
+    padding: 16px 12px 16px;
   }
   
   @media (max-width: 480px) {
-    padding: 12px 8px 120px;
+    padding: 12px 8px 12px;
   }
 `
 

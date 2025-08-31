@@ -7,19 +7,15 @@ import { Users, Trophy, User, Swords, DollarSign } from "lucide-react"
 const NavContainer = styled.nav`
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 600px;
-  background: linear-gradient(180deg, var(--light-bg) 0%, rgba(255,255,255,0.95) 100%);
+  background: var(--light-bg);
   border-top: 4px solid var(--border-primary);
-  border-left: 4px solid var(--border-primary);
-  border-right: 4px solid var(--border-primary);
-  padding: 16px 0 8px;
-  z-index: 100;
+  padding: 12px 0 8px;
+  z-index: 1000;
   font-family: var(--font-mono);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   
   @media (max-width: 768px) {
     border-width: 3px;
