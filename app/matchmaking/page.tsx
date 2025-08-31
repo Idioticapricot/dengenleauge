@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useSupabaseSocket } from '../../hooks/useSupabaseSocket'
+import { supabase } from '../../lib/supabase'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '../../components/layout/AppLayout'
@@ -92,7 +92,6 @@ const CountdownText = styled.div`
 `
 
 export default function MatchmakingPage() {
-  const { isConnected, currentRoom, joinQueue, leaveQueue, queueSize, testConnection } = useSupabaseSocket()
   const { activeAccount } = useWallet()
   const router = useRouter()
   const [inQueue, setInQueue] = useState(false)
@@ -100,10 +99,11 @@ export default function MatchmakingPage() {
   const [opponent, setOpponent] = useState<any>(null)
   const [countdown, setCountdown] = useState(3)
   const [selectedBattleType, setSelectedBattleType] = useState<'pvp' | 'pve'>('pvp')
-  const [connectionTested, setConnectionTested] = useState(false)
-  const [mockRoom, setMockRoom] = useState<any>(null)
+  const [queueSize, setQueueSize] = useState(0)
+  const [isConnected, setIsConnected] = useState(false)
+  const [currentRoom, setCurrentRoom] = useState<any>(null)
 
-  const handleJoinQueue = () => {
+  const handleJoinQueue = async () => {
     if (!activeAccount?.address) {
       alert('Please connect your wallet first!')
       return
@@ -127,56 +127,95 @@ export default function MatchmakingPage() {
       id: activeAccount.address,
       username: activeAccount.address.slice(0, 8) + '...',
       walletAddress: activeAccount.address,
-      team: JSON.parse(savedTeam)
+      team: JSON.parse(savedTeam),
+      battleType: selectedBattleType
     }
 
     console.log('Joining queue with data:', playerData)
-    joinQueue(playerData, selectedBattleType)
-    setInQueue(true)
+
+    try {
+      // Send join queue event via Supabase
+      await supabase
+        .channel('matchmaking-updates')
+        .send({
+          type: 'broadcast',
+          event: 'join-queue',
+          payload: playerData
+        })
+
+      setInQueue(true)
+      console.log('Successfully joined matchmaking queue')
+    } catch (error) {
+      console.error('Failed to join queue:', error)
+      alert('Failed to join matchmaking queue. Please try again.')
+    }
   }
 
-  const handleLeaveQueue = () => {
+  const handleLeaveQueue = async () => {
     if (!activeAccount?.address) return
-    leaveQueue(activeAccount.address)
-    setInQueue(false)
-    console.log('Left matchmaking queue')
+
+    try {
+      await supabase
+        .channel('matchmaking-updates')
+        .send({
+          type: 'broadcast',
+          event: 'leave-queue',
+          payload: { id: activeAccount.address }
+        })
+
+      setInQueue(false)
+      console.log('Left matchmaking queue')
+    } catch (error) {
+      console.error('Failed to leave queue:', error)
+    }
   }
 
+  // Set up Supabase listeners
   useEffect(() => {
-    const roomToUse = currentRoom || mockRoom
-    if (roomToUse && roomToUse.status === 'waiting') {
-      setMatchFound(true)
-      setOpponent(roomToUse.players.find((p: any) => p.id !== activeAccount?.address))
+    const matchmakingChannel = supabase.channel('matchmaking-updates')
+    const battleRoomsChannel = supabase.channel('battle-rooms')
 
-      setTimeout(() => {
-        console.log('🎯 Redirecting to:', selectedBattleType === 'pvp' ? `/game/${roomToUse.id}` : '/game/PVE')
-        if (selectedBattleType === 'pvp') {
-          router.push(`/game/${roomToUse.id}`)
+    matchmakingChannel
+      .on('broadcast', { event: 'match-found' }, ({ payload }) => {
+        console.log('Match found:', payload)
+        setCurrentRoom(payload)
+        setMatchFound(true)
+        setOpponent(payload.players.find((p: any) => p.id !== activeAccount?.address))
+
+        // Start countdown and redirect
+        const countdownInterval = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval)
+              router.push(`/game/${payload.roomId}`)
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+      })
+      .on('broadcast', { event: 'queue-update' }, ({ payload }) => {
+        setQueueSize(payload.queueSize)
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true)
         } else {
-          router.push('/game/PVE')
+          setIsConnected(false)
         }
-      }, 3000)
+      })
 
-      const countdownInterval = setInterval(() => {
-        setCountdown(prev => prev - 1)
-      }, 1000)
+    battleRoomsChannel
+      .on('broadcast', { event: 'battle-start' }, ({ payload }) => {
+        console.log('Battle started:', payload)
+      })
+      .subscribe()
 
-      setTimeout(() => clearInterval(countdownInterval), 3000)
+    return () => {
+      matchmakingChannel.unsubscribe()
+      battleRoomsChannel.unsubscribe()
     }
-  }, [currentRoom, mockRoom, activeAccount?.address, router])
-
-  // Periodic queue size refresh
-  useEffect(() => {
-    if (inQueue && !matchFound) {
-      const interval = setInterval(() => {
-        // The queue size is already updated via WebSocket events
-        // This interval is just a backup
-        console.log('Current queue size:', queueSize)
-      }, 5000)
-
-      return () => clearInterval(interval)
-    }
-  }, [inQueue, matchFound, queueSize])
+  }, [activeAccount?.address, router])
 
   if (!activeAccount?.address) {
     return (
@@ -287,11 +326,6 @@ export default function MatchmakingPage() {
                 <div style={{ fontSize: '12px', opacity: 0.8 }}>
                   Wallet: {activeAccount?.address ? `${activeAccount.address.slice(0, 10)}...` : 'Not Connected'}
                 </div>
-                {connectionTested && (
-                  <div style={{ fontSize: '12px', marginTop: '8px', color: isConnected ? 'var(--primary-green)' : 'var(--red-primary)' }}>
-                    Connection Test: {isConnected ? '✅ Passed' : '❌ Failed'}
-                  </div>
-                )}
               </div>
             )}
 
@@ -303,51 +337,6 @@ export default function MatchmakingPage() {
                 🎯 FIND {selectedBattleType.toUpperCase()} MATCH
               </Button>
 
-              {selectedBattleType === 'pvp' && (
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                  <Button
-                    onClick={async () => {
-                      // Test connection
-                      const connected = await testConnection()
-                      setConnectionTested(true)
-                      alert(connected ? '✅ Connection successful!' : '❌ Connection failed!')
-                    }}
-                    style={{
-                      fontSize: '12px',
-                      padding: '8px 16px',
-                      background: 'var(--brutal-yellow)',
-                      opacity: 0.8
-                    }}
-                  >
-                    🔧 Test Connection
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      // Debug button to show current status
-                      console.log('🔍 Debug Info:')
-                      console.log('- Queue size:', queueSize)
-                      console.log('- Is connected:', isConnected)
-                      console.log('- In queue:', inQueue)
-                      console.log('- Connection tested:', connectionTested)
-                      console.log('- Active account:', activeAccount?.address)
-
-                      alert(`Debug Info:
-Queue Size: ${queueSize}
-Connected: ${isConnected ? 'Yes' : 'No'}
-In Queue: ${inQueue ? 'Yes' : 'No'}
-Wallet: ${activeAccount?.address ? 'Connected' : 'Not Connected'}`)
-                    }}
-                    style={{
-                      fontSize: '12px',
-                      padding: '8px 16px',
-                      background: 'var(--brutal-cyan)',
-                      opacity: 0.8
-                    }}
-                  >
-                    📊 Debug Info
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -397,29 +386,6 @@ Wallet: ${activeAccount?.address ? 'Connected' : 'Not Connected'}`)
                 style={{ background: 'var(--red-primary)', fontSize: '16px' }}
               >
                 ❌ LEAVE QUEUE
-              </Button>
-              <Button
-                onClick={() => {
-                  // Quick match button for testing - creates instant match
-                  const mockRoomId = `test_${Date.now()}`
-                  console.log('Creating quick test match:', mockRoomId)
-
-                  // Simulate match found event
-                  setMockRoom({
-                    id: mockRoomId,
-                    players: [
-                      { id: activeAccount?.address || 'player1', username: 'Player 1', team: [] },
-                      { id: 'mock-opponent', username: 'Mock Opponent', team: [] }
-                    ],
-                    status: 'waiting',
-                    battleType: 'pvp'
-                  })
-                  setMatchFound(true)
-                  setOpponent({ id: 'mock-opponent', username: 'Mock Opponent' })
-                }}
-                style={{ background: 'var(--brutal-yellow)', fontSize: '14px', opacity: 0.8 }}
-              >
-                ⚡ Quick Test Match
               </Button>
             </div>
           </SearchingSection>

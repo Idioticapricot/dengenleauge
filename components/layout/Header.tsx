@@ -280,7 +280,7 @@ export function Header() {
     <HeaderContainer>
       <LeftSection>
         <BalanceContainer onClick={handleWamClick}>
-          <TokenIcon>$D</TokenIcon>
+          <TokenIcon>$DEGEN</TokenIcon>
           <Balance>{degenBalance}</Balance>
           <AddButton onClick={(e) => { e.stopPropagation(); setShowDegenSwap(true); }}>+</AddButton>
         </BalanceContainer>
