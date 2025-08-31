@@ -1,198 +1,12 @@
 "use client"
 
-import styled from "styled-components"
+import { useRef } from "react"
+import { motion } from "framer-motion"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Users, Calendar, Trophy, User, Swords, BarChart3, Zap, DollarSign } from "lucide-react"
+import { useSwipe } from "../../hooks/useSwipe"
 
-const NavContainer = styled.nav`
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 600px;
-  background: var(--light-bg);
-  border-top: var(--border-width) solid var(--border-primary);
-  border-left: var(--border-width) solid var(--border-primary);
-  border-right: var(--border-width) solid var(--border-primary);
-  padding: var(--mobile-padding) 0 calc(var(--mobile-padding) - 4px);
-  z-index: 100;
-  font-family: var(--font-mono);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  @media (max-width: 768px) {
-    border-width: var(--border-width);
-    padding: var(--mobile-padding) 0 calc(var(--mobile-padding) - 2px);
-    max-width: 100%;
-    box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.1);
-  }
-
-  @media (max-width: 480px) {
-    border-width: var(--border-width);
-    padding: var(--mobile-padding) 0 calc(var(--mobile-padding) - 4px);
-    box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
-  }
-`
-
-const NavList = styled.div`
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 0 8px;
-  
-  @media (max-width: 480px) {
-    padding: 0 4px;
-  }
-`
-
-const NavItem = styled(Link)<{ $active: boolean; $isBattle?: boolean }>`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: ${(props) => (props.$isBattle ? "14px 18px" : "10px 14px")};
-  border-radius: 0;
-  text-decoration: none;
-  color: var(--text-primary);
-  background: ${(props) => {
-    if (props.$isBattle && props.$active) return "var(--brutal-red)"
-    if (props.$isBattle) return "var(--brutal-orange)"
-    if (props.$active) return "var(--brutal-yellow)"
-    return "transparent"
-  }};
-  border: ${(props) => {
-    if (props.$isBattle) return "var(--border-width) solid var(--border-primary)"
-    if (props.$active) return "var(--border-width) solid var(--border-primary)"
-    return "var(--border-width) solid transparent"
-  }};
-  box-shadow: ${(props) => {
-    if (props.$isBattle && props.$active) return "var(--shadow-brutal)"
-    if (props.$isBattle) return "var(--shadow-brutal-sm)"
-    if (props.$active) return "var(--shadow-brutal-sm)"
-    return "none"
-  }};
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 900;
-  text-transform: uppercase;
-  transform: ${(props) => (props.$isBattle ? "scale(1.05)" : "scale(1)")};
-  min-height: var(--min-touch-target);
-  min-width: var(--min-touch-target);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.3s ease, height 0.3s ease;
-  }
-
-  &:hover {
-    background: ${(props) => (props.$isBattle ? "var(--brutal-red)" : "var(--brutal-lime)")};
-    border: var(--border-width) solid var(--border-primary);
-    box-shadow: ${(props) => (props.$isBattle ? "var(--shadow-brutal-sm)" : "var(--shadow-brutal-sm)")} 0px 0px var(--border-primary);
-    transform: ${(props) => (props.$isBattle ? "scale(1.05) translate(1px, 1px)" : "translate(1px, 1px)")};
-  }
-
-  &:active {
-    transform: ${(props) => (props.$isBattle ? "scale(1.05) translate(2px, 2px)" : "translate(2px, 2px)")};
-    box-shadow: ${(props) => (props.$isBattle ? "1px 1px" : "1px 1px")} 0px 0px var(--border-primary);
-
-    &::before {
-      width: 100px;
-      height: 100px;
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: ${(props) => (props.$isBattle ? "10px 12px" : "6px 8px")};
-    border-width: var(--border-width);
-    box-shadow: ${(props) => {
-      if (props.$isBattle && props.$active) return "var(--shadow-brutal-sm)"
-      if (props.$isBattle) return "var(--shadow-brutal-sm)"
-      if (props.$active) return "var(--shadow-brutal-sm)"
-      return "none"
-    }};
-    transform: ${(props) => (props.$isBattle ? "scale(1.05)" : "scale(1)")};
-
-    &:hover {
-      border-width: var(--border-width);
-      box-shadow: ${(props) => (props.$isBattle ? "var(--shadow-brutal-sm)" : "var(--shadow-brutal-sm)")} 0px 0px var(--border-primary);
-      transform: ${(props) => (props.$isBattle ? "scale(1.05) translate(1px, 1px)" : "translate(1px, 1px)")};
-    }
-
-    &:active {
-      transform: ${(props) => (props.$isBattle ? "scale(1.05) translate(1px, 1px)" : "translate(1px, 1px)")};
-      box-shadow: ${(props) => (props.$isBattle ? "1px 1px" : "1px 1px")} 0px 0px var(--border-primary);
-    }
-  }
-
-  @media (max-width: 480px) {
-    padding: ${(props) => (props.$isBattle ? "8px 10px" : "4px 6px")};
-    border-width: var(--border-width);
-    box-shadow: ${(props) => {
-      if (props.$isBattle && props.$active) return "var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary)"
-      if (props.$isBattle) return "var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary)"
-      if (props.$active) return "var(--shadow-offset) var(--shadow-offset) 0px 0px var(--border-primary)"
-      return "none"
-    }};
-    transform: none;
-
-    &:hover {
-      transform: none;
-      box-shadow: ${(props) => (props.$isBattle ? "var(--shadow-offset) var(--shadow-offset)" : "var(--shadow-offset) var(--shadow-offset)")} 0px 0px var(--border-primary);
-    }
-
-    &:active {
-      transform: none;
-      box-shadow: ${(props) => (props.$isBattle ? "1px 1px" : "1px 1px")} 0px 0px var(--border-primary);
-    }
-  }
-`
-
-const NavIcon = styled.div`
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  @media (max-width: 768px) {
-    width: 20px;
-    height: 20px;
-  }
-  
-  @media (max-width: 480px) {
-    width: 18px;
-    height: 18px;
-  }
-`
-
-const NavLabel = styled.span`
-  font-size: 10px;
-  font-weight: 900;
-  font-family: var(--font-mono);
-  letter-spacing: 0.5px;
-  
-  @media (max-width: 768px) {
-    font-size: 9px;
-    letter-spacing: 0.3px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 8px;
-    letter-spacing: 0.2px;
-  }
-`
 
 const navItems = [
   { href: "/team", icon: Users, label: "Team" },
@@ -205,18 +19,100 @@ const navItems = [
 export function BottomNavigation() {
   const pathname = usePathname()
 
+  // Add swipe gesture support
+  const navRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => {
+      // Navigate to next item or cycle through navigation
+      const currentIndex = navItems.findIndex(item => item.href === pathname)
+      const nextIndex = (currentIndex + 1) % navItems.length
+      // Could implement navigation logic here
+    },
+    onSwipeRight: () => {
+      // Navigate to previous item
+      const currentIndex = navItems.findIndex(item => item.href === pathname)
+      const prevIndex = currentIndex === 0 ? navItems.length - 1 : currentIndex - 1
+      // Could implement navigation logic here
+    }
+  })
+
   return (
-    <NavContainer>
-      <NavList>
-        {navItems.map(({ href, icon: Icon, label, isBattle }) => (
-          <NavItem key={href} href={href} $active={pathname === href} $isBattle={isBattle}>
-            <NavIcon>
-              <Icon size={isBattle ? 24 : 20} />
-            </NavIcon>
-            <NavLabel>{label}</NavLabel>
-          </NavItem>
-        ))}
-      </NavList>
-    </NavContainer>
+    <motion.nav
+      ref={navRef}
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-[600px] bg-white border-t-4 border-l-4 border-r-4 border-black pb-1 pt-4 px-0 z-[100] font-mono shadow-[-4px_0_20px_rgba(0,0,0,0.1)] backdrop-blur-[10px] md:border-t-3 md:border-l-3 md:border-r-3 md:pb-0.5 md:pt-3 md:max-w-full sm:border-t-2 sm:border-l-2 sm:border-r-2 sm:shadow-[-2px_0_15px_rgba(0,0,0,0.1)]"
+    >
+      <div className="flex justify-around items-center px-2 sm:px-1">
+        {navItems.map(({ href, icon: Icon, label, isBattle }) => {
+          const isActive = pathname === href
+          const baseClasses = "flex flex-col items-center gap-1 text-decoration-none text-black font-black uppercase relative overflow-hidden min-h-[44px] min-w-[44px] transition-all duration-150 ease-out"
+          const paddingClasses = isBattle ? "py-3.5 px-4.5" : "py-2.5 px-3.5"
+          const responsivePadding = isBattle
+            ? "md:py-2.5 md:px-3 sm:py-2 sm:px-2.5"
+            : "md:py-1.5 md:px-2 sm:py-1 sm:px-1.5"
+
+          const backgroundClasses = isBattle && isActive
+            ? "bg-[#fa7a7a]"
+            : isBattle
+            ? "bg-[#FF965B]"
+            : isActive
+            ? "bg-[#FFE500]"
+            : "bg-transparent"
+
+          const borderClasses = isBattle || isActive
+            ? "border-4 border-black md:border-3 sm:border-2"
+            : "border-4 border-transparent md:border-3 sm:border-2"
+
+          const shadowClasses = isBattle && isActive
+            ? "shadow-[6px_6px_0px_0px_#000]"
+            : isBattle
+            ? "shadow-[3px_3px_0px_0px_#000]"
+            : isActive
+            ? "shadow-[3px_3px_0px_0px_#000]"
+            : "shadow-none"
+
+          const transformClasses = isBattle ? "scale-105" : "scale-100"
+
+          return (
+            <motion.div
+              key={href}
+              whileHover={{
+                scale: isBattle ? 1.1 : 1.05,
+                x: 1,
+                y: 1,
+                backgroundColor: isBattle ? "#fa7a7a" : "#9dfc7c"
+              }}
+              whileTap={{
+                scale: isBattle ? 1.1 : 1.02,
+                x: 2,
+                y: 2,
+                boxShadow: isBattle ? "2px 2px 0px 0px #000" : "1px 1px 0px 0px #000"
+              }}
+              className={`${baseClasses} ${paddingClasses} ${responsivePadding} ${backgroundClasses} ${borderClasses} ${shadowClasses} ${transformClasses} hover:border-black hover:shadow-[3px_3px_0px_0px_#000] md:hover:shadow-[2px_2px_0px_0px_#000] sm:hover:shadow-[1px_1px_0px_0px_#000]`}
+            >
+              <motion.div
+                whileHover={{ rotate: isBattle ? 10 : 5 }}
+                className="w-6 h-6 flex items-center justify-center md:w-5 md:h-5 sm:w-4.5 sm:h-4.5"
+              >
+                <Icon size={isBattle ? 24 : 20} className="md:w-5 md:h-5 sm:w-4.5 sm:h-4.5" />
+              </motion.div>
+              <span className="text-[10px] font-black font-mono tracking-[0.5px] md:text-[9px] md:tracking-[0.3px] sm:text-[8px] sm:tracking-[0.2px]">
+                {label}
+              </span>
+
+              {/* Ripple effect on tap */}
+              <motion.div
+                className="absolute top-1/2 left-1/2 w-0 h-0 bg-white/30 rounded-full -translate-x-1/2 -translate-y-1/2"
+                whileTap={{
+                  width: "100px",
+                  height: "100px",
+                  transition: { duration: 0.3 }
+                }}
+              />
+            </motion.div>
+          )
+        })}
+      </div>
+    </motion.nav>
   )
 }

@@ -1,383 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import styled from "styled-components"
-import { Button } from "../styled/GlobalStyles"
+import { motion } from "framer-motion"
 import { useWallet } from "@txnlab/use-wallet-react"
 import { useRouter } from "next/navigation"
 import { algodClient } from "../../lib/algorand-config"
 import { SimpleConnectButton } from "../wallet/SimpleConnectButton"
 import Image from "next/image"
-
-const HeaderContainer = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  background: var(--light-bg);
-  border-bottom: 4px solid var(--border-primary);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  font-family: var(--font-mono);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 768px) {
-    padding: 12px;
-    border-bottom-width: 3px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 10px 8px;
-    border-bottom-width: 2px;
-    gap: 6px;
-  }
-`
-
-const LeftSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
-  @media (max-width: 768px) {
-    gap: 8px;
-  }
-`
-
-const BalanceContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--brutal-lime);
-  border: 3px solid var(--border-primary);
-  border-radius: 0;
-  padding: 8px 12px;
-  box-shadow: 3px 3px 0px 0px var(--border-primary);
-  font-weight: 900;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.1s ease;
-  
-  &:hover {
-    transform: translate(1px, 1px);
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-  }
-  
-  @media (max-width: 768px) {
-    border-width: 2px;
-    padding: 6px 10px;
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-    font-size: 12px;
-    
-    &:hover {
-      transform: none;
-      box-shadow: 2px 2px 0px 0px var(--border-primary);
-    }
-  }
-  
-  @media (max-width: 480px) {
-    padding: 4px 8px;
-    font-size: 11px;
-    gap: 6px;
-  }
-`
-
-const TokenIcon = styled.div`
-  width: 24px;
-  height: 24px;
-  background: var(--brutal-yellow);
-  border: 2px solid var(--border-primary);
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 900;
-  font-family: var(--font-mono);
-  
-  @media (max-width: 768px) {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
-    border-width: 1px;
-  }
-  
-  @media (max-width: 480px) {
-    width: 18px;
-    height: 18px;
-    font-size: 9px;
-  }
-`
-
-const Balance = styled.span`
-  font-weight: 900;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  
-  @media (max-width: 480px) {
-    font-size: 12px;
-  }
-`
-
-const AddButton = styled.button`
-  width: 24px;
-  height: 24px;
-  border-radius: 0;
-  background: var(--brutal-yellow);
-  border: 2px solid var(--border-primary);
-  color: var(--text-primary);
-  font-size: 16px;
-  font-weight: 900;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  transition: all 0.1s ease;
-  
-  &:hover {
-    background: var(--brutal-cyan);
-    transform: translate(1px, 1px);
-  }
-  
-  @media (max-width: 768px) {
-    width: 20px;
-    height: 20px;
-    font-size: 14px;
-    border-width: 1px;
-  }
-  
-  @media (max-width: 480px) {
-    width: 18px;
-    height: 18px;
-    font-size: 12px;
-  }
-`
-
-const PopupOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-`
-
-const PopupContent = styled.div`
-  background: var(--light-bg);
-  border: 4px solid var(--border-primary);
-  box-shadow: 8px 8px 0px 0px var(--border-primary);
-  padding: 32px;
-  max-width: 400px;
-  width: 90%;
-  font-family: var(--font-mono);
-  
-  @media (max-width: 768px) {
-    border-width: 3px;
-    box-shadow: 4px 4px 0px 0px var(--border-primary);
-    padding: 24px;
-  }
-  
-  @media (max-width: 480px) {
-    border-width: 2px;
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-    padding: 20px;
-  }
-`
-
-const PopupTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 900;
-  color: var(--text-primary);
-  margin: 0 0 16px 0;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-align: center;
-  
-  @media (max-width: 768px) {
-    font-size: 20px;
-    margin-bottom: 12px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-`
-
-const PopupText = styled.p`
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 24px 0;
-  text-align: center;
-  
-  @media (max-width: 768px) {
-    font-size: 13px;
-    margin-bottom: 20px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 12px;
-    margin-bottom: 16px;
-  }
-`
-
-const PopupButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  
-  @media (max-width: 480px) {
-    flex-direction: column;
-    gap: 8px;
-  }
-`
-
-const PopupButton = styled(Button)`
-  flex: 1;
-  font-size: 14px;
-  padding: 12px;
-  text-transform: uppercase;
-  
-  @media (max-width: 768px) {
-    font-size: 13px;
-    padding: 10px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 12px;
-    padding: 8px;
-  }
-`
-
-
-
-const RightSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-
-  @media (max-width: 768px) {
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  @media (max-width: 480px) {
-    gap: 6px;
-    width: 100%;
-    justify-content: space-between;
-  }
-`
-
-const ProfileButton = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--brutal-cyan);
-  border: 3px solid var(--border-primary);
-  border-radius: 0;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-weight: 900;
-  text-transform: uppercase;
-  box-shadow: 2px 2px 0px 0px var(--border-primary);
-  transition: all 0.1s ease;
-  white-space: nowrap;
-  
-  &:hover {
-    background: var(--brutal-lime);
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px 0px var(--border-primary);
-  }
-  
-  @media (max-width: 768px) {
-    border-width: 2px;
-    padding: 6px 10px;
-    font-size: 11px;
-    box-shadow: 2px 2px 0px 0px var(--border-primary);
-    
-    &:hover {
-      transform: none;
-      box-shadow: 2px 2px 0px 0px var(--border-primary);
-    }
-  }
-  
-  @media (max-width: 480px) {
-    padding: 4px 8px;
-    font-size: 10px;
-    gap: 4px;
-  }
-`
-
-const NetworkIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--brutal-violet);
-  border: 2px solid var(--border-primary);
-  border-radius: 0;
-  padding: 6px 10px;
-  font-size: 10px;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-weight: 900;
-  text-transform: uppercase;
-  box-shadow: 2px 2px 0px 0px var(--border-primary);
-  transition: all 0.1s ease;
-  
-  &:hover {
-    background: var(--brutal-pink);
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px 0px var(--border-primary);
-  }
-  
-  @media (max-width: 768px) {
-    border-width: 1px;
-    padding: 4px 8px;
-    font-size: 9px;
-    box-shadow: 1px 1px 0px 0px var(--border-primary);
-    
-    &:hover {
-      transform: none;
-      box-shadow: 1px 1px 0px 0px var(--border-primary);
-    }
-  }
-`
-
-const NetworkDot = styled.div<{ $network: string }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${(props) => {
-    switch (props.$network) {
-      case "algorand":
-        return "#007BFF"
-      case "algorandTestnet":
-        return "#17A2B8"
-      default:
-        return "#6B7280"
-    }
-  }};
-
-  @media (max-width: 768px) {
-    width: 6px;
-    height: 6px;
-  }
-`
 
 
 export function Header() {
@@ -447,40 +76,83 @@ export function Header() {
   return (
     <>
       {showWamPopup && (
-        <PopupOverlay onClick={() => setShowWamPopup(false)}>
-          <PopupContent onClick={(e) => e.stopPropagation()}>
-            <PopupTitle>💰 BUY $DEGEN</PopupTitle>
-            <PopupText>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-5"
+          onClick={() => setShowWamPopup(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_#000] p-8 max-w-md w-full font-mono md:border-3 md:shadow-[4px_4px_0px_0px_#000] md:p-6 sm:border-2 sm:shadow-[2px_2px_0px_0px_#000] sm:p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-black text-black mb-4 uppercase tracking-wider text-center md:text-xl md:mb-3 sm:text-lg sm:mb-2.5">
+              💰 BUY $DEGEN
+            </h2>
+            <p className="text-sm font-bold text-black mb-6 text-center md:text-xs md:mb-5 sm:text-xs sm:mb-4">
               Get more $DEGEN tokens to create beasts and battle other trainers!
-            </PopupText>
-            <PopupButtons>
-              <PopupButton onClick={() => setShowWamPopup(false)}>
+            </p>
+            <div className="flex gap-3 sm:flex-col sm:gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex-1 bg-[#FFE500] border-4 border-black px-3 py-3 font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 transition-all duration-150 md:border-3 md:px-2.5 md:py-2.5 md:text-xs sm:border-2 sm:px-2 sm:py-2 sm:text-xs"
+                onClick={() => setShowWamPopup(false)}
+              >
                 Cancel
-              </PopupButton>
-              <PopupButton onClick={handleGoToDeposit}>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex-1 bg-[#79F7FF] border-4 border-black px-3 py-3 font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 transition-all duration-150 md:border-3 md:px-2.5 md:py-2.5 md:text-xs sm:border-2 sm:px-2 sm:py-2 sm:text-xs"
+                onClick={handleGoToDeposit}
+              >
                 Go to Deposit
-              </PopupButton>
-            </PopupButtons>
-          </PopupContent>
-        </PopupOverlay>
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
-    
-    <HeaderContainer>
-      <LeftSection>
-      </LeftSection>
 
-      <RightSection>
-        {activeAccount?.address && (
-          <BalanceContainer onClick={handleWamClick}>
-            <TokenIcon>$D</TokenIcon>
-            <Balance>{degenBalance}</Balance>
-            <AddButton onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}>+</AddButton>
-          </BalanceContainer>
-        )}
-        <SimpleConnectButton />
-      </RightSection>
-    </HeaderContainer>
-    
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="flex items-center justify-between p-4 bg-white border-b-4 border-black sticky top-0 z-[100] font-mono backdrop-blur-[10px] shadow-[0_2px_10px_rgba(0,0,0,0.1)] md:p-3 md:border-b-3 md:flex-wrap md:gap-2 sm:p-2.5 sm:border-b-2 sm:gap-1.5"
+      >
+        <div className="flex items-center gap-3 md:gap-2">
+          {/* Left section - can add logo or other elements here */}
+        </div>
+
+        <div className="flex items-center gap-3 flex-shrink-0 md:gap-2 md:flex-wrap md:justify-end sm:gap-1.5 sm:w-full sm:justify-between">
+          {activeAccount?.address && (
+            <motion.div
+              whileHover={{ scale: 1.05, x: 2, y: 2 }}
+              whileTap={{ scale: 0.95, x: 4, y: 4 }}
+              className="flex items-center gap-2 bg-[#9dfc7c] border-3 border-black p-2 shadow-[3px_3px_0px_0px_#000] font-black uppercase cursor-pointer transition-all duration-100 hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 md:border-2 md:p-1.5 md:shadow-[2px_2px_0px_0px_#000] md:text-xs md:hover:translate-x-0 md:hover:translate-y-0 md:hover:shadow-[2px_2px_0px_0px_#000] sm:p-1 sm:text-xs sm:gap-1.5"
+              onClick={handleWamClick}
+            >
+              <div className="w-6 h-6 bg-[#FFE500] border-2 border-black flex items-center justify-center text-xs font-black font-mono md:w-5 md:h-5 md:text-[10px] md:border-1 sm:w-4.5 sm:h-4.5 sm:text-[9px]">
+                $D
+              </div>
+              <span className="font-black text-black font-mono sm:text-xs">
+                {degenBalance}
+              </span>
+              <motion.button
+                whileHover={{ rotate: 180 }}
+                className="w-6 h-6 bg-[#FFE500] border-2 border-black text-black text-base font-black flex items-center justify-center font-mono cursor-pointer transition-all duration-100 hover:bg-[#79F7FF] hover:translate-x-1 hover:translate-y-1 md:w-5 md:h-5 md:text-sm md:border-1 sm:w-4.5 sm:h-4.5 sm:text-xs"
+                onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}
+              >
+                +
+              </motion.button>
+            </motion.div>
+          )}
+          <SimpleConnectButton />
+        </div>
+      </motion.header>
     </>
   )
 }
