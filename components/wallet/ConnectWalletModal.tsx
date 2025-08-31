@@ -6,6 +6,7 @@ import styled from "styled-components"
 import { brutalToast } from "../ui/BrutalToast"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink } from '@fortawesome/free-solid-svg-icons'
+import { useSwipe } from "../../hooks/useSwipe"
 
 interface ConnectWalletModalProps {
   wallets: Wallet[]

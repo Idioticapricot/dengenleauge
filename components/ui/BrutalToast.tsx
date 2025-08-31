@@ -107,10 +107,48 @@ const removeToast = (id: string) => {
   }
 }
 
+const getIcon = (type: 'success' | 'error' | 'info') => {
+  switch (type) {
+    case 'success': return '✅'
+    case 'error': return '❌'
+    case 'info': return 'ℹ️'
+    default: return '📢'
+  }
+}
+
 export const brutalToast = {
   success: (message: string) => addToast('success', message),
   error: (message: string) => addToast('error', message),
   info: (message: string) => addToast('info', message),
+}
+
+interface SwipeableToastProps {
+  toast: ToastProps
+  isExiting: boolean
+  swipeOffset: number
+  onClick: () => void
+  onSwipeDismiss: (direction: 'left' | 'right') => void
+}
+
+function SwipeableToast({ toast, isExiting, swipeOffset, onClick, onSwipeDismiss }: SwipeableToastProps) {
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => onSwipeDismiss('left'),
+    onSwipeRight: () => onSwipeDismiss('right'),
+    minSwipeDistance: 50
+  })
+
+  return (
+    <ToastItem
+      ref={swipeRef}
+      $type={toast.type}
+      $isExiting={isExiting}
+      $swipeOffset={swipeOffset}
+      onClick={onClick}
+    >
+      <ToastIcon>{getIcon(toast.type)}</ToastIcon>
+      <ToastMessage>{toast.message}</ToastMessage>
+    </ToastItem>
+  )
 }
 
 export function BrutalToastContainer() {
@@ -169,15 +207,6 @@ export function BrutalToastContainer() {
         return newOffsets
       })
     }, 300)
-  }
-
-  const getIcon = (type: 'success' | 'error' | 'info') => {
-    switch (type) {
-      case 'success': return '✅'
-      case 'error': return '❌'
-      case 'info': return 'ℹ️'
-      default: return '📢'
-    }
   }
 
   return (
