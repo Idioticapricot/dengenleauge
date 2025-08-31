@@ -274,7 +274,8 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   .brutal-shadow-hover {
-    transition: all var(--duration-fast) ease;
+    transition: transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+    will-change: transform, box-shadow;
   }
 
   .brutal-shadow-hover:hover {
@@ -508,9 +509,10 @@ export const Button = styled.button<{
   }};
   width: ${(props) => (props.$fullWidth ? "100%" : "auto")};
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease;
   position: relative;
   box-shadow: var(--shadow-brutal);
+  will-change: transform, box-shadow;
   
   background: ${(props) => {
     switch (props.$variant) {

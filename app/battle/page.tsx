@@ -1,11 +1,27 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { AppLayout } from "../../components/layout/AppLayout"
 import { useWallet } from "@txnlab/use-wallet-react"
 import styled from "styled-components"
 import { Button, ResponsiveGrid, ResponsiveFlex, MobileHidden, DesktopHidden } from "../../components/styled/GlobalStyles"
-import { EnhancedBattleChart } from "../../components/ui/EnhancedBattleChart"
+const EnhancedBattleChart = dynamic(() => import("../../components/ui/EnhancedBattleChart").then(mod => mod.EnhancedBattleChart), {
+  loading: () => (
+    <div style={{
+      background: 'var(--brutal-yellow)',
+      border: '4px solid var(--border-primary)',
+      padding: '20px',
+      textAlign: 'center',
+      fontFamily: 'var(--font-mono)',
+      fontWeight: '900',
+      color: 'var(--text-primary)'
+    }}>
+      📊 LOADING BATTLE CHART...
+    </div>
+  ),
+  ssr: false
+})
 import { BattleHeaderSkeleton, TeamSectionSkeleton, BattleChartSkeleton } from "../../components/ui/skeleton"
 import { useSimpleApi } from "../../hooks/useApi"
 import { ErrorBoundary } from "../../components/ErrorBoundary"
