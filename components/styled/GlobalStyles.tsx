@@ -430,37 +430,6 @@ export const StadiumBackground = styled.div`
   bottom: 0;
   background: var(--light-bg);
   z-index: -2;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 10px,
-        rgba(255, 229, 0, 0.1) 10px,
-        rgba(255, 229, 0, 0.1) 20px
-      );
-    z-index: -1;
-  }
-
-  @media (max-width: 768px) {
-    &::before {
-      background-image: 
-        repeating-linear-gradient(
-          45deg,
-          transparent,
-          transparent 8px,
-          rgba(255, 229, 0, 0.08) 8px,
-          rgba(255, 229, 0, 0.08) 16px
-        );
-    }
-  }
 `
 
 export const MainContent = styled.main`
