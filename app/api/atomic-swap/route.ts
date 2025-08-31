@@ -80,9 +80,11 @@ export async function POST(request: Request) {
       const currentBalance = degenAsset ? Number(degenAsset.amount) / 1e6 : 0;
       console.log(`Creator DEGEN balance: ${currentBalance} (required: ${degenAmount / 1e6})`);
 
-      // Re-enabled balance validation now that creator has sufficient DEGEN
+      // Strict balance validation to prevent failed transactions
       if (!degenAsset || Number(degenAsset.amount) < degenAmount) {
-        throw new Error('Creator account has insufficient DEGEN balance');
+        const available = degenAsset ? Number(degenAsset.amount) / 1e6 : 0;
+        const required = degenAmount / 1e6;
+        throw new Error(`Insufficient DEGEN tokens available. Available: ${available}, Required: ${required}`);
       }
     } catch (creatorError: any) {
       if (creatorError.message.includes('insufficient DEGEN balance')) {
