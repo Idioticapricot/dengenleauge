@@ -155,6 +155,15 @@ export async function POST(request: Request) {
       signers: [], // Already signed by creator
     });
 
+    console.log('✅ ATOMIC SWAP CREATED SUCCESSFULLY');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Buyer Address:', buyerAddress);
+    console.log('ALGO Amount:', algoAmount);
+    console.log('DEGEN Amount:', degenAmount / 1e6);
+    console.log('Transaction Group Size:', transactions.length);
+    console.log('Opt-in Required:', !buyerAlreadyOptedIn);
+    console.log('');
+
     return NextResponse.json({
       success: true,
       data: {
@@ -167,7 +176,35 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
-    console.error('Error creating atomic swap:', error);
+    console.error('🚨 ATOMIC SWAP ERROR LOG 🚨');
+    console.error('Timestamp:', new Date().toISOString());
+    console.error('Error Message:', error.message);
+    console.error('Error Name:', error.name);
+    console.error('Error Stack:', error.stack);
+
+    // Log request details for debugging
+    try {
+      const requestData = await request.clone().json();
+      console.error('Request Data:', {
+        buyerAddress: requestData.buyerAddress,
+        algoAmount: requestData.algoAmount,
+        hasValidBuyerAddress: requestData.buyerAddress && algosdk.isValidAddress(requestData.buyerAddress)
+      });
+    } catch (parseError: any) {
+      console.error('Could not parse request data:', parseError.message);
+    }
+
+    // Log configuration status
+    console.error('Configuration Status:', {
+      assetId: SWAP_CONFIG.assetId,
+      hasMnemonic: !!SWAP_CONFIG.creatorMnemonic,
+      rate: SWAP_CONFIG.rate,
+      minPurchase: SWAP_CONFIG.minPurchase,
+      maxPurchase: SWAP_CONFIG.maxPurchase
+    });
+
+    console.error('🔚 END ERROR LOG 🔚\n');
+
     // Return a generic error to the user for security
     return NextResponse.json({ success: false, error: "An internal server error occurred. Please try again later." }, { status: 500 });
   }
@@ -256,6 +293,13 @@ export async function PUT(request: Request) {
         }, { status: 500 });
       }
 
+      console.log('✅ TRANSACTION SUBMITTED SUCCESSFULLY');
+      console.log('Timestamp:', new Date().toISOString());
+      console.log('Transaction ID:', txId);
+      console.log('Explorer URL:', `https://testnet.algoexplorer.io/tx/${txId}`);
+      console.log('Transaction Count:', transactionsToSubmit.length);
+      console.log('');
+
       return NextResponse.json({
         success: true,
         data: {
@@ -265,11 +309,25 @@ export async function PUT(request: Request) {
       });
 
     } catch (error: any) {
-      console.error('Transaction submission error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack
-      });
+      console.error('🚨 TRANSACTION SUBMISSION ERROR 🚨');
+      console.error('Timestamp:', new Date().toISOString());
+      console.error('Error Message:', error.message);
+      console.error('Error Name:', error.name);
+      console.error('Error Stack:', error.stack);
+
+      // Log transaction details
+      try {
+        const requestData = await request.clone().json();
+        console.error('Submission Data:', {
+          hasUserTransactions: !!requestData.signedUserTransaction,
+          userTxCount: requestData.signedUserTransaction?.length || 0,
+          hasCreatorTransaction: !!requestData.signedCreatorTransaction
+        });
+      } catch (parseError: any) {
+        console.error('Could not parse submission data:', parseError.message);
+      }
+
+      console.error('🔚 END SUBMISSION ERROR LOG 🔚\n');
       return NextResponse.json({ success: false, error: "Failed to submit transaction to the network." }, { status: 500 });
     }
 }

@@ -1,4 +1,4 @@
-const algosdk = require('algosdk');
+oconst algosdk = require('algosdk');
 
 // DEGEN Token Configuration (from contract)
 const DEGEN_TOKEN_CONFIG = {
