@@ -1,32 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import styled from "styled-components"
+import { motion } from "framer-motion"
 import { TokenCard } from "./TokenCard"
-
-const GridContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr) auto;
-  gap: 12px;
-  margin-bottom: 20px;
-  
-  /* Make the 5th card span both columns in the last row */
-  > :nth-child(5) {
-    grid-column: 1 / -1;
-    max-width: 200px;
-    margin: 0 auto;
-  }
-`
-
-const GridTitle = styled.h2`
-  font-family: var(--font-space-grotesk);
-  font-weight: 700;
-  font-size: 20px;
-  color: white;
-  margin-bottom: 16px;
-  text-align: center;
-`
 
 interface VestigeToken {
   id: number
@@ -79,32 +55,74 @@ export function TokenGrid() {
 
   if (loading) {
     return (
-      <div>
-        <GridTitle>Loading Tokens...</GridTitle>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center"
+      >
+        <motion.h2
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="font-bold text-xl text-white mb-4"
+        >
+          Loading Tokens...
+        </motion.h2>
+      </motion.div>
     )
   }
 
   return (
-    <div>
-      <GridTitle>Select Your Squad ({selectedTokens.length}/5)</GridTitle>
-      <GridContainer>
-        {tokens.map((token) => {
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.h2
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        className="font-bold text-xl text-white mb-4 text-center"
+      >
+        Select Your Squad ({selectedTokens.length}/5)
+      </motion.h2>
+      <motion.div
+        className="grid grid-cols-2 gap-3 mb-5"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.1
+            }
+          }
+        }}
+      >
+        {tokens.map((token, index) => {
           const change = calculateChange(token.price, token.price1d)
           return (
-            <TokenCard
+            <motion.div
               key={token.id}
-              symbol={token.ticker}
-              logo={token.image}
-              price={token.price}
-              change={change}
-              points={Math.floor(Math.random() * 1000) + 100} // Mock points for now
-              selected={selectedTokens.includes(token.ticker)}
-              onClick={() => handleTokenSelect(token.ticker)}
-            />
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 }
+              }}
+              transition={{ duration: 0.3 }}
+              className={index === 4 ? "col-span-2 max-w-[200px] mx-auto" : ""}
+            >
+              <TokenCard
+                symbol={token.ticker}
+                logo={token.image}
+                price={token.price}
+                change={change}
+                points={Math.floor(Math.random() * 1000) + 100} // Mock points for now
+                selected={selectedTokens.includes(token.ticker)}
+                onClick={() => handleTokenSelect(token.ticker)}
+              />
+            </motion.div>
           )
         })}
-      </GridContainer>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

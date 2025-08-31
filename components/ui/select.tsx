@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { motion } from "framer-motion"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
@@ -32,21 +33,52 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default"
 }) {
+  const [isFocused, setIsFocused] = React.useState(false)
+
   return (
-    <SelectPrimitive.Trigger
-      data-slot="select-trigger"
-      data-size={size}
-      className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
+    <motion.div
+      animate={{
+        x: isFocused ? 1 : 0,
+        y: isFocused ? 1 : 0,
+        boxShadow: isFocused
+          ? "1px 1px 0px 0px #000"
+          : "6px 6px 0px 0px #000"
+      }}
+      transition={{ duration: 0.1 }}
+      className="relative"
     >
-      {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
-      </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>
+      <SelectPrimitive.Trigger
+        data-slot="select-trigger"
+        data-size={size}
+        className={cn(
+          "border-black bg-white px-4 py-3 text-base font-mono font-black shadow-[6px_6px_0px_0px_#000] border-4 flex w-fit items-center justify-between gap-2 whitespace-nowrap transition-all duration-100 outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+          "data-[size=default]:h-12 data-[size=sm]:h-10",
+          "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
+          "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-black",
+          "focus:bg-[#FFE500] focus:shadow-none",
+          "aria-invalid:border-[#fa7a7a] aria-invalid:bg-[#fa7a7a]/20",
+          className
+        )}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        {...props}
+      >
+        {children}
+        <SelectPrimitive.Icon asChild>
+          <ChevronDownIcon className="size-4 opacity-50" />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+      {/* Focus ring animation */}
+      <motion.div
+        className="absolute inset-0 border-4 border-[#FFE500] pointer-events-none"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{
+          opacity: isFocused ? 1 : 0,
+          scale: isFocused ? 1 : 0.95
+        }}
+        transition={{ duration: 0.15 }}
+      />
+    </motion.div>
   )
 }
 
