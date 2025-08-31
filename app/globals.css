@@ -307,11 +307,59 @@ textarea:focus {
   :root {
     --border-primary: #000000;
     --text-primary: #000000;
+    --background: #ffffff;
+    --card: #ffffff;
+    --muted: #f0f0f0;
+    --accent: #000000;
   }
-  
+
   .dark {
     --border-primary: #ffffff;
     --text-primary: #ffffff;
+    --background: #000000;
+    --card: #000000;
+    --muted: #333333;
+    --accent: #ffffff;
+  }
+
+  /* Enhanced button contrast */
+  .brutal-button {
+    border-width: 3px;
+    box-shadow: 4px 4px 0px 0px var(--border-primary);
+  }
+
+  /* Better focus indicators */
+  *:focus-visible {
+    outline: 3px solid var(--text-primary);
+    outline-offset: 3px;
+  }
+
+  /* Enhanced text contrast */
+  body, p, span, div {
+    color: var(--text-primary);
+  }
+
+  /* Better link contrast */
+  a {
+    color: var(--text-primary);
+    text-decoration: underline;
+  }
+
+  a:hover, a:focus {
+    background-color: var(--accent);
+    color: var(--background);
+  }
+
+  /* Input field enhancements */
+  input, textarea, select {
+    border: 2px solid var(--border-primary);
+    background-color: var(--background);
+    color: var(--text-primary);
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 2px var(--text-primary);
   }
 }
 
@@ -332,4 +380,17 @@ textarea:focus {
 .success {
   border-color: #9dfc7c !important;
   background-color: rgba(157, 252, 124, 0.1) !important;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

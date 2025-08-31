@@ -1,6 +1,7 @@
 "use client"
 
 import styled, { keyframes } from "styled-components"
+import { motion, useReducedMotion } from "framer-motion"
 
 const spin = keyframes`
   0% { transform: rotate(0deg); }
@@ -27,7 +28,7 @@ const LoadingContainer = styled.div<{ $size?: "sm" | "md" | "lg" }>`
   }};
 `
 
-const Spinner = styled.div<{ $size?: "sm" | "md" | "lg" }>`
+const Spinner = styled(motion.div)<{ $size?: "sm" | "md" | "lg" }>`
   width: ${props => {
     switch (props.$size) {
       case "sm": return "16px"
@@ -45,14 +46,13 @@ const Spinner = styled.div<{ $size?: "sm" | "md" | "lg" }>`
   border: 3px solid var(--light-bg);
   border-top: 3px solid var(--brutal-yellow);
   border-radius: 0;
-  animation: ${spin} 1s linear infinite;
-  
+
   @media (max-width: 768px) {
     border-width: 2px;
   }
 `
 
-const LoadingText = styled.span<{ $size?: "sm" | "md" | "lg" }>`
+const LoadingText = styled(motion.span)<{ $size?: "sm" | "md" | "lg" }>`
   font-family: var(--font-mono);
   font-weight: 900;
   color: var(--text-primary);
@@ -65,7 +65,6 @@ const LoadingText = styled.span<{ $size?: "sm" | "md" | "lg" }>`
       default: return "14px"
     }
   }};
-  animation: ${bounce} 1.5s ease-in-out infinite;
 `
 
 const DotsContainer = styled.div`
@@ -93,15 +92,44 @@ interface LoadingSpinnerProps {
   showDots?: boolean
 }
 
-export function LoadingSpinner({ 
-  size = "md", 
-  text = "Loading", 
-  showDots = true 
+export function LoadingSpinner({
+  size = "md",
+  text = "Loading",
+  showDots = true
 }: LoadingSpinnerProps) {
+  const shouldReduceMotion = useReducedMotion()
+
+  const spinAnimation = shouldReduceMotion
+    ? {}
+    : {
+        rotate: 360,
+        transition: {
+          duration: 1,
+          repeat: Infinity as number,
+          ease: "linear" as const
+        }
+      }
+
   return (
     <LoadingContainer $size={size}>
-      <Spinner $size={size} />
-      <LoadingText $size={size}>{text}</LoadingText>
+      <Spinner
+        $size={size}
+        animate={spinAnimation}
+        initial={{ rotate: 0 }}
+      />
+      <LoadingText
+        $size={size}
+        animate={shouldReduceMotion ? {} : {
+          y: [-2, 2, -2],
+          transition: {
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut" as const
+          }
+        }}
+      >
+        {text}
+      </LoadingText>
       {showDots && (
         <DotsContainer>
           <Dot $delay={0} />

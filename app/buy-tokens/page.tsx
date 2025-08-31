@@ -3,7 +3,15 @@
 import { AppLayout } from '../../components/layout/AppLayout'
 import dynamic from 'next/dynamic'
 import styled from 'styled-components'
-import AtomicSwap from '../../components/token/AtomicSwap'
+
+const AtomicSwap = dynamic(() => import('../../components/token/AtomicSwap'), {
+  loading: () => (
+    <LoadingCard>
+      <div>⚡ LOADING SWAP...</div>
+    </LoadingCard>
+  ),
+  ssr: false
+})
 
 
 const BuyTokensContainer = styled.div`
