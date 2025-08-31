@@ -263,6 +263,84 @@ export const GlobalStyle = createGlobalStyle`
       outline-offset: 2px;
     }
   }
+
+  /* Brutal Design Utility Classes */
+  .brutal-border {
+    border: var(--border-width-normal) solid var(--border-primary);
+  }
+
+  .brutal-shadow {
+    box-shadow: var(--shadow-brutal);
+  }
+
+  .brutal-shadow-hover {
+    transition: all var(--duration-fast) ease;
+  }
+
+  .brutal-shadow-hover:hover {
+    transform: translate(2px, 2px);
+    box-shadow: var(--shadow-brutal-sm);
+  }
+
+  .brutal-shadow-active:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
+  }
+
+  .brutal-text-shadow {
+    text-shadow: var(--shadow-brutal-text);
+  }
+
+  .brutal-glow {
+    box-shadow: var(--shadow-brutal-glow);
+  }
+
+  .brutal-animation-fast {
+    transition-duration: var(--duration-fast);
+  }
+
+  .brutal-animation-normal {
+    transition-duration: var(--duration-normal);
+  }
+
+  .brutal-animation-slow {
+    transition-duration: var(--duration-slow);
+  }
+
+  /* Mobile-specific brutal utilities */
+  @media (max-width: 768px) {
+    .brutal-border {
+      border-width: var(--border-width-thin);
+    }
+
+    .brutal-shadow {
+      box-shadow: var(--shadow-brutal-sm);
+    }
+
+    .brutal-shadow-hover:hover {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0px 0px var(--border-primary);
+    }
+
+    .brutal-shadow-active:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .brutal-border {
+      border-width: 1px;
+    }
+
+    .brutal-shadow {
+      box-shadow: 2px 2px 0px 0px var(--border-primary);
+    }
+
+    .brutal-shadow-hover:hover {
+      transform: none;
+    }
+  }
 `
 
 export const Container = styled.div`
