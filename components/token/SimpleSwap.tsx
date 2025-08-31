@@ -253,7 +253,7 @@ export default function SimpleSwap() {
       >
         {loading ? (
           <>
-            <LoadingSpinner size="small" />
+            <LoadingSpinner size="sm" />
             Processing...
           </>
         ) : (

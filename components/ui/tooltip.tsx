@@ -3,17 +3,24 @@
 import { useState, useRef, useEffect } from "react"
 import styled from "styled-components"
 
+// Simple TooltipProvider for compatibility
+export const TooltipProvider = ({ children, delayDuration = 0 }: { children: React.ReactNode, delayDuration?: number }) => (
+  <div data-tooltip-delay={delayDuration}>
+    {children}
+  </div>
+)
+
 const TooltipContainer = styled.div`
   position: relative;
   display: inline-block;
 `
 
-const TooltipTrigger = styled.div`
+export const TooltipTrigger = styled.div`
   cursor: pointer;
   display: inline-block;
 `
 
-const TooltipContent = styled.div<{ $position: 'top' | 'bottom' | 'left' | 'right' }>`
+export const TooltipContent = styled.div<{ $position: 'top' | 'bottom' | 'left' | 'right' }>`
   position: absolute;
   background: var(--light-bg);
   border: 3px solid var(--border-primary);
