@@ -131,6 +131,14 @@ const ConnectWalletModal = ({
 }: ConnectWalletModalProps) => {
   const { activeAccount } = useWallet()
 
+  // Swipe gesture handlers for modal dismissal
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeLeft: () => onClose(),
+    onSwipeRight: () => onClose(),
+    onSwipeDown: () => onClose(),
+    minSwipeDistance: 50
+  })
+
   if (!isOpen) return null
 
   const handleWalletClick = async (wallet: Wallet) => {
@@ -168,7 +176,7 @@ const ConnectWalletModal = ({
 
   return createPortal(
     <ModalOverlay onClick={onClose}>
-      <ModalContent onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
+      <ModalContent ref={swipeRef} onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
         <CloseButton onClick={onClose}>×</CloseButton>
         <ModalTitle>
           <FontAwesomeIcon icon={faLink} style={{ marginRight: '8px' }} />
