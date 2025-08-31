@@ -97,6 +97,30 @@ export const GlobalStyle = createGlobalStyle`
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    box-sizing: border-box;
+  }
+  
+  /* Performance optimizations */
+  * {
+    will-change: auto;
+  }
+  
+  *:hover, *:focus, *:active {
+    will-change: transform, box-shadow, background-color;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   /* Enable text selection for content */
@@ -154,11 +178,18 @@ export const GlobalStyle = createGlobalStyle`
       --shadow-offset: 2px;
     }
 
-    /* Reduce motion for mobile performance */
+    /* Optimize for mobile performance */
     *, *::before, *::after {
       animation-duration: 0.2s !important;
       animation-delay: 0s !important;
       transition-duration: 0.2s !important;
+    }
+    
+    /* Hardware acceleration for animations */
+    *[class*="brutal-"], button, a {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000px;
     }
   }
 
