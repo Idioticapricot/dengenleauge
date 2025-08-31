@@ -43,7 +43,7 @@ const ToastContainer = styled.div`
   gap: 12px;
 `
 
-const ToastItem = styled.div<{ $type: 'success' | 'error' | 'info', $isExiting: boolean }>`
+const ToastItem = styled.div<{ $type: 'success' | 'error' | 'info', $isExiting: boolean, $swipeOffset?: number }>`
   background: ${props => {
     switch (props.$type) {
       case 'success': return 'var(--brutal-lime)'
@@ -64,9 +64,11 @@ const ToastItem = styled.div<{ $type: 'success' | 'error' | 'info', $isExiting: 
   animation: ${props => props.$isExiting ? slideOut : slideIn} 0.3s ease-out;
   cursor: pointer;
   transition: transform 0.1s ease;
-  
+  transform: translateX(${props => props.$swipeOffset || 0}px) ${props => props.$swipeOffset ? 'none' : 'translate(2px, 2px)'};
+  opacity: ${props => props.$swipeOffset ? Math.max(0, 1 - Math.abs(props.$swipeOffset) / 200) : 1};
+
   &:hover {
-    transform: translate(2px, 2px);
+    transform: ${props => props.$swipeOffset ? `translateX(${props.$swipeOffset}px)` : 'translate(2px, 2px)'};
     box-shadow: 4px 4px 0px 0px var(--border-primary);
   }
 `
@@ -114,14 +116,15 @@ export const brutalToast = {
 export function BrutalToastContainer() {
   const [toastList, setToastList] = useState<ToastProps[]>([])
   const [exitingToasts, setExitingToasts] = useState<Set<string>>(new Set())
+  const [swipeOffsets, setSwipeOffsets] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const listener = (newToasts: ToastProps[]) => {
       setToastList(newToasts)
     }
-    
+
     listeners.push(listener)
-    
+
     return () => {
       const index = listeners.indexOf(listener)
       if (index > -1) {
@@ -142,6 +145,32 @@ export function BrutalToastContainer() {
     }, 300)
   }
 
+  const handleSwipeDismiss = (id: string, direction: 'left' | 'right') => {
+    // Add to exiting toasts for animation
+    setExitingToasts(prev => new Set(prev).add(id))
+
+    // Set final swipe offset for animation
+    setSwipeOffsets(prev => ({
+      ...prev,
+      [id]: direction === 'left' ? -400 : 400
+    }))
+
+    // Remove after animation
+    setTimeout(() => {
+      removeToast(id)
+      setExitingToasts(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(id)
+        return newSet
+      })
+      setSwipeOffsets(prev => {
+        const newOffsets = { ...prev }
+        delete newOffsets[id]
+        return newOffsets
+      })
+    }, 300)
+  }
+
   const getIcon = (type: 'success' | 'error' | 'info') => {
     switch (type) {
       case 'success': return '✅'
@@ -154,15 +183,14 @@ export function BrutalToastContainer() {
   return (
     <ToastContainer>
       {toastList.map((toast) => (
-        <ToastItem
+        <SwipeableToast
           key={toast.id}
-          $type={toast.type}
-          $isExiting={exitingToasts.has(toast.id)}
+          toast={toast}
+          isExiting={exitingToasts.has(toast.id)}
+          swipeOffset={swipeOffsets[toast.id] || 0}
           onClick={() => handleToastClick(toast.id)}
-        >
-          <ToastIcon>{getIcon(toast.type)}</ToastIcon>
-          <ToastMessage>{toast.message}</ToastMessage>
-        </ToastItem>
+          onSwipeDismiss={(direction) => handleSwipeDismiss(toast.id, direction)}
+        />
       ))}
     </ToastContainer>
   )
