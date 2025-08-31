@@ -17,10 +17,29 @@ const HomeContainer = styled.div`
 
 const HeroSection = styled.div`
   text-align: center;
-  background: var(--brutal-yellow);
+  background: linear-gradient(135deg, var(--brutal-yellow) 0%, var(--brutal-lime) 100%);
   padding: 40px 20px;
   border: 4px solid var(--border-primary);
   box-shadow: 8px 8px 0px 0px var(--border-primary);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.05) 10px,
+      rgba(0, 0, 0, 0.05) 20px
+    );
+    pointer-events: none;
+  }
   
   @media (max-width: 768px) {
     padding: 32px 16px;
@@ -37,6 +56,9 @@ const HeroTitle = styled.h1`
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 4px;
+  text-shadow: 2px 2px 0px var(--border-primary);
+  position: relative;
+  z-index: 1;
   
   @media (max-width: 768px) {
     font-size: 36px;
@@ -55,6 +77,8 @@ const HeroSubtitle = styled.p`
   color: var(--text-primary);
   margin: 0 0 32px 0;
   font-family: var(--font-mono);
+  position: relative;
+  z-index: 1;
   
   @media (max-width: 768px) {
     font-size: 16px;
@@ -84,7 +108,24 @@ const ActionCard = styled.div<{ $color: string }>`
   padding: 24px;
   box-shadow: 6px 6px 0px 0px var(--border-primary);
   cursor: pointer;
-  transition: all 0.1s ease;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  &:hover::after {
+    left: 100%;
+  }
   
   &:hover {
     transform: translate(2px, 2px);
@@ -168,10 +209,28 @@ const CardDescription = styled.p`
 `
 
 const StatsSection = styled.div`
-  background: var(--brutal-cyan);
+  background: linear-gradient(135deg, var(--brutal-cyan) 0%, var(--brutal-violet) 100%);
   border: 4px solid var(--border-primary);
   padding: 24px;
   box-shadow: 6px 6px 0px 0px var(--border-primary);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 15px,
+      rgba(255, 255, 255, 0.1) 15px,
+      rgba(255, 255, 255, 0.1) 30px
+    );
+    pointer-events: none;
+  }
   
   @media (max-width: 768px) {
     border-width: 3px;
@@ -194,6 +253,9 @@ const StatsTitle = styled.h2`
   font-family: var(--font-mono);
   text-transform: uppercase;
   text-align: center;
+  position: relative;
+  z-index: 1;
+  text-shadow: 1px 1px 0px var(--border-primary);
   
   @media (max-width: 768px) {
     font-size: 20px;
@@ -222,6 +284,14 @@ const StatItem = styled.div`
   background: var(--light-bg);
   border: 2px solid var(--border-primary);
   padding: 16px 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 2px 4px 0px 0px var(--border-primary);
+    background: var(--brutal-yellow);
+  }
   
   @media (max-width: 768px) {
     padding: 12px 8px;
