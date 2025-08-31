@@ -160,15 +160,6 @@ export default function AtomicSwap() {
   const handleAtomicSwap = async () => {
     if (!activeAddress || !algoAmount) return
 
-    // Debug: Check wallet state
-    console.log('=== WALLET DEBUG INFO ===')
-    console.log('Wallet state:', {
-      activeAddress,
-      signTransactions: typeof signTransactions,
-      algoAmount,
-      walletConnected: !!activeAddress
-    })
-
     // Validation: Check wallet connection
     if (!activeAddress) {
       throw new Error('Wallet not connected - please connect your wallet first')
@@ -193,13 +184,6 @@ export default function AtomicSwap() {
 
       const data = await response.json()
 
-      console.log('API Response:', data)
-      console.log('API Response data structure:', {
-        hasData: !!data.data,
-        hasTransactions: !!(data.data && data.data.transactions),
-        hasSignedCreator: !!(data.data && data.data.signedCreatorTransaction),
-        signedCreatorLength: data.data && data.data.signedCreatorTransaction ? data.data.signedCreatorTransaction.length : 0
-      })
 
       if (!data.success) {
         throw new Error(data.error)
@@ -218,19 +202,7 @@ export default function AtomicSwap() {
           return new Uint8Array(txnData.txn)
         })
 
-        console.log('Transaction group to sign:', txnGroup.length, 'transactions')
-        console.log('Transaction details:', txnGroup.map((txn: Uint8Array, i: number) => ({
-          index: i,
-          length: txn.length,
-          type: 'Uint8Array'
-        })))
-
         // Step 3: Pass complete transaction group to wallet
-        console.log('=== SIGNING DEBUG ===')
-        console.log('Calling signTransactions with:', txnGroup)
-        console.log('Wallet activeAddress:', activeAddress)
-        console.log('Wallet signTransactions function:', typeof signTransactions)
-        console.log('Transaction group valid:', txnGroup.every((txn: Uint8Array) => txn instanceof Uint8Array && txn.length > 0))
 
         // Handle the case where wallet might return different number of transactions
         let signedUserTransactions: number[][] = []
@@ -238,68 +210,23 @@ export default function AtomicSwap() {
         let signedTxns: any = null
 
         // Pera wallet compatibility: Use only payment transaction
-        console.log('=== USING PERA WALLET COMPATIBLE METHOD ===')
         const paymentTxn = txnGroup[1] // Payment transaction only
-        console.log('Payment transaction to sign:', paymentTxn)
-        console.log('About to call signTransactions...')
-        
-        try {
-          console.log('Calling signTransactions with payment txn...')
-          signedTxns = await signTransactions([paymentTxn])
-          console.log('signTransactions completed successfully')
-          console.log('=== DETAILED SIGNING RESPONSE ===')
-          console.log('signTransactions returned:', signedTxns)
-          console.log('Signed transactions type:', typeof signedTxns)
-          console.log('Is array:', Array.isArray(signedTxns))
-          console.log('Number of signed transactions:', signedTxns ? signedTxns.length : 0)
 
-          if (signedTxns) {
-            signedTxns.forEach((txn: any, i: number) => {
-              console.log(`=== SIGNED TRANSACTION ${i} DETAILS ===`)
-              console.log('Type:', typeof txn)
-              console.log('Is Uint8Array:', txn instanceof Uint8Array)
-              console.log('Is Array:', Array.isArray(txn))
-              console.log('Length:', txn ? txn.length : 'null/undefined')
-              console.log('Constructor:', txn ? txn.constructor.name : 'null')
-              if (txn && txn.length > 0) {
-                console.log('First 10 bytes:', Array.from(txn).slice(0, 10))
-              }
-            })
-          } else {
-            console.log('signTransactions returned null/undefined')
-          }
+        try {
+          signedTxns = await signTransactions([paymentTxn])
         } catch (signError: any) {
-          console.error('=== SIGNING ERROR CAUGHT ===')
-          console.error('Error during signTransactions:', signError)
-          console.error('Error details:', {
-            message: signError.message,
-            stack: signError.stack,
-            name: signError.name
-          })
-          console.error('This error prevented any further processing')
           throw new Error(`Wallet signing failed: ${signError.message}`)
         }
-        
-        console.log('=== POST SIGNING ANALYSIS ===')
-        console.log('signedTxns after signing:', signedTxns)
-        console.log('signedTxns is array:', Array.isArray(signedTxns))
-        console.log('signedTxns length:', signedTxns ? signedTxns.length : 'null/undefined')
 
         // Process single payment transaction result
         if (!signedTxns || !Array.isArray(signedTxns) || signedTxns.length === 0) {
-          console.log('Payment transaction signing failed')
           throw new Error('Wallet failed to sign payment transaction')
         } else {
-          console.log('=== PROCESSING PAYMENT TRANSACTION ===')
           signedUserTransactions = [Array.from(signedTxns[0])]
           signedCreatorTransaction = data.data.signedCreatorTransaction
-          
-          console.log('Payment signed successfully')
-          console.log('User transaction length:', signedUserTransactions[0].length)
-          console.log('Creator transaction length:', signedCreatorTransaction.length)
         }
-        
-        // Old fallback code (now unused)
+
+        // Remove unused fallback code
         if (false) {
           console.log('Wallet signing failed or returned empty results, using fallback method')
 
@@ -384,18 +311,6 @@ export default function AtomicSwap() {
           }
         }
 
-        console.log('=== FINAL TRANSACTION DATA TO SEND ===')
-        console.log('signedUserTransactions length:', signedUserTransactions.length)
-        signedUserTransactions.forEach((txn, i) => {
-          console.log(`User txn ${i} - type:`, typeof txn, 'length:', txn.length, 'first 10:', txn.slice(0, 10))
-        })
-        console.log('signedCreatorTransaction type:', typeof signedCreatorTransaction)
-        console.log('signedCreatorTransaction length:', signedCreatorTransaction.length)
-        console.log('signedCreatorTransaction first 10:', signedCreatorTransaction.slice(0, 10))
-        
-        console.log('=== SENDING TO BACKEND ===')
-        console.log('Payload signedUserTransaction:', signedUserTransactions)
-        console.log('Payload signedCreatorTransaction:', signedCreatorTransaction)
 
         // Step 4: Send signed transactions to PUT endpoint
         submitResponse = await fetch('/api/atomic-swap', {
@@ -408,21 +323,13 @@ export default function AtomicSwap() {
         })
       } else {
         // Fallback to old format for backward compatibility
-        console.log('Using fallback transaction format')
         const unsignedTransactionBytes = new Uint8Array(data.data.unsignedTransaction)
         const unsignedTxn = algosdk.decodeUnsignedTransaction(unsignedTransactionBytes)
-        console.log('Decoded unsigned transaction:', unsignedTxn)
 
         const signedTxns = await signTransactions([unsignedTxn])
-        console.log('Signed transactions result:', signedTxns)
 
         const signedUserTransactions = signedTxns && signedTxns[0] ? [Array.from(signedTxns[0])] : []
         const signedCreatorTransaction = data.data.signedCreatorTransaction
-
-        console.log('Fallback transaction data:', {
-          signedUserTransactions,
-          signedCreatorTransaction
-        })
 
         // Step 4: Send signed transactions to PUT endpoint
         submitResponse = await fetch('/api/atomic-swap', {
@@ -435,10 +342,7 @@ export default function AtomicSwap() {
         })
       }
 
-      console.log('=== BACKEND RESPONSE ===')
       const submitResult = await submitResponse.json()
-      console.log('Submit result:', submitResult)
-      console.log('Submit response status:', submitResponse.status)
       
       if (submitResult.success) {
         setResult({
