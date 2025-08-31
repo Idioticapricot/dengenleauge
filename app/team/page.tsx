@@ -8,7 +8,7 @@ import { MemeCard } from "../../components/meme/MemeCard"
 import { useWallet } from "@txnlab/use-wallet-react"
 import { CoinGridSkeleton } from "../../components/ui/skeleton"
 import { useSimpleApi } from "../../hooks/useApi"
-import { ErrorBoundary } from "../../components/ErrorBoundary"
+
 import { useSwipe } from "../../hooks/useSwipe"
 import { useRouter } from "next/navigation"
 import { PullToRefresh } from "../../components/ui/PullToRefresh"
@@ -246,14 +246,6 @@ const SelectableCoinCard = styled.div<{ $selected: boolean }>`
 `
 
 export default function TeamPage() {
-  return (
-    <ErrorBoundary>
-      <TeamPageContent />
-    </ErrorBoundary>
-  )
-}
-
-function TeamPageContent() {
   const [currentTeam, setCurrentTeam] = useState<any[]>([null, null, null])
   const [selectedCoins, setSelectedCoins] = useState<number[]>([])
   const [memeCoins, setMemeCoins] = useState<any[]>([])

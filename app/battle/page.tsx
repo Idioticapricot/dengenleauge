@@ -24,7 +24,6 @@ const EnhancedBattleChart = dynamic(() => import("../../components/ui/EnhancedBa
 })
 import { BattleHeaderSkeleton, TeamSectionSkeleton, BattleChartSkeleton } from "../../components/ui/skeleton"
 import { useSimpleApi } from "../../hooks/useApi"
-import { ErrorBoundary } from "../../components/ErrorBoundary"
 import { useSwipe } from "../../hooks/useSwipe"
 
 const BattleContainer = styled.div`
