@@ -17,7 +17,7 @@ const HeaderContainer = styled.header`
   border-bottom: 4px solid var(--border-primary);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 9999;
   font-family: var(--font-mono);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
@@ -166,7 +166,7 @@ const PopupOverlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9998;
   padding: 20px;
 `
 

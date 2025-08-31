@@ -14,7 +14,7 @@ const NavContainer = styled.nav`
   background: var(--light-bg);
   border-top: 4px solid var(--border-primary);
   padding: 12px 0 8px;
-  z-index: 1000;
+  z-index: 9998;
   font-family: var(--font-mono);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   visibility: visible !important;
