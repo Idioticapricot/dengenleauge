@@ -13,42 +13,42 @@ import { BrutalToastContainer } from "../ui/BrutalToast"
 const LogoNameBox = styled.div`
   position: fixed;
   left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 20px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 12px;
   background: var(--brutal-lime);
   border: 3px solid var(--border-primary);
   border-radius: 0;
-  padding: 16px;
+  padding: 8px 16px;
   box-shadow: 3px 3px 0px 0px var(--border-primary);
   cursor: pointer;
   transition: all 0.1s ease;
   z-index: 1000;
 
   &:hover {
-    transform: translateY(-50%) translate(1px, 1px);
+    transform: translate(1px, 1px);
     box-shadow: 2px 2px 0px 0px var(--border-primary);
   }
 
   @media (max-width: 768px) {
     left: 10px;
+    top: 10px;
     border-width: 2px;
-    padding: 12px;
+    padding: 6px 12px;
     box-shadow: 2px 2px 0px 0px var(--border-primary);
     gap: 8px;
 
     &:hover {
-      transform: translateY(-50%) translate(1px, 1px);
+      transform: translate(1px, 1px);
       box-shadow: 1px 1px 0px 0px var(--border-primary);
     }
   }
 
   @media (max-width: 480px) {
     left: 5px;
-    padding: 8px;
+    top: 5px;
+    padding: 4px 8px;
     gap: 6px;
   }
 `
@@ -86,8 +86,6 @@ const AppName = styled.span`
   text-transform: uppercase;
   letter-spacing: 1px;
   white-space: nowrap;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
 
   @media (max-width: 768px) {
     font-size: 14px;
