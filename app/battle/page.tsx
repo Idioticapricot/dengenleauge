@@ -419,6 +419,163 @@ export default function BattleMemePage() {
 }
 
 function BattleMemePageContent() {
+  const [timeLeft, setTimeLeft] = useState(60)
+  const [battleActive, setBattleActive] = useState(false)
+  const [battleComplete, setBattleComplete] = useState(false)
+  const [teamA, setTeamA] = useState([
+    { name: 'DOGE', change: 0 },
+    { name: 'PEPE', change: 0 },
+    { name: 'SHIB', change: 0 }
+  ])
+  const [teamB, setTeamB] = useState([
+    { name: 'FLOKI', change: 0 },
+    { name: 'BONK', change: 0 },
+    { name: 'WIF', change: 0 }
+  ])
+  const [winner, setWinner] = useState<'A' | 'B' | null>(null)
+  const { activeAccount } = useWallet()
+
+  const startBattle = () => {
+    setBattleActive(true)
+    setBattleComplete(false)
+    setTimeLeft(60)
+  }
+
+  const simulatePriceChanges = () => {
+    setTeamA(prev => prev.map(coin => ({
+      ...coin,
+      change: (Math.random() - 0.5) * 20
+    })))
+    setTeamB(prev => prev.map(coin => ({
+      ...coin,
+      change: (Math.random() - 0.5) * 20
+    })))
+  }
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (battleActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            setBattleActive(false)
+            setBattleComplete(true)
+            const scoreA = teamA.reduce((sum, coin) => sum + coin.change, 0)
+            const scoreB = teamB.reduce((sum, coin) => sum + coin.change, 0)
+            setWinner(scoreA > scoreB ? 'A' : 'B')
+            return 0
+          }
+          return prev - 1
+        })
+        simulatePriceChanges()
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [battleActive, timeLeft, teamA, teamB])
+
+  const teamAScore = teamA.reduce((sum, coin) => sum + coin.change, 0)
+  const teamBScore = teamB.reduce((sum, coin) => sum + coin.change, 0)
+
+  return (
+    <AppLayout>
+      <BattleContainer>
+        <BattleHeader>
+          <BattleTitle>🔥 MEME COIN BATTLE 🔥</BattleTitle>
+          <BattleStats>
+            <StatItem>⚔️ LIVE BATTLE</StatItem>
+            <StatItem>💰 PRIZE POOL: 1000 $DEGEN</StatItem>
+            <StatItem>👥 PLAYERS: {Math.floor(Math.random() * 50) + 10}</StatItem>
+          </BattleStats>
+        </BattleHeader>
+
+        {battleActive && (
+          <Timer>{timeLeft}s</Timer>
+        )}
+
+        <ResponsiveGrid>
+          <TeamSection>
+            <TeamTitle>🔵 TEAM ALPHA</TeamTitle>
+            {teamA.map((coin, index) => (
+              <CoinItem key={index}>
+                <CoinName>{coin.name}</CoinName>
+                <PriceChange $positive={coin.change > 0}>
+                  {coin.change > 0 ? '+' : ''}{coin.change.toFixed(2)}%
+                </PriceChange>
+              </CoinItem>
+            ))}
+            <ScoreDisplay>
+              SCORE: {teamAScore.toFixed(2)}%
+            </ScoreDisplay>
+          </TeamSection>
+
+          <TeamSection>
+            <TeamTitle>🔴 TEAM BETA</TeamTitle>
+            {teamB.map((coin, index) => (
+              <CoinItem key={index}>
+                <CoinName>{coin.name}</CoinName>
+                <PriceChange $positive={coin.change > 0}>
+                  {coin.change > 0 ? '+' : ''}{coin.change.toFixed(2)}%
+                </PriceChange>
+              </CoinItem>
+            ))}
+            <ScoreDisplay>
+              SCORE: {teamBScore.toFixed(2)}%
+            </ScoreDisplay>
+          </TeamSection>
+        </ResponsiveGrid>
+
+        {battleActive && (
+          <EnhancedBattleChart 
+            teamAData={teamA}
+            teamBData={teamB}
+            timeLeft={timeLeft}
+          />
+        )}
+
+        {battleComplete && winner && (
+          <WinnerSection $winner={winner === 'A'}>
+            <WinnerText>
+              🏆 TEAM {winner === 'A' ? 'ALPHA' : 'BETA'} WINS! 🏆
+            </WinnerText>
+            <FinalScore>
+              Final Score: {winner === 'A' ? teamAScore.toFixed(2) : teamBScore.toFixed(2)}%
+            </FinalScore>
+            <ShareResultsButton onClick={() => window.location.reload()}>
+              🔄 NEW BATTLE
+            </ShareResultsButton>
+          </WinnerSection>
+        )}
+
+        {!battleActive && !battleComplete && (
+          <StartBattleButton onClick={startBattle}>
+            ⚔️ START BATTLE
+          </StartBattleButton>
+        )}
+      </BattleContainer>
+    </AppLayout>
+  )
+}
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+`
+
+export default function BattleMemePage() {
+  return (
+    <ErrorBoundary>
+      <BattleMemePageContent />
+    </ErrorBoundary>
+  )
+}
+
+function BattleMemePageContent() {
   const [timeLeft, setTimeLeft] = useState(60) // 1 minute battle
   const [battleActive, setBattleActive] = useState(false)
   const [playerTeam, setPlayerTeam] = useState<any[]>([])
