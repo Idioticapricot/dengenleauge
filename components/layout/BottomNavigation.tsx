@@ -11,13 +11,15 @@ const NavContainer = styled.nav`
   transform: translateX(-50%);
   width: 100%;
   max-width: 600px;
-  background: var(--light-bg);
+  background: linear-gradient(180deg, var(--light-bg) 0%, rgba(255,255,255,0.95) 100%);
   border-top: 4px solid var(--border-primary);
   border-left: 4px solid var(--border-primary);
   border-right: 4px solid var(--border-primary);
   padding: 16px 0 8px;
   z-index: 100;
   font-family: var(--font-mono);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
   
   @media (max-width: 768px) {
     border-width: 3px;
@@ -51,10 +53,11 @@ const NavItem = styled.div<{ $isActive: boolean; $isBattle?: boolean }>`
   min-height: 44px;
   min-width: 44px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 900;
   text-transform: uppercase;
   position: relative;
+  border-radius: 8px;
   
   background: ${props => {
     if (props.$isBattle && props.$isActive) return 'var(--brutal-red)'
@@ -80,8 +83,33 @@ const NavItem = styled.div<{ $isActive: boolean; $isBattle?: boolean }>`
     background: ${props => props.$isBattle ? 'var(--brutal-red)' : 'var(--brutal-lime)'};
     border: 4px solid var(--border-primary);
     box-shadow: 3px 3px 0px 0px var(--border-primary);
-    transform: ${props => props.$isBattle ? 'scale(1.1) translate(1px, 1px)' : 'scale(1.05) translate(1px, 1px)'};
+    transform: ${props => props.$isBattle ? 'scale(1.1) translateY(-2px)' : 'scale(1.05) translateY(-2px)'};
   }
+  
+  &:active {
+    transform: ${props => props.$isBattle ? 'scale(1.05) translateY(0px)' : 'scale(1.02) translateY(0px)'};
+    transition: all 0.1s ease;
+  }
+  
+  ${props => props.$isActive && `
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 3px;
+      background: var(--brutal-yellow);
+      border-radius: 2px;
+      animation: activeIndicator 0.3s ease-out;
+    }
+    
+    @keyframes activeIndicator {
+      0% { width: 0; }
+      100% { width: 20px; }
+    }
+  `}
   
   @media (max-width: 768px) {
     padding: ${props => props.$isBattle ? '10px 12px' : '8px 10px'};
@@ -111,10 +139,14 @@ const IconContainer = styled.div<{ $isBattle?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
   ${NavItem}:hover & {
-    transform: ${props => props.$isBattle ? 'rotate(10deg)' : 'rotate(5deg)'};
+    transform: ${props => props.$isBattle ? 'rotate(15deg) scale(1.1)' : 'rotate(10deg) scale(1.05)'};
+  }
+  
+  ${NavItem}:active & {
+    transform: scale(0.9);
   }
   
   @media (max-width: 768px) {
