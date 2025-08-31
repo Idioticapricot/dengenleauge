@@ -59,7 +59,7 @@ const WalletModal = styled.div<{ $isOpen: boolean }>`
 `
 
 const ModalContent = styled.div`
-  background: #ff0000; /* Temporary bright red background for debugging */
+  background: var(--light-bg);
   border: 4px solid var(--border-primary);
   padding: 32px;
   max-width: 400px;
@@ -68,7 +68,7 @@ const ModalContent = styled.div`
   position: relative;
   margin: auto;
   z-index: 1000000;
-  color: white; /* Make text visible on red background */
+  font-family: var(--font-mono);
 
   @media (max-width: 768px) {
     padding: 24px;
@@ -91,6 +91,12 @@ const ModalTitle = styled.h2`
   color: var(--text-primary);
   margin: 0 0 24px 0;
   text-align: center;
+  font-size: 18px;
+  
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
 `
 
 const WalletButton = styled(Button)`
