@@ -185,12 +185,7 @@ export const GlobalStyle = createGlobalStyle`
       transition-duration: 0.2s !important;
     }
     
-    /* Hardware acceleration for animations */
-    *[class*="brutal-"], button, a {
-      transform: translateZ(0);
-      backface-visibility: hidden;
-      perspective: 1000px;
-    }
+
   }
 
   /* Small mobile styles */
@@ -404,6 +399,22 @@ export const GlobalStyle = createGlobalStyle`
 
 export const Container = styled.div`
   max-width: 600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--light-bg);
+  padding-bottom: 80px;
+  
+  @media (max-width: 768px) {
+    border-left: 3px solid var(--border-primary);
+    border-right: 3px solid var(--border-primary);
+    max-width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    border-left: 2px solid var(--border-primary);
+    border-right: 2px solid var(--border-primary);
+  }
+`-width: 600px;
   margin: 0 auto;
   min-height: 100vh;
   background: var(--light-bg);
