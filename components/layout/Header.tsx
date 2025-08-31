@@ -389,20 +389,8 @@ export function Header() {
               height={40}
               priority
             />
-            <AppName>DEGEN LEAGUE</AppName>
           </LogoNameBox>
         </LeftSection>
-
-        <RightSection>
-          {activeAccount?.address && (
-            <BalanceContainer onClick={handleWamClick}>
-              <TokenIcon>$D</TokenIcon>
-              <Balance>{degenBalance}</Balance>
-              <AddButton onClick={(e) => { e.stopPropagation(); router.push('/buy-tokens'); }}>+</AddButton>
-            </BalanceContainer>
-          )}
-          <SimpleConnectButton />
-        </RightSection>
       </HeaderContainer>
     </>
   )

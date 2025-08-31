@@ -5,27 +5,34 @@ import styled from "styled-components"
 import { Users, Trophy, User, Swords, DollarSign } from "lucide-react"
 
 const NavContainer = styled.nav`
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 80px !important;
   background: var(--light-bg);
   border-top: 4px solid var(--border-primary);
   padding: 12px 0 8px;
   z-index: 1000;
   font-family: var(--font-mono);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  visibility: visible !important;
+  opacity: 1 !important;
+  box-sizing: border-box;
+  transform: none !important;
+  transition: none !important;
   
   @media (max-width: 768px) {
     border-width: 3px;
     padding: 12px 0 6px;
-    max-width: 100%;
+    height: 76px !important;
   }
   
   @media (max-width: 480px) {
     border-width: 2px;
     padding: 10px 0 4px;
+    height: 72px !important;
   }
 `
 
@@ -75,17 +82,17 @@ const NavItem = styled.div<{ $isActive: boolean; $isBattle?: boolean }>`
   
   transform: ${props => props.$isBattle ? 'scale(1.05)' : 'scale(1)'};
   
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     &:hover {
       background: ${props => props.$isBattle ? 'var(--brutal-red)' : 'var(--brutal-lime)'};
       border: 4px solid var(--border-primary);
       box-shadow: 3px 3px 0px 0px var(--border-primary);
-      transform: ${props => props.$isBattle ? 'scale(1.1) translateY(-2px)' : 'scale(1.05) translateY(-2px)'};
+      transform: ${props => props.$isBattle ? 'scale(1.1)' : 'scale(1.05)'};
     }
   }
   
   &:active {
-    transform: ${props => props.$isBattle ? 'scale(1.05) translateY(0px)' : 'scale(1.02) translateY(0px)'};
+    transform: ${props => props.$isBattle ? 'scale(1.05)' : 'scale(1.02)'};
     transition: all 0.1s ease;
   }
   
@@ -113,9 +120,11 @@ const NavItem = styled.div<{ $isActive: boolean; $isBattle?: boolean }>`
     padding: ${props => props.$isBattle ? '10px 12px' : '8px 10px'};
     border-width: 3px;
     
-    &:hover {
-      border-width: 3px;
-      box-shadow: 2px 2px 0px 0px var(--border-primary);
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        border-width: 3px;
+        box-shadow: 2px 2px 0px 0px var(--border-primary);
+      }
     }
   }
   
@@ -123,10 +132,12 @@ const NavItem = styled.div<{ $isActive: boolean; $isBattle?: boolean }>`
     padding: ${props => props.$isBattle ? '8px 10px' : '6px 8px'};
     border-width: 2px;
     
-    &:hover {
-      border-width: 2px;
-      box-shadow: 1px 1px 0px 0px var(--border-primary);
-      transform: none;
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        border-width: 2px;
+        box-shadow: 1px 1px 0px 0px var(--border-primary);
+        transform: none;
+      }
     }
   }
 `
@@ -139,7 +150,7 @@ const IconContainer = styled.div<{ $isBattle?: boolean }>`
   justify-content: center;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
-  @media (hover: hover) {
+  @media (hover: hover) and (pointer: fine) {
     ${NavItem}:hover & {
       transform: ${props => props.$isBattle ? 'rotate(15deg) scale(1.1)' : 'rotate(10deg) scale(1.05)'};
     }
