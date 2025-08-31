@@ -112,6 +112,57 @@ module.exports = {
         'brutal-sm': '2px 2px 0px 0px #000000',
         'brutal-lg': '8px 8px 0px 0px #000000',
         'brutal-xl': '12px 12px 0px 0px #000000',
+        'brutal-inner': 'inset 4px 4px 0px 0px #000000',
+        'brutal-glow': '0 0 20px rgba(255, 229, 0, 0.5)',
+        'brutal-text': '2px 2px 0px 0px #000000',
+      },
+      borderWidth: {
+        '3': '3px',
+        '4': '4px',
+        '6': '6px',
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "brutal-bounce": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
+        },
+        "brutal-shake": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-2px)" },
+          "75%": { transform: "translateX(2px)" },
+        },
+        "brutal-pulse": {
+          "0%, 100%": { boxShadow: "4px 4px 0px 0px #000000" },
+          "50%": { boxShadow: "6px 6px 0px 0px #000000" },
+        },
+        "brutal-glow": {
+          "0%, 100%": { boxShadow: "0 0 10px rgba(255, 229, 0, 0.3)" },
+          "50%": { boxShadow: "0 0 20px rgba(255, 229, 0, 0.6)" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "brutal-bounce": "brutal-bounce 0.6s ease-in-out",
+        "brutal-shake": "brutal-shake 0.5s ease-in-out",
+        "brutal-pulse": "brutal-pulse 1s ease-in-out infinite",
+        "brutal-glow": "brutal-glow 2s ease-in-out infinite",
+      },
+      screens: {
+        'xs': '375px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
       },
     },
   },

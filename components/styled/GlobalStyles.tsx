@@ -20,6 +20,20 @@ export const GlobalStyle = createGlobalStyle`
     --shadow-brutal: 6px 6px 0px 0px var(--border-primary);
     --shadow-brutal-sm: 3px 3px 0px 0px var(--border-primary);
     --shadow-brutal-lg: 8px 8px 0px 0px var(--border-primary);
+    --shadow-brutal-xl: 12px 12px 0px 0px var(--border-primary);
+    --shadow-brutal-inner: inset 4px 4px 0px 0px var(--border-primary);
+    --shadow-brutal-glow: 0 0 20px rgba(255, 229, 0, 0.5);
+    --shadow-brutal-text: 2px 2px 0px 0px var(--border-primary);
+
+    /* Animation durations */
+    --duration-fast: 0.15s;
+    --duration-normal: 0.3s;
+    --duration-slow: 0.5s;
+
+    /* Border widths */
+    --border-width-thin: 2px;
+    --border-width-normal: 4px;
+    --border-width-thick: 6px;
 
     /* Mobile-first touch targets */
     --min-touch-target: 44px;
@@ -29,6 +43,14 @@ export const GlobalStyle = createGlobalStyle`
     --mobile-padding: 16px;
     --mobile-margin: 16px;
     --mobile-gap: 12px;
+
+    /* Spacing scale */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
   }
 
   .dark {
