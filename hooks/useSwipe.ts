@@ -24,6 +24,29 @@ export function useSwipe<T extends HTMLElement = HTMLElement>(config: SwipeConfi
 
   const elementRef = useRef<T>(null)
 
+  // Keyboard navigation support
+  const handleKeyDown = (e: KeyboardEvent) => {
+    // Prevent default behavior for arrow keys to avoid page scrolling
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      e.preventDefault()
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          if (onSwipeLeft) onSwipeLeft()
+          break
+        case 'ArrowRight':
+          if (onSwipeRight) onSwipeRight()
+          break
+        case 'ArrowUp':
+          if (onSwipeUp) onSwipeUp()
+          break
+        case 'ArrowDown':
+          if (onSwipeDown) onSwipeDown()
+          break
+      }
+    }
+  }
+
   useEffect(() => {
     const element = elementRef.current
     if (!element) return
@@ -54,7 +77,7 @@ export function useSwipe<T extends HTMLElement = HTMLElement>(config: SwipeConfi
       const timeDiff = touchEnd.time - touchStart.time
 
       const isValidSwipe = Math.abs(distanceX) > minSwipeDistance ||
-                          Math.abs(distanceY) > minSwipeDistance
+                           Math.abs(distanceY) > minSwipeDistance
 
       if (timeDiff <= maxSwipeTime && isValidSwipe) {
         const isLeftSwipe = distanceX > minSwipeDistance
@@ -80,11 +103,13 @@ export function useSwipe<T extends HTMLElement = HTMLElement>(config: SwipeConfi
     element.addEventListener('touchstart', handleTouchStart, { passive: true })
     element.addEventListener('touchmove', handleTouchMove, { passive: true })
     element.addEventListener('touchend', handleTouchEnd, { passive: true })
+    element.addEventListener('keydown', handleKeyDown)
 
     return () => {
       element.removeEventListener('touchstart', handleTouchStart)
       element.removeEventListener('touchmove', handleTouchMove)
       element.removeEventListener('touchend', handleTouchEnd)
+      element.removeEventListener('keydown', handleKeyDown)
     }
   }, [touchStart, touchEnd, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, minSwipeDistance, maxSwipeTime])
 

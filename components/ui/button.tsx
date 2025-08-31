@@ -28,7 +28,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-12 px-6 py-3",
-        sm: "h-10 px-4 py-2",
+        sm: "h-11 px-4 py-2",
         lg: "h-14 px-8 py-4 text-base",
         icon: "size-12",
       },
@@ -43,6 +43,8 @@ const buttonVariants = cva(
 type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    "aria-label"?: string
+    "aria-describedby"?: string
   }
 
 function Button({
@@ -50,6 +52,8 @@ function Button({
   variant,
   size,
   asChild = false,
+  "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
   ...props
 }: ButtonProps) {
   const baseClassName = cn(buttonVariants({ variant, size, className }))
@@ -59,6 +63,8 @@ function Button({
       <Slot
         data-slot="button"
         className={baseClassName}
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
         {...props}
       />
     )
@@ -68,6 +74,8 @@ function Button({
     <motion.button
       data-slot="button"
       className={baseClassName}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       whileHover={{
         x: 2,
         y: 2,

@@ -54,15 +54,74 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const [isOpen, setIsOpen] = React.useState(false)
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const previouslyFocusedElement = React.useRef<Element | null>(null)
+
+  // Focus trapping and restoration
+  React.useEffect(() => {
+    if (isOpen && contentRef.current) {
+      // Store the previously focused element
+      previouslyFocusedElement.current = document.activeElement
+
+      // Focus the first focusable element in the dialog
+      const focusableElements = contentRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      const firstFocusableElement = focusableElements[0] as HTMLElement
+      if (firstFocusableElement) {
+        firstFocusableElement.focus()
+      }
+
+      // Add keyboard event listener for focus trapping
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          const focusableElements = contentRef.current?.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          )
+          if (!focusableElements) return
+
+          const firstElement = focusableElements[0] as HTMLElement
+          const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+
+          if (e.shiftKey) {
+            // Shift + Tab
+            if (document.activeElement === firstElement) {
+              lastElement.focus()
+              e.preventDefault()
+            }
+          } else {
+            // Tab
+            if (document.activeElement === lastElement) {
+              firstElement.focus()
+              e.preventDefault()
+            }
+          }
+        }
+      }
+
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    } else if (!isOpen && previouslyFocusedElement.current) {
+      // Restore focus to the previously focused element
+      ;(previouslyFocusedElement.current as HTMLElement).focus()
+    }
+  }, [isOpen])
+
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
+        ref={contentRef}
         data-slot="dialog-content"
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
           className
         )}
+        onOpenAutoFocus={() => setIsOpen(true)}
+        onCloseAutoFocus={() => setIsOpen(false)}
         {...props}
       >
         {children}

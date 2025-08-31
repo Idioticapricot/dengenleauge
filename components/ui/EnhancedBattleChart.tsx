@@ -309,14 +309,32 @@ export function EnhancedBattleChart({
     )
   }
   
+  // Generate accessibility description for the chart
+  const chartDescription = `Battle chart showing ${data.length} data points. Your score: ${playerScore.toFixed(4)}%, Opponent score: ${opponentScore.toFixed(4)}%. Opponent strategy: ${opponentStrategy}. Battle ${isActive ? 'in progress' : 'completed'}.`
+
   return (
-    <ChartContainer>
+    <ChartContainer
+      role="img"
+      aria-label="Meme coin battle performance chart"
+      aria-describedby="battle-chart-description"
+    >
+      <div id="battle-chart-description" className="sr-only">
+        {chartDescription}
+      </div>
       <ChartHeader>
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <ScoreDisplay $isLeading={isLeading} $color="#00ff41">
+          <ScoreDisplay
+            $isLeading={isLeading}
+            $color="#00ff41"
+            aria-label={`Your current score: ${playerScore.toFixed(4)}%`}
+          >
             {isLeading ? '🚀' : '📈'} YOU: {playerScore.toFixed(4)}%
           </ScoreDisplay>
-          <ScoreDisplay $isLeading={!isLeading} $color="#ff1493">
+          <ScoreDisplay
+            $isLeading={!isLeading}
+            $color="#ff1493"
+            aria-label={`Opponent current score: ${opponentScore.toFixed(4)}%`}
+          >
             {!isLeading ? '🔥' : '🤖'} AI: {opponentScore.toFixed(4)}%
           </ScoreDisplay>
         </div>
@@ -331,7 +349,7 @@ export function EnhancedBattleChart({
         </BattleInfo>
       </ChartHeader>
       
-      <ChartWrapper>
+      <ChartWrapper aria-label="Interactive battle performance chart with time series data">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
             <defs>

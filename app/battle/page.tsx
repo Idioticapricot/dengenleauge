@@ -510,8 +510,10 @@ function BattleMemePageContent() {
     if (battleActive && timeLeft > 0) {
       const timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1)
-        // Simulate price changes
-        updatePrices()
+        // Throttle chart updates using requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
+          updatePrices()
+        })
       }, 1000)
       return () => clearTimeout(timer)
     } else if (timeLeft === 0) {
@@ -1031,7 +1033,29 @@ function BattleMemePageContent() {
               </FinalScore>
             </WinnerSection>
             <ShareResultsButton
-              onClick={() => navigator.share ? navigator.share({title: 'Meme Coin Battle Result', text: `I ${winner === 'player' ? 'won' : 'lost'} with ${playerScore.toFixed(4)}% vs ${opponentScore.toFixed(4)}%!`}) : null}
+              onClick={async () => {
+                const shareText = `I ${winner === 'player' ? 'won' : 'lost'} with ${playerScore.toFixed(4)}% vs ${opponentScore.toFixed(4)}%!`;
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: 'Meme Coin Battle Result',
+                      text: shareText
+                    });
+                  } catch (error) {
+                    console.error('Share failed:', error);
+                  }
+                } else {
+                  // Clipboard fallback for browsers without share API
+                  try {
+                    await navigator.clipboard.writeText(shareText);
+                    alert('Results copied to clipboard!');
+                  } catch (error) {
+                    console.error('Clipboard write failed:', error);
+                    // Fallback to prompt
+                    prompt('Copy this text:', shareText);
+                  }
+                }
+              }}
             >
               📤 SHARE RESULTS
             </ShareResultsButton>
